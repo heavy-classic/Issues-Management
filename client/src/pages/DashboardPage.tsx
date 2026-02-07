@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import IssueFilters from "../components/IssueFilters";
 import IssueForm from "../components/IssueForm";
@@ -26,12 +26,14 @@ interface User {
 }
 
 export default function DashboardPage() {
+  const [searchParams] = useSearchParams();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [filters, setFilters] = useState({
-    status: "",
-    priority: "",
-    assignee_id: "",
+    status: searchParams.get("status") || "",
+    priority: searchParams.get("priority") || "",
+    assignee_id: searchParams.get("assignee_id") || "",
+    stage_id: searchParams.get("stage_id") || "",
   });
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,7 @@ export default function DashboardPage() {
     if (filters.status) params.set("status", filters.status);
     if (filters.priority) params.set("priority", filters.priority);
     if (filters.assignee_id) params.set("assignee_id", filters.assignee_id);
+    if (filters.stage_id) params.set("stage_id", filters.stage_id);
     const res = await api.get(`/issues?${params}`);
     setIssues(res.data.issues);
     setLoading(false);

@@ -14,6 +14,7 @@ import {
   Area,
   Legend,
 } from "recharts";
+import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import KPICard from "../components/KPICard";
 import ChartCard from "../components/ChartCard";
@@ -52,6 +53,7 @@ interface Stage {
 }
 
 export default function BIDashboardPage() {
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState("90d");
   const [priority, setPriority] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
@@ -136,6 +138,19 @@ export default function BIDashboardPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  function drillDown(params: Record<string, string>) {
+    const qs = new URLSearchParams(params).toString();
+    navigate(`/?${qs}`);
+  }
+
+  function stageIdByName(name: string): string {
+    return stages.find((s) => s.name === name)?.id || "";
+  }
+
+  function userIdByName(name: string): string {
+    return users.find((u) => u.name === name || u.email === name)?.id || "";
+  }
 
   // Build heatmap grid
   const heatmapStages = [
@@ -237,6 +252,8 @@ export default function BIDashboardPage() {
                     dataKey="value"
                     nameKey="name"
                     label={({ name, value }) => `${name}: ${value}`}
+                    style={{ cursor: "pointer" }}
+                    onClick={(data: any) => drillDown({ status: data.name })}
                   >
                     {issuesByStatus.map((entry: any, i: number) => (
                       <Cell
@@ -253,12 +270,12 @@ export default function BIDashboardPage() {
             {/* Issues by Priority - Bar */}
             <ChartCard title="Issues by Priority">
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={issuesByPriority}>
+                <BarChart data={issuesByPriority} style={{ cursor: "pointer" }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="value">
+                  <Bar dataKey="value" onClick={(data: any) => drillDown({ priority: data.name })}>
                     {issuesByPriority.map((entry: any, i: number) => (
                       <Cell
                         key={entry.name}
@@ -327,7 +344,7 @@ export default function BIDashboardPage() {
             {/* Workflow Funnel - Horizontal Bar */}
             <ChartCard title="Workflow Funnel">
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={resolutionFunnel} layout="vertical">
+                <BarChart data={resolutionFunnel} layout="vertical" style={{ cursor: "pointer" }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis
@@ -336,7 +353,10 @@ export default function BIDashboardPage() {
                     width={100}
                   />
                   <Tooltip />
-                  <Bar dataKey="value">
+                  <Bar dataKey="value" onClick={(data: any) => {
+                    const sid = stageIdByName(data.name);
+                    if (sid) drillDown({ stage_id: sid });
+                  }}>
                     {resolutionFunnel.map((entry: any, i: number) => (
                       <Cell
                         key={entry.name}
@@ -351,12 +371,15 @@ export default function BIDashboardPage() {
             {/* Issues by Stage - Bar */}
             <ChartCard title="Issues by Stage">
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={issuesByStage}>
+                <BarChart data={issuesByStage} style={{ cursor: "pointer" }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="value">
+                  <Bar dataKey="value" onClick={(data: any) => {
+                    const sid = stageIdByName(data.name);
+                    if (sid) drillDown({ stage_id: sid });
+                  }}>
                     {issuesByStage.map((entry: any, i: number) => (
                       <Cell
                         key={entry.name}
@@ -395,8 +418,16 @@ export default function BIDashboardPage() {
                           style={{
                             backgroundColor: `rgba(37, 99, 235, ${intensity * 0.8})`,
                             color: intensity > 0.5 ? "white" : "#1f2937",
+                            cursor: val ? "pointer" : "default",
                           }}
                           title={`${p} / ${s}: ${val}`}
+                          onClick={() => {
+                            if (!val) return;
+                            const sid = stageIdByName(s);
+                            const params: Record<string, string> = { priority: p };
+                            if (sid) params.stage_id = sid;
+                            drillDown(params);
+                          }}
                         >
                           {val || ""}
                         </div>
@@ -410,7 +441,14 @@ export default function BIDashboardPage() {
             {/* Team Workload - Grouped Bar */}
             <ChartCard title="Team Workload">
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={teamWorkload}>
+                <BarChart data={teamWorkload} style={{ cursor: "pointer" }}
+                  onClick={(data: any) => {
+                    if (data?.activePayload?.[0]?.payload?.name) {
+                      const uid = userIdByName(data.activePayload[0].payload.name);
+                      if (uid) drillDown({ assignee_id: uid });
+                    }
+                  }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
