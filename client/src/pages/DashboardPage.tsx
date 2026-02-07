@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api/client";
 import IssueFilters from "../components/IssueFilters";
 import IssueForm from "../components/IssueForm";
+import { exportToCSV, exportToExcel } from "../utils/exportUtils";
 
 interface Issue {
   id: string;
@@ -72,12 +73,48 @@ export default function DashboardPage() {
     <div>
       <div className="dashboard-header">
         <h1>Issues</h1>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="btn btn-primary"
-        >
-          {showCreate ? "Cancel" : "New Issue"}
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            onClick={() => {
+              const data = issues.map((i) => ({
+                Title: i.title,
+                Status: i.status,
+                Priority: i.priority,
+                Stage: i.stage_name || "",
+                Reporter: i.reporter_name || i.reporter_email,
+                Assignee: i.assignee_name || i.assignee_email || "Unassigned",
+                Created: new Date(i.created_at).toLocaleDateString(),
+              }));
+              exportToCSV(data, "issues.csv");
+            }}
+            className="btn btn-secondary btn-sm"
+          >
+            CSV
+          </button>
+          <button
+            onClick={() => {
+              const data = issues.map((i) => ({
+                Title: i.title,
+                Status: i.status,
+                Priority: i.priority,
+                Stage: i.stage_name || "",
+                Reporter: i.reporter_name || i.reporter_email,
+                Assignee: i.assignee_name || i.assignee_email || "Unassigned",
+                Created: new Date(i.created_at).toLocaleDateString(),
+              }));
+              exportToExcel(data, "Issues", "issues.xlsx");
+            }}
+            className="btn btn-secondary btn-sm"
+          >
+            Excel
+          </button>
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="btn btn-primary"
+          >
+            {showCreate ? "Cancel" : "New Issue"}
+          </button>
+        </div>
       </div>
 
       {showCreate && (

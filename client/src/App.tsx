@@ -13,6 +13,8 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminTeamsPage from "./pages/AdminTeamsPage";
 import AdminWorkflowPage from "./pages/AdminWorkflowPage";
 import AdminAuditPage from "./pages/AdminAuditPage";
+import BIDashboardPage from "./pages/BIDashboardPage";
+import ReportBuilderPage from "./pages/ReportBuilderPage";
 
 export default function App() {
   return (
@@ -77,6 +79,22 @@ export default function App() {
                 <AdminRoute>
                   <AdminWorkflowPage />
                 </AdminRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <BIDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <ReportBuilderPage />
+                </ProtectedRoute>
               }
             />
             <Route

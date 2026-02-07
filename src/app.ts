@@ -12,6 +12,10 @@ import workflowStagesRoutes from "./routes/workflowStages";
 import auditRoutes from "./routes/audit";
 import signatureRoutes from "./routes/signatures";
 import workflowRoutes from "./routes/workflow";
+import actionsRoutes from "./routes/actions";
+import dashboardRoutes from "./routes/dashboard";
+import reportsRoutes from "./routes/reports";
+import exportsRoutes from "./routes/exports";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -31,6 +35,10 @@ app.use("/api/workflow-stages", workflowStagesRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/signatures", signatureRoutes);
 app.use("/api/workflow", workflowRoutes);
+app.use("/api/actions", actionsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/exports", exportsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

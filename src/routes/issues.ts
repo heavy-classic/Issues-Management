@@ -5,6 +5,7 @@ import { validate } from "../middleware/validate";
 import * as issuesService from "../services/issuesService";
 import * as commentsService from "../services/commentsService";
 import * as workflowService from "../services/workflowService";
+import * as actionsService from "../services/actionsService";
 import type { AuditContext } from "../services/auditService";
 
 const router = Router();
@@ -106,6 +107,13 @@ router.post(
     res.status(201).json({ comment });
   }
 );
+
+router.get("/:id/actions", async (req, res) => {
+  const actions = await actionsService.getActionsForIssue(
+    req.params.id as string
+  );
+  res.json({ actions });
+});
 
 router.delete("/:id/comments/:commentId", async (req, res) => {
   await commentsService.deleteComment(

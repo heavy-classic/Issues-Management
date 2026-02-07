@@ -6,6 +6,9 @@ import CommentThread from "../components/CommentThread";
 import SignatureDialog from "../components/SignatureDialog";
 import SignatureDisplay from "../components/SignatureDisplay";
 import AuditHistoryModal from "../components/AuditHistoryModal";
+import ActionCard from "../components/ActionCard";
+import ActionFormModal from "../components/ActionFormModal";
+import { exportIssuePDF } from "../utils/exportUtils";
 
 interface StageAssignment {
   id: string;
@@ -60,6 +63,25 @@ interface Issue {
   comments: Comment[];
   stageAssignments: StageAssignment[];
   signatures: Signature[];
+  actions: ActionItem[];
+}
+
+interface ActionItem {
+  id: string;
+  issue_id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  assigned_to: string | null;
+  assignee_name: string | null;
+  assignee_email: string | null;
+  creator_name: string | null;
+  creator_email: string | null;
+  due_date: string | null;
+  completed_at: string | null;
+  attachment_count: number;
+  created_at: string;
 }
 
 interface User {
@@ -86,6 +108,8 @@ export default function IssueDetailPage() {
   const [saving, setSaving] = useState(false);
   const [signingStage, setSigningStage] = useState<StageAssignment | null>(null);
   const [showAudit, setShowAudit] = useState(false);
+  const [showActionForm, setShowActionForm] = useState(false);
+  const [editingAction, setEditingAction] = useState<ActionItem | null>(null);
   const [verifyResult, setVerifyResult] = useState<{
     valid: boolean;
     signerName: string;
@@ -251,6 +275,19 @@ export default function IssueDetailPage() {
           <div className="issue-header">
             <h1>{issue.title}</h1>
             <div className="issue-actions">
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await api.get(`/exports/issues/${id}`);
+                    exportIssuePDF(res.data);
+                  } catch {
+                    alert("Failed to export PDF");
+                  }
+                }}
+                className="btn btn-secondary"
+              >
+                Export PDF
+              </button>
               <button onClick={() => setShowAudit(true)} className="btn btn-secondary">
                 History
               </button>
@@ -366,6 +403,70 @@ export default function IssueDetailPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Action Plan */}
+      {!editing && (
+        <div className="action-plan-section">
+          <div className="action-plan-header">
+            <h3>Action Plan ({issue.actions?.length || 0})</h3>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setEditingAction(null);
+                setShowActionForm(true);
+              }}
+            >
+              + Add Action
+            </button>
+          </div>
+          {issue.actions && issue.actions.length > 0 ? (
+            <div className="action-cards-grid">
+              {issue.actions.map((a) => (
+                <ActionCard
+                  key={a.id}
+                  action={a}
+                  onEdit={(action) => {
+                    setEditingAction(action);
+                    setShowActionForm(true);
+                  }}
+                  onDelete={async (actionId) => {
+                    if (!confirm("Delete this action?")) return;
+                    try {
+                      await api.delete(`/actions/${actionId}`);
+                      fetchIssue();
+                    } catch {
+                      alert("Failed to delete action");
+                    }
+                  }}
+                  onUpdate={fetchIssue}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted">No actions yet.</p>
+          )}
+        </div>
+      )}
+
+      {showActionForm && (
+        <ActionFormModal
+          issueId={issue.id}
+          action={
+            editingAction
+              ? { ...editingAction, issue_id: issue.id }
+              : null
+          }
+          onSave={() => {
+            setShowActionForm(false);
+            setEditingAction(null);
+            fetchIssue();
+          }}
+          onCancel={() => {
+            setShowActionForm(false);
+            setEditingAction(null);
+          }}
+        />
       )}
 
       <CommentThread

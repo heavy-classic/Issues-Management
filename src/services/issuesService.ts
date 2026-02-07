@@ -124,7 +124,24 @@ export async function getIssue(issueId: string) {
     .where("issue_id", issueId)
     .orderBy("signature_timestamp", "asc");
 
-  return { ...issue, comments, stageAssignments, signatures };
+  // Get actions for this issue
+  const actions = await db("actions")
+    .select(
+      "actions.*",
+      "assignee.email as assignee_email",
+      "assignee.name as assignee_name",
+      "creator.email as creator_email",
+      "creator.name as creator_name",
+      db.raw(
+        "(SELECT COUNT(*) FROM action_attachments WHERE action_id = actions.id)::int as attachment_count"
+      )
+    )
+    .leftJoin("users as assignee", "actions.assigned_to", "assignee.id")
+    .leftJoin("users as creator", "actions.created_by", "creator.id")
+    .where("actions.issue_id", issueId)
+    .orderBy("actions.created_at", "asc");
+
+  return { ...issue, comments, stageAssignments, signatures, actions };
 }
 
 export async function createIssue(

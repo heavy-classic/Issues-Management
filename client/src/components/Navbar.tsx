@@ -14,6 +14,8 @@ export default function Navbar() {
           <div className="navbar-links">
             <Link to="/" className="navbar-link">Issues</Link>
             <Link to="/board" className="navbar-link">Board</Link>
+            <Link to="/analytics" className="navbar-link">Analytics</Link>
+            <Link to="/reports" className="navbar-link">Reports</Link>
             {isAdmin && (
               <Link to="/admin" className="navbar-link">Admin</Link>
             )}
