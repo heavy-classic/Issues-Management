@@ -1,0 +1,141 @@
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import api from "../api/client";
+import IssueFilters from "../components/IssueFilters";
+import IssueForm from "../components/IssueForm";
+
+interface Issue {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  reporter_email: string;
+  reporter_name: string | null;
+  assignee_email: string | null;
+  assignee_name: string | null;
+  created_at: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
+export default function DashboardPage() {
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filters, setFilters] = useState({
+    status: "",
+    priority: "",
+    assignee_id: "",
+  });
+  const [showCreate, setShowCreate] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchIssues = useCallback(async () => {
+    const params = new URLSearchParams();
+    if (filters.status) params.set("status", filters.status);
+    if (filters.priority) params.set("priority", filters.priority);
+    if (filters.assignee_id) params.set("assignee_id", filters.assignee_id);
+    const res = await api.get(`/issues?${params}`);
+    setIssues(res.data.issues);
+    setLoading(false);
+  }, [filters]);
+
+  useEffect(() => {
+    fetchIssues();
+  }, [fetchIssues]);
+
+  useEffect(() => {
+    api.get("/users").then((res) => setUsers(res.data.users));
+  }, []);
+
+  async function handleCreate(data: {
+    title: string;
+    description: string;
+    priority: string;
+    assignee_id: string | null;
+  }) {
+    await api.post("/issues", data);
+    setShowCreate(false);
+    fetchIssues();
+  }
+
+  function statusLabel(status: string) {
+    return status.replace("_", " ");
+  }
+
+  return (
+    <div>
+      <div className="dashboard-header">
+        <h1>Issues</h1>
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          className="btn btn-primary"
+        >
+          {showCreate ? "Cancel" : "New Issue"}
+        </button>
+      </div>
+
+      {showCreate && (
+        <IssueForm
+          users={users}
+          onSubmit={handleCreate}
+          onCancel={() => setShowCreate(false)}
+        />
+      )}
+
+      <IssueFilters
+        filters={filters}
+        users={users}
+        onFilterChange={setFilters}
+      />
+
+      {loading ? (
+        <p>Loading issues...</p>
+      ) : issues.length === 0 ? (
+        <p className="text-muted">No issues found.</p>
+      ) : (
+        <table className="issues-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Reporter</th>
+              <th>Assignee</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {issues.map((issue) => (
+              <tr key={issue.id}>
+                <td>
+                  <Link to={`/issues/${issue.id}`}>{issue.title}</Link>
+                </td>
+                <td>
+                  <span className={`badge badge-status-${issue.status}`}>
+                    {statusLabel(issue.status)}
+                  </span>
+                </td>
+                <td>
+                  <span className={`badge badge-priority-${issue.priority}`}>
+                    {issue.priority}
+                  </span>
+                </td>
+                <td>{issue.reporter_name || issue.reporter_email}</td>
+                <td>
+                  {issue.assignee_name ||
+                    issue.assignee_email ||
+                    "Unassigned"}
+                </td>
+                <td>{new Date(issue.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,103 @@
+import { useState, FormEvent } from "react";
+import { useAuth } from "../context/AuthContext";
+import api from "../api/client";
+
+interface Comment {
+  id: string;
+  issue_id: string;
+  author_id: string;
+  author_email: string;
+  author_name: string | null;
+  body: string;
+  created_at: string;
+}
+
+interface CommentThreadProps {
+  issueId: string;
+  comments: Comment[];
+  onUpdate: () => void;
+}
+
+export default function CommentThread({
+  issueId,
+  comments,
+  onUpdate,
+}: CommentThreadProps) {
+  const { user } = useAuth();
+  const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!body.trim()) return;
+    setError("");
+    setSubmitting(true);
+    try {
+      await api.post(`/issues/${issueId}/comments`, { body });
+      setBody("");
+      onUpdate();
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to add comment");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(commentId: string) {
+    try {
+      await api.delete(`/issues/${issueId}/comments/${commentId}`);
+      onUpdate();
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to delete comment");
+    }
+  }
+
+  return (
+    <div className="comment-thread">
+      <h3>Comments ({comments.length})</h3>
+
+      {error && <p className="error">{error}</p>}
+
+      {comments.length === 0 && (
+        <p className="text-muted">No comments yet.</p>
+      )}
+
+      {comments.map((c) => (
+        <div key={c.id} className="comment">
+          <div className="comment-header">
+            <strong>{c.author_name || c.author_email}</strong>
+            <span className="text-muted">
+              {new Date(c.created_at).toLocaleString()}
+            </span>
+            {user?.userId === c.author_id && (
+              <button
+                onClick={() => handleDelete(c.id)}
+                className="btn btn-danger btn-sm"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+          <p className="comment-body">{c.body}</p>
+        </div>
+      ))}
+
+      <form onSubmit={handleSubmit} className="comment-form">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Add a comment..."
+          rows={3}
+        />
+        <button
+          type="submit"
+          className="btn btn-primary btn-sm"
+          disabled={submitting || !body.trim()}
+        >
+          {submitting ? "Posting..." : "Add Comment"}
+        </button>
+      </form>
+    </div>
+  );
+}

@@ -8,6 +8,7 @@ const router = Router();
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  name: z.string().max(255).optional(),
 });
 
 const loginSchema = z.object({
@@ -24,7 +25,7 @@ const logoutSchema = z.object({
 });
 
 router.post("/register", validate(registerSchema), async (req, res) => {
-  const user = await authService.registerUser(req.body.email, req.body.password);
+  const user = await authService.registerUser(req.body.email, req.body.password, req.body.name);
   res.status(201).json({ user });
 });
 

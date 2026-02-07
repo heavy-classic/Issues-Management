@@ -38,7 +38,7 @@ function parseRefreshExpiresMs(): number {
   return value * (multipliers[unit] || 86400000);
 }
 
-export async function registerUser(email: string, password: string) {
+export async function registerUser(email: string, password: string, name?: string) {
   const existing = await db("users").where({ email }).first();
   if (existing) {
     throw new AppError(409, "Email already registered");
@@ -46,8 +46,8 @@ export async function registerUser(email: string, password: string) {
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const [user] = await db("users")
-    .insert({ email, password_hash: passwordHash })
-    .returning(["id", "email", "created_at"]);
+    .insert({ email, password_hash: passwordHash, name: name || null })
+    .returning(["id", "email", "name", "created_at"]);
 
   return user;
 }
