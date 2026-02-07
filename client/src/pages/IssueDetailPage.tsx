@@ -3,6 +3,42 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import CommentThread from "../components/CommentThread";
+import SignatureDialog from "../components/SignatureDialog";
+import SignatureDisplay from "../components/SignatureDisplay";
+import AuditHistoryModal from "../components/AuditHistoryModal";
+
+interface StageAssignment {
+  id: string;
+  stage_id: string;
+  stage_name: string;
+  stage_color: string;
+  stage_position: number;
+  requires_signature: boolean;
+  user_id: string | null;
+  assignee_name: string | null;
+  assignee_email: string | null;
+  completed_at: string | null;
+}
+
+interface Signature {
+  id: string;
+  workflow_stage_id: string;
+  user_id: string;
+  signer_full_name: string;
+  signature_meaning: string;
+  signature_timestamp: string;
+  signature_reason: string | null;
+}
+
+interface Comment {
+  id: string;
+  issue_id: string;
+  author_id: string;
+  author_email: string;
+  author_name: string | null;
+  body: string;
+  created_at: string;
+}
 
 interface Issue {
   id: string;
@@ -16,19 +52,14 @@ interface Issue {
   assignee_id: string | null;
   assignee_email: string | null;
   assignee_name: string | null;
+  current_stage_id: string | null;
+  stage_name: string | null;
+  stage_color: string | null;
   created_at: string;
   updated_at: string;
   comments: Comment[];
-}
-
-interface Comment {
-  id: string;
-  issue_id: string;
-  author_id: string;
-  author_email: string;
-  author_name: string | null;
-  body: string;
-  created_at: string;
+  stageAssignments: StageAssignment[];
+  signatures: Signature[];
 }
 
 interface User {
@@ -53,6 +84,12 @@ export default function IssueDetailPage() {
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [signingStage, setSigningStage] = useState<StageAssignment | null>(null);
+  const [showAudit, setShowAudit] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{
+    valid: boolean;
+    signerName: string;
+  } | null>(null);
 
   const fetchIssue = useCallback(async () => {
     try {
@@ -110,6 +147,19 @@ export default function IssueDetailPage() {
     }
   }
 
+  async function handleVerifySignature(signatureId: string) {
+    try {
+      const res = await api.get(`/signatures/${signatureId}/verify`);
+      setVerifyResult({
+        valid: res.data.valid,
+        signerName: res.data.signature.signer_full_name,
+      });
+      setTimeout(() => setVerifyResult(null), 5000);
+    } catch {
+      alert("Failed to verify signature");
+    }
+  }
+
   if (error && !issue) {
     return <p className="error">{error}</p>;
   }
@@ -118,10 +168,19 @@ export default function IssueDetailPage() {
   }
 
   const isReporter = user?.userId === issue.reporter_id;
+  const stageSignatures = (stageId: string) =>
+    issue.signatures.filter((s) => s.workflow_stage_id === stageId);
 
   return (
     <div className="issue-detail">
       {error && <p className="error">{error}</p>}
+
+      {verifyResult && (
+        <div className={`verify-banner ${verifyResult.valid ? "verify-valid" : "verify-invalid"}`}>
+          Signature by {verifyResult.signerName}:{" "}
+          {verifyResult.valid ? "VALID - Hash verified" : "INVALID - Hash mismatch"}
+        </div>
+      )}
 
       {editing ? (
         <div className="issue-edit">
@@ -130,18 +189,14 @@ export default function IssueDetailPage() {
             <input
               type="text"
               value={editData.title}
-              onChange={(e) =>
-                setEditData({ ...editData, title: e.target.value })
-              }
+              onChange={(e) => setEditData({ ...editData, title: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Description</label>
             <textarea
               value={editData.description}
-              onChange={(e) =>
-                setEditData({ ...editData, description: e.target.value })
-              }
+              onChange={(e) => setEditData({ ...editData, description: e.target.value })}
               rows={6}
             />
           </div>
@@ -150,9 +205,7 @@ export default function IssueDetailPage() {
               <label>Status</label>
               <select
                 value={editData.status}
-                onChange={(e) =>
-                  setEditData({ ...editData, status: e.target.value })
-                }
+                onChange={(e) => setEditData({ ...editData, status: e.target.value })}
               >
                 <option value="open">Open</option>
                 <option value="in_progress">In Progress</option>
@@ -163,9 +216,7 @@ export default function IssueDetailPage() {
               <label>Priority</label>
               <select
                 value={editData.priority}
-                onChange={(e) =>
-                  setEditData({ ...editData, priority: e.target.value })
-                }
+                onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -177,31 +228,20 @@ export default function IssueDetailPage() {
               <label>Assignee</label>
               <select
                 value={editData.assignee_id}
-                onChange={(e) =>
-                  setEditData({ ...editData, assignee_id: e.target.value })
-                }
+                onChange={(e) => setEditData({ ...editData, assignee_id: e.target.value })}
               >
                 <option value="">Unassigned</option>
                 {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name || u.email}
-                  </option>
+                  <option key={u.id} value={u.id}>{u.name || u.email}</option>
                 ))}
               </select>
             </div>
           </div>
           <div className="form-actions">
-            <button
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={saving}
-            >
+            <button onClick={handleSave} className="btn btn-primary" disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </button>
-            <button
-              onClick={() => setEditing(false)}
-              className="btn btn-secondary"
-            >
+            <button onClick={() => setEditing(false)} className="btn btn-secondary">
               Cancel
             </button>
           </div>
@@ -211,6 +251,9 @@ export default function IssueDetailPage() {
           <div className="issue-header">
             <h1>{issue.title}</h1>
             <div className="issue-actions">
+              <button onClick={() => setShowAudit(true)} className="btn btn-secondary">
+                History
+              </button>
               <button onClick={startEditing} className="btn btn-secondary">
                 Edit
               </button>
@@ -229,33 +272,97 @@ export default function IssueDetailPage() {
             <span className={`badge badge-priority-${issue.priority}`}>
               {issue.priority}
             </span>
+            {issue.stage_name && (
+              <span
+                className="badge"
+                style={{
+                  backgroundColor: (issue.stage_color || "#6b7280") + "20",
+                  color: issue.stage_color || "#6b7280",
+                }}
+              >
+                {issue.stage_name}
+              </span>
+            )}
           </div>
 
           <div className="issue-info">
-            <p>
-              <strong>Reporter:</strong>{" "}
-              {issue.reporter_name || issue.reporter_email}
-            </p>
-            <p>
-              <strong>Assignee:</strong>{" "}
-              {issue.assignee_name ||
-                issue.assignee_email ||
-                "Unassigned"}
-            </p>
-            <p>
-              <strong>Created:</strong>{" "}
-              {new Date(issue.created_at).toLocaleString()}
-            </p>
-            <p>
-              <strong>Updated:</strong>{" "}
-              {new Date(issue.updated_at).toLocaleString()}
-            </p>
+            <p><strong>Reporter:</strong> {issue.reporter_name || issue.reporter_email}</p>
+            <p><strong>Assignee:</strong> {issue.assignee_name || issue.assignee_email || "Unassigned"}</p>
+            <p><strong>Created:</strong> {new Date(issue.created_at).toLocaleString()}</p>
+            <p><strong>Updated:</strong> {new Date(issue.updated_at).toLocaleString()}</p>
           </div>
 
           {issue.description && (
             <div className="issue-description">
               <h3>Description</h3>
               <p>{issue.description}</p>
+            </div>
+          )}
+
+          {/* Workflow Stage Progress */}
+          {issue.stageAssignments.length > 0 && (
+            <div className="stage-progress">
+              <h3>Workflow Progress</h3>
+              <div className="stage-progress-bar">
+                {issue.stageAssignments.map((sa) => {
+                  const isCurrent = sa.stage_id === issue.current_stage_id;
+                  const isComplete = !!sa.completed_at;
+                  const sigs = stageSignatures(sa.stage_id);
+                  const hasSig = sigs.length > 0;
+
+                  return (
+                    <div
+                      key={sa.id}
+                      className={`stage-step ${isCurrent ? "stage-current" : ""} ${isComplete ? "stage-complete" : ""}`}
+                      style={{ borderColor: sa.stage_color }}
+                    >
+                      <div className="stage-step-header">
+                        <span
+                          className="stage-step-dot"
+                          style={{
+                            backgroundColor: isCurrent
+                              ? sa.stage_color
+                              : isComplete
+                                ? "#10b981"
+                                : "#d1d5db",
+                          }}
+                        />
+                        <span className="stage-step-name">{sa.stage_name}</span>
+                        {sa.requires_signature && (
+                          <span
+                            className={`stage-sig-indicator ${hasSig ? "signed" : "unsigned"}`}
+                            title={hasSig ? "Signed" : "Signature required"}
+                          >
+                            S
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Show signatures for this stage */}
+                      {sigs.map((sig) => (
+                        <SignatureDisplay
+                          key={sig.id}
+                          signature={sig}
+                          onVerify={handleVerifySignature}
+                        />
+                      ))}
+
+                      {/* Show Sign button if current stage requires signature and user hasn't signed */}
+                      {isCurrent &&
+                        sa.requires_signature &&
+                        !sigs.some((s) => s.user_id === user?.userId) && (
+                          <button
+                            onClick={() => setSigningStage(sa)}
+                            className="btn btn-primary btn-sm"
+                            style={{ marginTop: "0.5rem" }}
+                          >
+                            Sign Stage
+                          </button>
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </>
@@ -266,6 +373,23 @@ export default function IssueDetailPage() {
         comments={issue.comments}
         onUpdate={fetchIssue}
       />
+
+      {signingStage && (
+        <SignatureDialog
+          issueId={issue.id}
+          stageId={signingStage.stage_id}
+          stageName={signingStage.stage_name}
+          onComplete={() => {
+            setSigningStage(null);
+            fetchIssue();
+          }}
+          onCancel={() => setSigningStage(null)}
+        />
+      )}
+
+      {showAudit && (
+        <AuditHistoryModal issueId={issue.id} onClose={() => setShowAudit(false)} />
+      )}
     </div>
   );
 }

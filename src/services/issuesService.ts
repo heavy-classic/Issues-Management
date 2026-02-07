@@ -1,5 +1,7 @@
 import db from "../db";
 import { AppError } from "../errors/AppError";
+import * as auditService from "./auditService";
+import type { AuditContext } from "./auditService";
 
 interface CreateIssueParams {
   title: string;
@@ -20,6 +22,8 @@ interface ListIssuesFilters {
   status?: string;
   priority?: string;
   assignee_id?: string;
+  stage_id?: string;
+  search?: string;
 }
 
 export async function listIssues(filters: ListIssuesFilters) {
@@ -29,20 +33,32 @@ export async function listIssues(filters: ListIssuesFilters) {
       "reporter.email as reporter_email",
       "reporter.name as reporter_name",
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name"
+      "assignee.name as assignee_name",
+      "workflow_stages.name as stage_name",
+      "workflow_stages.color as stage_color"
     )
     .leftJoin("users as reporter", "issues.reporter_id", "reporter.id")
     .leftJoin("users as assignee", "issues.assignee_id", "assignee.id")
+    .leftJoin(
+      "workflow_stages",
+      "issues.current_stage_id",
+      "workflow_stages.id"
+    )
     .orderBy("issues.created_at", "desc");
 
-  if (filters.status) {
-    query.where("issues.status", filters.status);
-  }
-  if (filters.priority) {
-    query.where("issues.priority", filters.priority);
-  }
-  if (filters.assignee_id) {
+  if (filters.status) query.where("issues.status", filters.status);
+  if (filters.priority) query.where("issues.priority", filters.priority);
+  if (filters.assignee_id)
     query.where("issues.assignee_id", filters.assignee_id);
+  if (filters.stage_id)
+    query.where("issues.current_stage_id", filters.stage_id);
+  if (filters.search) {
+    query.where(function () {
+      this.whereILike("issues.title", `%${filters.search}%`).orWhereILike(
+        "issues.description",
+        `%${filters.search}%`
+      );
+    });
   }
 
   return query;
@@ -55,10 +71,17 @@ export async function getIssue(issueId: string) {
       "reporter.email as reporter_email",
       "reporter.name as reporter_name",
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name"
+      "assignee.name as assignee_name",
+      "workflow_stages.name as stage_name",
+      "workflow_stages.color as stage_color"
     )
     .leftJoin("users as reporter", "issues.reporter_id", "reporter.id")
     .leftJoin("users as assignee", "issues.assignee_id", "assignee.id")
+    .leftJoin(
+      "workflow_stages",
+      "issues.current_stage_id",
+      "workflow_stages.id"
+    )
     .where("issues.id", issueId)
     .first();
 
@@ -76,12 +99,38 @@ export async function getIssue(issueId: string) {
     .where("comments.issue_id", issueId)
     .orderBy("comments.created_at", "asc");
 
-  return { ...issue, comments };
+  // Get workflow stage assignments
+  const stageAssignments = await db("issue_stage_assignments")
+    .select(
+      "issue_stage_assignments.*",
+      "workflow_stages.name as stage_name",
+      "workflow_stages.color as stage_color",
+      "workflow_stages.position as stage_position",
+      "workflow_stages.requires_signature",
+      "users.email as assignee_email",
+      "users.name as assignee_name"
+    )
+    .leftJoin(
+      "workflow_stages",
+      "issue_stage_assignments.stage_id",
+      "workflow_stages.id"
+    )
+    .leftJoin("users", "issue_stage_assignments.user_id", "users.id")
+    .where("issue_stage_assignments.issue_id", issueId)
+    .orderBy("workflow_stages.position", "asc");
+
+  // Get signatures for this issue
+  const signatures = await db("electronic_signatures")
+    .where("issue_id", issueId)
+    .orderBy("signature_timestamp", "asc");
+
+  return { ...issue, comments, stageAssignments, signatures };
 }
 
 export async function createIssue(
   reporterId: string,
-  params: CreateIssueParams
+  params: CreateIssueParams,
+  auditCtx?: AuditContext
 ) {
   const [issue] = await db("issues")
     .insert({
@@ -93,10 +142,18 @@ export async function createIssue(
     })
     .returning("*");
 
+  if (auditCtx) {
+    await auditService.logInsert("issues", issue.id, issue, auditCtx);
+  }
+
   return issue;
 }
 
-export async function updateIssue(issueId: string, params: UpdateIssueParams) {
+export async function updateIssue(
+  issueId: string,
+  params: UpdateIssueParams,
+  auditCtx?: AuditContext
+) {
   const existing = await db("issues").where({ id: issueId }).first();
   if (!existing) {
     throw new AppError(404, "Issue not found");
@@ -122,16 +179,34 @@ export async function updateIssue(issueId: string, params: UpdateIssueParams) {
     .update(updateData)
     .returning("*");
 
+  if (auditCtx) {
+    await auditService.logFieldChanges(
+      "issues",
+      issueId,
+      existing,
+      updated,
+      auditCtx
+    );
+  }
+
   return updated;
 }
 
-export async function deleteIssue(issueId: string, userId: string) {
+export async function deleteIssue(
+  issueId: string,
+  userId: string,
+  auditCtx?: AuditContext
+) {
   const issue = await db("issues").where({ id: issueId }).first();
   if (!issue) {
     throw new AppError(404, "Issue not found");
   }
   if (issue.reporter_id !== userId) {
     throw new AppError(403, "Only the reporter can delete this issue");
+  }
+
+  if (auditCtx) {
+    await auditService.logDelete("issues", issueId, issue, auditCtx);
   }
 
   await db("issues").where({ id: issueId }).del();

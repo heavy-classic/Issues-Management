@@ -12,8 +12,8 @@ function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-function signAccessToken(userId: string, email: string): string {
-  return jwt.sign({ userId, email }, config.jwt.accessSecret, {
+function signAccessToken(userId: string, email: string, role: string): string {
+  return jwt.sign({ userId, email, role }, config.jwt.accessSecret, {
     expiresIn: ms(config.jwt.accessExpiresIn as ms.StringValue) / 1000,
   });
 }
@@ -38,7 +38,7 @@ function parseRefreshExpiresMs(): number {
   return value * (multipliers[unit] || 86400000);
 }
 
-export async function registerUser(email: string, password: string, name?: string) {
+export async function registerUser(email: string, password: string, name?: string, fullName?: string) {
   const existing = await db("users").where({ email }).first();
   if (existing) {
     throw new AppError(409, "Email already registered");
@@ -46,8 +46,13 @@ export async function registerUser(email: string, password: string, name?: strin
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const [user] = await db("users")
-    .insert({ email, password_hash: passwordHash, name: name || null })
-    .returning(["id", "email", "name", "created_at"]);
+    .insert({
+      email,
+      password_hash: passwordHash,
+      name: name || null,
+      full_name: fullName || null,
+    })
+    .returning(["id", "email", "name", "full_name", "role", "created_at"]);
 
   return user;
 }
@@ -63,7 +68,11 @@ export async function loginUser(email: string, password: string) {
     throw new AppError(401, "Invalid email or password");
   }
 
-  const accessToken = signAccessToken(user.id, user.email);
+  if (user.status === "disabled") {
+    throw new AppError(403, "Account is disabled");
+  }
+
+  const accessToken = signAccessToken(user.id, user.email, user.role);
   const refreshToken = signRefreshToken(user.id);
 
   await db("refresh_tokens").insert({
@@ -71,6 +80,8 @@ export async function loginUser(email: string, password: string) {
     token_hash: hashToken(refreshToken),
     expires_at: new Date(Date.now() + parseRefreshExpiresMs()),
   });
+
+  await db("users").where({ id: user.id }).update({ last_login_at: new Date() });
 
   return { accessToken, refreshToken };
 }
@@ -104,7 +115,7 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     throw new AppError(401, "User not found");
   }
 
-  const accessToken = signAccessToken(user.id, user.email);
+  const accessToken = signAccessToken(user.id, user.email, user.role);
   return { accessToken };
 }
 

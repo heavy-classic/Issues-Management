@@ -6,6 +6,7 @@ import { AppError } from "../errors/AppError";
 interface AccessTokenPayload {
   userId: string;
   email: string;
+  role: string;
 }
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
@@ -21,7 +22,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
       token,
       config.jwt.accessSecret
     ) as AccessTokenPayload;
-    req.user = { userId: payload.userId, email: payload.email };
+    req.user = { userId: payload.userId, email: payload.email, role: payload.role || "user" };
     next();
   } catch {
     next(new AppError(401, "Invalid or expired access token"));

@@ -13,6 +13,8 @@ interface Issue {
   reporter_name: string | null;
   assignee_email: string | null;
   assignee_name: string | null;
+  stage_name: string | null;
+  stage_color: string | null;
   created_at: string;
 }
 
@@ -101,6 +103,7 @@ export default function DashboardPage() {
           <thead>
             <tr>
               <th>Title</th>
+              <th>Stage</th>
               <th>Status</th>
               <th>Priority</th>
               <th>Reporter</th>
@@ -113,6 +116,21 @@ export default function DashboardPage() {
               <tr key={issue.id}>
                 <td>
                   <Link to={`/issues/${issue.id}`}>{issue.title}</Link>
+                </td>
+                <td>
+                  {issue.stage_name ? (
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: (issue.stage_color || "#6b7280") + "20",
+                        color: issue.stage_color || "#6b7280",
+                      }}
+                    >
+                      {issue.stage_name}
+                    </span>
+                  ) : (
+                    "-"
+                  )}
                 </td>
                 <td>
                   <span className={`badge badge-status-${issue.status}`}>

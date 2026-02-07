@@ -1,10 +1,13 @@
 import db from "../db";
 import { AppError } from "../errors/AppError";
+import * as auditService from "./auditService";
+import type { AuditContext } from "./auditService";
 
 export async function addComment(
   issueId: string,
   authorId: string,
-  body: string
+  body: string,
+  auditCtx?: AuditContext
 ) {
   const issue = await db("issues").where({ id: issueId }).first();
   if (!issue) {
@@ -19,13 +22,18 @@ export async function addComment(
     })
     .returning("*");
 
+  if (auditCtx) {
+    await auditService.logInsert("comments", comment.id, comment, auditCtx);
+  }
+
   return comment;
 }
 
 export async function deleteComment(
   issueId: string,
   commentId: string,
-  userId: string
+  userId: string,
+  auditCtx?: AuditContext
 ) {
   const comment = await db("comments")
     .where({ id: commentId, issue_id: issueId })
@@ -36,6 +44,10 @@ export async function deleteComment(
   }
   if (comment.author_id !== userId) {
     throw new AppError(403, "Only the comment author can delete this comment");
+  }
+
+  if (auditCtx) {
+    await auditService.logDelete("comments", commentId, comment, auditCtx);
   }
 
   await db("comments").where({ id: commentId }).del();
