@@ -272,11 +272,17 @@ export async function seed(knex: Knex): Promise<void> {
         ];
 
         const fileIdx = Math.floor(Math.random() * fileNames.length);
-        await knex("action_attachments").insert({
-          action_id: action.id,
-          file_name: fileNames[fileIdx],
-          file_type: fileTypes[fileIdx],
+        const originalName = fileNames[fileIdx];
+        const ext = originalName.substring(originalName.lastIndexOf("."));
+        await knex("attachments").insert({
+          parent_id: action.id,
+          parent_type: "action",
+          file_name: knex.raw("gen_random_uuid() || ?", [ext]),
+          original_name: originalName,
+          file_path: `legacy/${originalName}`,
           file_size: Math.floor(Math.random() * 5000000) + 10000,
+          mime_type: fileTypes[fileIdx],
+          file_extension: ext,
           uploaded_by: creator.id,
         });
       }
