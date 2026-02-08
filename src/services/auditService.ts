@@ -115,7 +115,7 @@ export async function getAuditHistory(filters: AuditFilters) {
   const limit = Math.min(filters.limit || 50, 200);
   const offset = (page - 1) * limit;
 
-  const query = db("audit_log").orderBy("changed_at", "desc");
+  const query = db("audit_log");
 
   if (filters.tableName) query.where("table_name", filters.tableName);
   if (filters.recordId) query.where("record_id", filters.recordId);
@@ -128,7 +128,7 @@ export async function getAuditHistory(filters: AuditFilters) {
   const countQuery = query.clone().count("* as total").first();
   const total = Number((await countQuery)?.total || 0);
 
-  const entries = await query.offset(offset).limit(limit);
+  const entries = await query.clone().orderBy("changed_at", "desc").offset(offset).limit(limit);
 
   return { entries, total, page, limit };
 }
