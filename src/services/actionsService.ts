@@ -29,12 +29,6 @@ interface UpdateActionParams {
   due_date?: string | null;
 }
 
-interface AddAttachmentParams {
-  file_name: string;
-  file_type: string;
-  file_size: number;
-}
-
 export async function listActions(filters: ListActionsFilters) {
   const query = db("actions")
     .select(
@@ -83,15 +77,19 @@ export async function getAction(actionId: string) {
     throw new AppError(404, "Action not found");
   }
 
-  const attachments = await db("action_attachments")
+  const attachments = await db("attachments")
     .select(
-      "action_attachments.*",
+      "attachments.*",
       "users.email as uploader_email",
       "users.name as uploader_name"
     )
-    .leftJoin("users", "action_attachments.uploaded_by", "users.id")
-    .where("action_attachments.action_id", actionId)
-    .orderBy("action_attachments.created_at", "asc");
+    .leftJoin("users", "attachments.uploaded_by", "users.id")
+    .where({
+      "attachments.parent_type": "action",
+      "attachments.parent_id": actionId,
+      "attachments.is_deleted": false,
+    })
+    .orderBy("attachments.uploaded_at", "asc");
 
   return { ...action, attachments };
 }
@@ -105,7 +103,7 @@ export async function getActionsForIssue(issueId: string) {
       "creator.email as creator_email",
       "creator.name as creator_name",
       db.raw(
-        "(SELECT COUNT(*) FROM action_attachments WHERE action_id = actions.id)::int as attachment_count"
+        "(SELECT COUNT(*) FROM attachments WHERE parent_type = 'action' AND parent_id = actions.id AND is_deleted = false)::int as attachment_count"
       )
     )
     .leftJoin("users as assignee", "actions.assigned_to", "assignee.id")
@@ -207,53 +205,3 @@ export async function deleteAction(
   await db("actions").where({ id: actionId }).del();
 }
 
-export async function addAttachment(
-  actionId: string,
-  userId: string,
-  params: AddAttachmentParams,
-  auditCtx: AuditContext
-) {
-  const action = await db("actions").where({ id: actionId }).first();
-  if (!action) {
-    throw new AppError(404, "Action not found");
-  }
-
-  const [attachment] = await db("action_attachments")
-    .insert({
-      action_id: actionId,
-      file_name: params.file_name,
-      file_type: params.file_type,
-      file_size: params.file_size,
-      uploaded_by: userId,
-    })
-    .returning("*");
-
-  await auditService.logInsert(
-    "action_attachments",
-    attachment.id,
-    attachment,
-    auditCtx
-  );
-
-  return attachment;
-}
-
-export async function deleteAttachment(
-  attachmentId: string,
-  auditCtx: AuditContext
-) {
-  const attachment = await db("action_attachments")
-    .where({ id: attachmentId })
-    .first();
-  if (!attachment) {
-    throw new AppError(404, "Attachment not found");
-  }
-
-  await auditService.logDelete(
-    "action_attachments",
-    attachmentId,
-    attachment,
-    auditCtx
-  );
-  await db("action_attachments").where({ id: attachmentId }).del();
-}

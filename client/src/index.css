@@ -1289,14 +1289,20 @@ a:hover {
 
 .attachment-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.35rem 0;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
   border-bottom: 1px solid #f3f4f6;
   font-size: 0.8rem;
 }
 
+.attachment-icon {
+  flex-shrink: 0;
+}
+
 .attachment-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -1304,11 +1310,20 @@ a:hover {
 .attachment-name {
   font-weight: 500;
   color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .attachment-meta {
   color: #9ca3af;
   font-size: 0.7rem;
+}
+
+.attachment-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 .btn-sm {
@@ -1709,4 +1724,362 @@ a:hover {
   .report-type-cards {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== File Type Badges ===== */
+.file-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.file-type-pdf { background: #dc2626; }
+.file-type-img { background: #8b5cf6; }
+.file-type-doc { background: #2563eb; }
+.file-type-xls { background: #059669; }
+.file-type-ppt { background: #ea580c; }
+.file-type-txt { background: #6b7280; }
+.file-type-zip { background: #d97706; }
+.file-type-file { background: #9ca3af; }
+
+/* ===== Issue Attachments Section ===== */
+.issue-attachments-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ===== File Upload Modal ===== */
+.modal-upload {
+  max-width: 560px;
+}
+
+.dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+  margin-bottom: 1rem;
+}
+
+.dropzone:hover,
+.dropzone-active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dropzone-content p {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.dropzone-icon {
+  font-size: 2rem;
+}
+
+.dropzone-hint {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.upload-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.upload-file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.upload-file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-file-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-file-size {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.upload-progress-bar {
+  width: 80px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.2s;
+}
+
+.upload-status-done {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.upload-status-error {
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* ===== Document Viewer Modal ===== */
+.viewer-overlay {
+  z-index: 1100;
+}
+
+.viewer-modal {
+  background: #1a1a2e;
+  border-radius: 8px;
+  width: 95vw;
+  height: 92vh;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #16213e;
+  border-radius: 8px 8px 0 0;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.viewer-filename {
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.viewer-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.viewer-close-btn {
+  color: #fff !important;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.viewer-body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.viewer-unsupported {
+  text-align: center;
+  color: #9ca3af;
+}
+
+.viewer-unsupported-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.viewer-unsupported p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+/* ===== PDF Viewer ===== */
+.pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #0f172a;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.pdf-toolbar .btn {
+  color: #fff;
+  border-color: #334155;
+}
+
+.pdf-page-info,
+.pdf-zoom-info {
+  min-width: 80px;
+  text-align: center;
+}
+
+.pdf-zoom-separator {
+  color: #4b5563;
+}
+
+.pdf-document-container {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* ===== Image Viewer ===== */
+.image-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.image-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #0f172a;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.image-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-container img {
+  transition: transform 0.1s;
+  user-select: none;
+}
+
+/* ===== Text Viewer ===== */
+.text-viewer {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+.text-viewer-content {
+  margin: 0;
+  padding: 1rem;
+  background: #0f172a;
+  border-radius: 6px;
+  color: #e5e7eb;
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  min-width: 100%;
+}
+
+.text-viewer-line {
+  display: flex;
+}
+
+.text-viewer-line-num {
+  color: #4b5563;
+  text-align: right;
+  padding-right: 1rem;
+  min-width: 3rem;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.text-viewer-line-text {
+  white-space: pre;
+}
+
+/* ===== Page Drop Overlay ===== */
+.page-drop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(37, 99, 235, 0.15);
+  border: 3px dashed #2563eb;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.page-drop-overlay-content {
+  text-align: center;
+  color: #2563eb;
+}
+
+.page-drop-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.page-drop-overlay-content p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
 }

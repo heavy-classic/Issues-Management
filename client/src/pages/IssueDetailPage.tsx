@@ -8,6 +8,9 @@ import SignatureDisplay from "../components/SignatureDisplay";
 import AuditHistoryModal from "../components/AuditHistoryModal";
 import ActionCard from "../components/ActionCard";
 import ActionFormModal from "../components/ActionFormModal";
+import AttachmentList from "../components/AttachmentList";
+import FileUploadModal from "../components/FileUploadModal";
+import DropZoneOverlay from "../components/DropZoneOverlay";
 import { exportIssuePDF } from "../utils/exportUtils";
 
 interface StageAssignment {
@@ -43,6 +46,19 @@ interface Comment {
   created_at: string;
 }
 
+interface IssueAttachment {
+  id: string;
+  original_name: string;
+  mime_type: string;
+  file_size: number;
+  file_extension: string;
+  file_path: string;
+  uploader_name: string | null;
+  uploader_email: string | null;
+  uploaded_at: string;
+  download_count: number;
+}
+
 interface Issue {
   id: string;
   title: string;
@@ -64,6 +80,7 @@ interface Issue {
   stageAssignments: StageAssignment[];
   signatures: Signature[];
   actions: ActionItem[];
+  attachments: IssueAttachment[];
 }
 
 interface ActionItem {
@@ -110,6 +127,8 @@ export default function IssueDetailPage() {
   const [showAudit, setShowAudit] = useState(false);
   const [showActionForm, setShowActionForm] = useState(false);
   const [editingAction, setEditingAction] = useState<ActionItem | null>(null);
+  const [showDropUpload, setShowDropUpload] = useState(false);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
   const [verifyResult, setVerifyResult] = useState<{
     valid: boolean;
     signerName: string;
@@ -196,6 +215,12 @@ export default function IssueDetailPage() {
     issue.signatures.filter((s) => s.workflow_stage_id === stageId);
 
   return (
+    <DropZoneOverlay
+      onDrop={(files) => {
+        setDroppedFiles(files);
+        setShowDropUpload(true);
+      }}
+    >
     <div className="issue-detail">
       {error && <p className="error">{error}</p>}
 
@@ -333,6 +358,18 @@ export default function IssueDetailPage() {
             <div className="issue-description">
               <h3>Description</h3>
               <p>{issue.description}</p>
+            </div>
+          )}
+
+          {/* Issue Attachments */}
+          {!editing && (
+            <div className="issue-attachments-section">
+              <AttachmentList
+                parentId={issue.id}
+                parentType="issue"
+                attachments={issue.attachments || []}
+                onUpdate={fetchIssue}
+              />
             </div>
           )}
 
@@ -491,6 +528,24 @@ export default function IssueDetailPage() {
       {showAudit && (
         <AuditHistoryModal issueId={issue.id} onClose={() => setShowAudit(false)} />
       )}
+
+      {showDropUpload && issue && (
+        <FileUploadModal
+          parentId={issue.id}
+          parentType="issue"
+          initialFiles={droppedFiles}
+          onComplete={() => {
+            setShowDropUpload(false);
+            setDroppedFiles([]);
+            fetchIssue();
+          }}
+          onCancel={() => {
+            setShowDropUpload(false);
+            setDroppedFiles([]);
+          }}
+        />
+      )}
     </div>
+    </DropZoneOverlay>
   );
 }

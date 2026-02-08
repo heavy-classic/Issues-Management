@@ -2,11 +2,14 @@ import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { validate } from "../middleware/validate";
+import { upload } from "../middleware/upload";
 import * as issuesService from "../services/issuesService";
 import * as commentsService from "../services/commentsService";
 import * as workflowService from "../services/workflowService";
 import * as actionsService from "../services/actionsService";
+import * as attachmentService from "../services/attachmentService";
 import type { AuditContext } from "../services/auditService";
+import { AppError } from "../errors/AppError";
 
 const router = Router();
 
@@ -113,6 +116,34 @@ router.get("/:id/actions", async (req, res) => {
     req.params.id as string
   );
   res.json({ actions });
+});
+
+// Upload attachments to issue
+router.post(
+  "/:id/attachments",
+  upload.array("files", 20),
+  async (req, res) => {
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      throw new AppError(400, "No files provided");
+    }
+    const attachments = await attachmentService.uploadAttachments(
+      req.params.id as string,
+      "issue",
+      req.files as Express.Multer.File[],
+      req.user!.userId,
+      getAuditCtx(req)
+    );
+    res.status(201).json({ attachments });
+  }
+);
+
+// List attachments for issue
+router.get("/:id/attachments", async (req, res) => {
+  const attachments = await attachmentService.listAttachments(
+    req.params.id as string,
+    "issue"
+  );
+  res.json({ attachments });
 });
 
 router.delete("/:id/comments/:commentId", async (req, res) => {

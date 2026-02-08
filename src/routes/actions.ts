@@ -2,8 +2,11 @@ import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { validate } from "../middleware/validate";
+import { upload } from "../middleware/upload";
 import * as actionsService from "../services/actionsService";
+import * as attachmentService from "../services/attachmentService";
 import type { AuditContext } from "../services/auditService";
+import { AppError } from "../errors/AppError";
 
 const router = Router();
 
@@ -37,12 +40,6 @@ const updateActionSchema = z.object({
   priority: z.enum(["low", "medium", "high", "critical"]).optional(),
   assigned_to: z.string().uuid("Invalid user ID").nullable().optional(),
   due_date: z.string().optional().nullable(),
-});
-
-const addAttachmentSchema = z.object({
-  file_name: z.string().min(1, "File name is required").max(255),
-  file_type: z.string().min(1, "File type is required").max(100),
-  file_size: z.number().int().min(0, "File size must be non-negative"),
 });
 
 // List actions with filters
@@ -94,28 +91,32 @@ router.delete("/:id", async (req, res) => {
   res.json({ message: "Action deleted" });
 });
 
-// Add attachment metadata
+// Upload attachments to action
 router.post(
   "/:id/attachments",
-  validate(addAttachmentSchema),
+  upload.array("files", 20),
   async (req, res) => {
-    const attachment = await actionsService.addAttachment(
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      throw new AppError(400, "No files provided");
+    }
+    const attachments = await attachmentService.uploadAttachments(
       req.params.id as string,
+      "action",
+      req.files as Express.Multer.File[],
       req.user!.userId,
-      req.body,
       getAuditCtx(req)
     );
-    res.status(201).json({ attachment });
+    res.status(201).json({ attachments });
   }
 );
 
-// Delete attachment
-router.delete("/:id/attachments/:attachmentId", async (req, res) => {
-  await actionsService.deleteAttachment(
-    req.params.attachmentId as string,
-    getAuditCtx(req)
+// List attachments for action
+router.get("/:id/attachments", async (req, res) => {
+  const attachments = await attachmentService.listAttachments(
+    req.params.id as string,
+    "action"
   );
-  res.json({ message: "Attachment deleted" });
+  res.json({ attachments });
 });
 
 export default router;

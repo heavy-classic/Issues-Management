@@ -159,6 +159,14 @@ export async function getIssueAuditHistory(issueId: string) {
               .select("id")
               .where("issue_id", issueId)
           );
+        })
+        .orWhere(function () {
+          this.where("table_name", "attachments").whereIn(
+            "record_id",
+            db("attachments")
+              .select("id")
+              .where({ parent_type: "issue", parent_id: issueId })
+          );
         });
     })
     .orderBy("changed_at", "desc");

@@ -133,7 +133,7 @@ export async function getIssue(issueId: string) {
       "creator.email as creator_email",
       "creator.name as creator_name",
       db.raw(
-        "(SELECT COUNT(*) FROM action_attachments WHERE action_id = actions.id)::int as attachment_count"
+        "(SELECT COUNT(*) FROM attachments WHERE parent_type = 'action' AND parent_id = actions.id AND is_deleted = false)::int as attachment_count"
       )
     )
     .leftJoin("users as assignee", "actions.assigned_to", "assignee.id")
@@ -141,7 +141,22 @@ export async function getIssue(issueId: string) {
     .where("actions.issue_id", issueId)
     .orderBy("actions.created_at", "asc");
 
-  return { ...issue, comments, stageAssignments, signatures, actions };
+  // Get issue-level attachments
+  const attachments = await db("attachments")
+    .select(
+      "attachments.*",
+      "users.name as uploader_name",
+      "users.email as uploader_email"
+    )
+    .leftJoin("users", "attachments.uploaded_by", "users.id")
+    .where({
+      "attachments.parent_type": "issue",
+      "attachments.parent_id": issueId,
+      "attachments.is_deleted": false,
+    })
+    .orderBy("attachments.uploaded_at", "asc");
+
+  return { ...issue, comments, stageAssignments, signatures, actions, attachments };
 }
 
 export async function createIssue(

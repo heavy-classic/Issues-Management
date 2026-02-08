@@ -23,12 +23,15 @@ interface Action {
 
 interface Attachment {
   id: string;
-  file_name: string;
-  file_type: string;
+  original_name: string;
+  mime_type: string;
   file_size: number;
+  file_extension: string;
+  file_path: string;
   uploader_name: string | null;
   uploader_email: string | null;
-  created_at: string;
+  uploaded_at: string;
+  download_count: number;
 }
 
 interface Props {
@@ -147,7 +150,8 @@ export default function ActionCard({
             <p className="action-card-desc">{action.description}</p>
           )}
           <AttachmentList
-            actionId={action.id}
+            parentId={action.id}
+            parentType="action"
             attachments={attachments}
             onUpdate={refreshAttachments}
           />

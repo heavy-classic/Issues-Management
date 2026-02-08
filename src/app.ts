@@ -16,6 +16,7 @@ import actionsRoutes from "./routes/actions";
 import dashboardRoutes from "./routes/dashboard";
 import reportsRoutes from "./routes/reports";
 import exportsRoutes from "./routes/exports";
+import attachmentsRoutes from "./routes/attachments";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/actions", actionsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/exports", exportsRoutes);
+app.use("/api/attachments", attachmentsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
