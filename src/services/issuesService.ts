@@ -24,6 +24,7 @@ interface ListIssuesFilters {
   assignee_id?: string;
   stage_id?: string;
   search?: string;
+  audit_id?: string;
 }
 
 export async function listIssues(filters: ListIssuesFilters) {
@@ -52,6 +53,8 @@ export async function listIssues(filters: ListIssuesFilters) {
     query.where("issues.assignee_id", filters.assignee_id);
   if (filters.stage_id)
     query.where("issues.current_stage_id", filters.stage_id);
+  if (filters.audit_id)
+    query.where("issues.audit_id", filters.audit_id);
   if (filters.search) {
     query.where(function () {
       this.whereILike("issues.title", `%${filters.search}%`).orWhereILike(

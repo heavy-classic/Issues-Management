@@ -57,11 +57,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <span className="sidebar-nav-icon">{"\u{1F4CB}"}</span>
               <span className="sidebar-nav-text">Issues</span>
             </NavLink>
-            <div className="sidebar-nav-item disabled">
+            <NavLink to="/audits" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F50D}"}</span>
               <span className="sidebar-nav-text">Audits</span>
-              <span className="sidebar-badge">0</span>
-            </div>
+            </NavLink>
             <div className="sidebar-nav-item disabled">
               <span className="sidebar-nav-icon">{"\u2713"}</span>
               <span className="sidebar-nav-text">Inspections</span>
@@ -110,6 +109,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <NavLink to="/admin/workflow" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u{1F504}"}</span>
                 <span className="sidebar-nav-text">Workflow</span>
+              </NavLink>
+              <NavLink to="/admin/audit-types" className={navClass} onClick={onToggle}>
+                <span className="sidebar-nav-icon">{"\u{1F3F7}\uFE0F"}</span>
+                <span className="sidebar-nav-text">Audit Config</span>
+              </NavLink>
+              <NavLink to="/admin/checklists" className={navClass} onClick={onToggle}>
+                <span className="sidebar-nav-icon">{"\u2611\uFE0F"}</span>
+                <span className="sidebar-nav-text">Checklists</span>
               </NavLink>
               <NavLink to="/admin/audit" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u{1F4DC}"}</span>

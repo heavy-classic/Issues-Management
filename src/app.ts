@@ -17,6 +17,12 @@ import dashboardRoutes from "./routes/dashboard";
 import reportsRoutes from "./routes/reports";
 import exportsRoutes from "./routes/exports";
 import attachmentsRoutes from "./routes/attachments";
+import auditTypesRoutes from "./routes/auditTypes";
+import checklistsRoutes from "./routes/checklists";
+import auditsRoutes from "./routes/audits";
+import checklistExecutionRoutes from "./routes/checklistExecution";
+import auditDashboardRoutes from "./routes/auditDashboard";
+import auditExportsRoutes from "./routes/auditExports";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -41,6 +47,12 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/exports", exportsRoutes);
 app.use("/api/attachments", attachmentsRoutes);
+app.use("/api/audit-types", auditTypesRoutes);
+app.use("/api/checklists", checklistsRoutes);
+app.use("/api/audits", auditsRoutes);
+app.use("/api/checklist-instances", checklistExecutionRoutes);
+app.use("/api/audit-dashboard", auditDashboardRoutes);
+app.use("/api/audit-exports", auditExportsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

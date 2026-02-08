@@ -23,6 +23,10 @@ const ROUTE_LABELS: Record<string, string> = {
   "admin/teams": "Teams",
   "admin/workflow": "Workflow",
   "admin/audit": "Audit Log",
+  audits: "Audits",
+  "audits/analytics": "Audit Analytics",
+  "admin/audit-types": "Audit Configuration",
+  "admin/checklists": "Checklists",
 };
 
 export function BreadcrumbProvider({ children }: { children: ReactNode }) {

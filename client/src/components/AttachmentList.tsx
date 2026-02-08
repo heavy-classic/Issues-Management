@@ -19,7 +19,7 @@ interface Attachment {
 
 interface Props {
   parentId: string;
-  parentType: "issue" | "action";
+  parentType: "issue" | "action" | "audit";
   attachments: Attachment[];
   onUpdate: () => void;
 }

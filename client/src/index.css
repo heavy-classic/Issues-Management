@@ -105,11 +105,11 @@ a:hover {
 /* Orange circle "O" in INVOKE logo */
 .brand-o {
   display: inline-block;
-  width: 0.85em;
-  height: 0.85em;
-  border: 3px solid #e8723a;
+  width: 0.75em;
+  height: 0.75em;
+  border: 2.5px solid #e8723a;
   border-radius: 50%;
-  margin: 0 -0.02em;
+  margin: 0 0.3em 0 0;
   flex-shrink: 0;
 }
 
@@ -2623,4 +2623,135 @@ a:hover {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
+}
+
+/* ═══════════════════════════════════════════
+   Audit Module Styles
+   ═══════════════════════════════════════════ */
+
+.audit-detail {
+  max-width: 1200px;
+}
+
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.audit-header h1 {
+  font-size: 1.5rem;
+}
+
+.detail-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.detail-section h3 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header-row h3 {
+  margin-bottom: 0;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-bar select,
+.filter-bar input[type="text"] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+  min-width: 150px;
+}
+
+.filter-bar input[type="text"] {
+  min-width: 200px;
+}
+
+.modal-lg {
+  max-width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+/* Charts grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* KPI row */
+.kpi-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.kpi-row .kpi-card {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .audit-header {
+    flex-direction: column;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+  }
+
+  .filter-bar select,
+  .filter-bar input[type="text"] {
+    min-width: 100%;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-lg {
+    max-width: 100%;
+  }
 }

@@ -23,23 +23,29 @@ function getAbsolutePath(relativePath: string): string {
   return path.join(projectRoot, relativePath);
 }
 
+type AttachmentParentType = "issue" | "action" | "audit" | "checklist_response";
+
+const parentTableMap: Record<AttachmentParentType, string> = {
+  issue: "issues",
+  action: "actions",
+  audit: "audits",
+  checklist_response: "criterion_responses",
+};
+
 async function verifyParentExists(
   parentId: string,
-  parentType: "issue" | "action"
+  parentType: AttachmentParentType
 ): Promise<void> {
-  const table = parentType === "issue" ? "issues" : "actions";
+  const table = parentTableMap[parentType];
   const record = await db(table).where({ id: parentId }).first();
   if (!record) {
-    throw new AppError(
-      404,
-      `${parentType === "issue" ? "Issue" : "Action"} not found`
-    );
+    throw new AppError(404, `${parentType} record not found`);
   }
 }
 
 export async function uploadAttachments(
   parentId: string,
-  parentType: "issue" | "action",
+  parentType: AttachmentParentType,
   files: UploadedFileInfo[],
   userId: string,
   auditCtx: AuditContext
@@ -69,7 +75,7 @@ export async function uploadAttachments(
 
 export async function listAttachments(
   parentId: string,
-  parentType: "issue" | "action"
+  parentType: AttachmentParentType
 ) {
   return db("attachments")
     .select(

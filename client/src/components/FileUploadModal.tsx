@@ -4,7 +4,7 @@ import api from "../api/client";
 
 interface Props {
   parentId: string;
-  parentType: "issue" | "action";
+  parentType: "issue" | "action" | "audit";
   onComplete: () => void;
   onCancel: () => void;
   initialFiles?: File[];
