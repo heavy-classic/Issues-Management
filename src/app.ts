@@ -23,6 +23,9 @@ import auditsRoutes from "./routes/audits";
 import checklistExecutionRoutes from "./routes/checklistExecution";
 import auditDashboardRoutes from "./routes/auditDashboard";
 import auditExportsRoutes from "./routes/auditExports";
+import risksRoutes from "./routes/risks";
+import riskCategoriesRoutes from "./routes/riskCategories";
+import riskDashboardRoutes from "./routes/riskDashboard";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -53,6 +56,9 @@ app.use("/api/audits", auditsRoutes);
 app.use("/api/checklist-instances", checklistExecutionRoutes);
 app.use("/api/audit-dashboard", auditDashboardRoutes);
 app.use("/api/audit-exports", auditExportsRoutes);
+app.use("/api/risks", risksRoutes);
+app.use("/api/risk-categories", riskCategoriesRoutes);
+app.use("/api/risk-dashboard", riskDashboardRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

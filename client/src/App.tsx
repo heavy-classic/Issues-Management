@@ -22,6 +22,10 @@ import AuditAnalyticsPage from "./pages/AuditAnalyticsPage";
 import AdminAuditTypesPage from "./pages/AdminAuditTypesPage";
 import AdminChecklistsPage from "./pages/AdminChecklistsPage";
 import ChecklistBuilderPage from "./pages/ChecklistBuilderPage";
+import RisksPage from "./pages/RisksPage";
+import RiskDetailPage from "./pages/RiskDetailPage";
+import RiskAnalyticsPage from "./pages/RiskAnalyticsPage";
+import AdminRiskCategoriesPage from "./pages/AdminRiskCategoriesPage";
 import { ReactNode } from "react";
 
 function LayoutRoute({ children }: { children: ReactNode }) {
@@ -64,6 +68,10 @@ export default function App() {
           <Route path="/admin/audit-types" element={<AdminLayoutRoute><AdminAuditTypesPage /></AdminLayoutRoute>} />
           <Route path="/admin/checklists" element={<AdminLayoutRoute><AdminChecklistsPage /></AdminLayoutRoute>} />
           <Route path="/admin/checklists/:id" element={<AdminLayoutRoute><ChecklistBuilderPage /></AdminLayoutRoute>} />
+          <Route path="/risks" element={<LayoutRoute><RisksPage /></LayoutRoute>} />
+          <Route path="/risks/:id" element={<LayoutRoute><RiskDetailPage /></LayoutRoute>} />
+          <Route path="/risk-analytics" element={<LayoutRoute><RiskAnalyticsPage /></LayoutRoute>} />
+          <Route path="/admin/risk-categories" element={<AdminLayoutRoute><AdminRiskCategoriesPage /></AdminLayoutRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

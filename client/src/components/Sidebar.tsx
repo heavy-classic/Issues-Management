@@ -63,6 +63,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <span className="sidebar-nav-icon">{"\u{1F50D}"}</span>
               <span className="sidebar-nav-text">Audits</span>
             </NavLink>
+            <NavLink to="/risks" className={navClass} onClick={onToggle}>
+              <span className="sidebar-nav-icon">{"\u26A0\uFE0F"}</span>
+              <span className="sidebar-nav-text">Risks</span>
+            </NavLink>
             <div className="sidebar-nav-item disabled">
               <span className="sidebar-nav-icon">{"\u2713"}</span>
               <span className="sidebar-nav-text">Inspections</span>
@@ -84,6 +88,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <NavLink to="/board" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F4CB}"}</span>
               <span className="sidebar-nav-text">Kanban Board</span>
+            </NavLink>
+            <NavLink to="/risk-analytics" className={navClass} onClick={onToggle}>
+              <span className="sidebar-nav-icon">{"\u{1F525}"}</span>
+              <span className="sidebar-nav-text">Risk Analytics</span>
             </NavLink>
             <NavLink to="/reports" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F4D1}"}</span>
@@ -119,6 +127,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <NavLink to="/admin/checklists" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u2611\uFE0F"}</span>
                 <span className="sidebar-nav-text">Checklists</span>
+              </NavLink>
+              <NavLink to="/admin/risk-categories" className={navClass} onClick={onToggle}>
+                <span className="sidebar-nav-icon">{"\u{1F6E1}\uFE0F"}</span>
+                <span className="sidebar-nav-text">Risk Categories</span>
               </NavLink>
               <NavLink to="/admin/audit" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u{1F4DC}"}</span>
