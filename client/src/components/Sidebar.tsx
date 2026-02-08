@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -8,6 +9,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, isAdmin, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   function getInitials(): string {
     if (user?.fullName) {
@@ -127,6 +129,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </nav>
 
         <div className="sidebar-footer">
+          <div className="dark-mode-toggle" onClick={toggleTheme}>
+            <div className="toggle-label">
+              <span className="mode-icon">{theme === "dark" ? "\u{1F319}" : "\u2600\uFE0F"}</span>
+              <span className="mode-text">{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+            </div>
+            <div className={`toggle-switch${theme === "dark" ? " active" : ""}`}>
+              <div className="toggle-slider" />
+            </div>
+          </div>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar">{getInitials()}</div>
             <div className="sidebar-user-info">
