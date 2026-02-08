@@ -226,6 +226,25 @@ export async function createAudit(
   }
 
   await auditService.logInsert("audits", audit.id, audit, auditCtx);
+
+  // Auto-assign default checklists from audit type configuration
+  const checklistSettings = typeof auditType.checklist_settings === "string"
+    ? JSON.parse(auditType.checklist_settings)
+    : auditType.checklist_settings;
+
+  if (checklistSettings?.default_checklists?.length > 0) {
+    for (const checklistId of checklistSettings.default_checklists) {
+      const checklist = await db("checklists").where({ id: checklistId }).first();
+      if (checklist) {
+        await db("checklist_instances").insert({
+          audit_id: audit.id,
+          checklist_id: checklistId,
+          assigned_to: params.lead_auditor_id || null,
+        });
+      }
+    }
+  }
+
   return audit;
 }
 

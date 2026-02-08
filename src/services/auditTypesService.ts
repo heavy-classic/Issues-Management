@@ -69,7 +69,7 @@ export async function createAuditType(
       description: params.description || "",
       color: params.color || "#667eea",
       icon: params.icon || "\u{1F50D}",
-      workflow_phases: JSON.stringify(params.workflow_phases || ["Planning", "Fieldwork", "Review", "Closeout"]),
+      workflow_phases: JSON.stringify(params.workflow_phases || ["Schedule", "Plan", "Execute", "Review", "Closeout"]),
       checklist_settings: JSON.stringify(params.checklist_settings || { required: false, max_checklists: 10 }),
       team_settings: JSON.stringify(params.team_settings || { min_team_size: 1, require_lead: true }),
       is_active: params.is_active !== undefined ? params.is_active : true,

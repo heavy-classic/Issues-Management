@@ -1,6 +1,14 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/client";
+
+const ANSWER_TYPE_LABELS: Record<string, string> = {
+  yes_no: "Yes/No",
+  yes_no_na: "Yes/No/N/A",
+  compliant: "Compliant/Partial/Non-Compliant",
+  rating_scale: "1-5 Rating",
+  expectations: "Exceeds/Meets/Needs Improvement",
+};
 
 export default function ChecklistBuilderPage() {
   const { id } = useParams<{ id: string }>();
@@ -8,6 +16,8 @@ export default function ChecklistBuilderPage() {
   const [checklist, setChecklist] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [addingGroup, setAddingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
 
   async function fetchChecklist() {
     const res = await api.get(`/checklists/${id}`);
@@ -23,9 +33,10 @@ export default function ChecklistBuilderPage() {
   }
 
   async function handleAddGroup() {
-    const name = prompt("Group name:");
-    if (!name) return;
-    await api.post(`/checklists/${id}/groups`, { name });
+    if (!newGroupName.trim()) return;
+    await api.post(`/checklists/${id}/groups`, { name: newGroupName.trim() });
+    setNewGroupName("");
+    setAddingGroup(false);
     fetchChecklist();
   }
 
@@ -85,7 +96,7 @@ export default function ChecklistBuilderPage() {
       </div>
 
       {/* Editable meta fields */}
-      <div style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "1rem", marginBottom: "1.5rem" }}>
+      <div className="checklist-meta-card">
         <div className="form-group">
           <label>Name</label>
           <input
@@ -126,9 +137,26 @@ export default function ChecklistBuilderPage() {
         />
       ))}
 
-      <button className="btn btn-primary" onClick={handleAddGroup} style={{ marginTop: "1rem" }}>
-        + Add Group
-      </button>
+      {/* Add Group */}
+      {addingGroup ? (
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", alignItems: "center" }}>
+          <input
+            type="text"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="Group name..."
+            autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter") handleAddGroup(); if (e.key === "Escape") { setAddingGroup(false); setNewGroupName(""); } }}
+            style={{ flex: 1 }}
+          />
+          <button className="btn btn-primary" onClick={handleAddGroup} disabled={!newGroupName.trim()}>Add</button>
+          <button className="btn btn-secondary" onClick={() => { setAddingGroup(false); setNewGroupName(""); }}>Cancel</button>
+        </div>
+      ) : (
+        <button className="btn btn-primary" onClick={() => setAddingGroup(true)} style={{ marginTop: "1rem" }}>
+          + Add Group
+        </button>
+      )}
     </div>
   );
 }
@@ -145,26 +173,39 @@ function GroupSection({
   saving: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameName, setRenameName] = useState(group.name);
+
+  function handleRename() {
+    if (renameName.trim() && renameName.trim() !== group.name) {
+      onUpdateGroup(group.id, renameName.trim());
+    }
+    setRenaming(false);
+  }
 
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "1rem", overflow: "hidden" }}>
-      <div
-        style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          padding: "0.75rem 1rem", background: "#f9fafb", cursor: "pointer",
-        }}
-        onClick={() => setCollapsed(!collapsed)}
-      >
+    <div className="checklist-group-card">
+      <div className="checklist-group-header" onClick={() => setCollapsed(!collapsed)}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span>{collapsed ? "\u25B6" : "\u25BC"}</span>
-          <h3 style={{ margin: 0 }}>{group.name}</h3>
+          {renaming ? (
+            <input
+              type="text"
+              value={renameName}
+              onChange={(e) => setRenameName(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={(e) => { if (e.key === "Enter") handleRename(); if (e.key === "Escape") { setRenaming(false); setRenameName(group.name); } }}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+              style={{ fontWeight: 600, fontSize: "1rem" }}
+            />
+          ) : (
+            <h3 style={{ margin: 0 }}>{group.name}</h3>
+          )}
           <span className="section-count-badge">{group.criteria?.length || 0}</span>
         </div>
         <div style={{ display: "flex", gap: "0.25rem" }} onClick={(e) => e.stopPropagation()}>
-          <button className="btn-icon" onClick={() => {
-            const name = prompt("Rename group:", group.name);
-            if (name) onUpdateGroup(group.id, name);
-          }} title="Rename">&#9998;</button>
+          <button className="btn-icon" onClick={() => { setRenaming(true); setRenameName(group.name); }} title="Rename">&#9998;</button>
           <button className="btn-icon btn-danger-icon" onClick={() => onDeleteGroup(group.id)} title="Delete">&times;</button>
         </div>
       </div>
@@ -197,19 +238,16 @@ function CriterionEditor({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div style={{
-      border: "1px solid #e5e7eb", borderRadius: "6px", padding: "0.75rem",
-      marginBottom: "0.5rem", background: "#fff",
-    }}>
+    <div className="criterion-editor-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1, cursor: "pointer" }} onClick={() => setExpanded(!expanded)}>
           {criterion.criterion_id_display && (
-            <span className="badge" style={{ background: "#667eea", color: "#fff", fontSize: "0.75rem" }}>{criterion.criterion_id_display}</span>
+            <span className="badge" style={{ background: "var(--color-primary, #667eea)", color: "#fff", fontSize: "0.75rem" }}>{criterion.criterion_id_display}</span>
           )}
           <span style={{ fontWeight: 500, fontSize: "0.9rem" }}>{criterion.text}</span>
         </div>
         <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
-          <span className="badge" style={{ fontSize: "0.7rem" }}>{criterion.answer_type}</span>
+          <span className="badge" style={{ fontSize: "0.7rem" }}>{ANSWER_TYPE_LABELS[criterion.answer_type] || criterion.answer_type}</span>
           <button className="btn-icon btn-danger-icon" onClick={() => onDelete(criterion.id)} title="Delete">&times;</button>
         </div>
       </div>
@@ -233,11 +271,11 @@ function CriterionEditor({
               <label>Answer Type</label>
               <select defaultValue={criterion.answer_type}
                 onChange={(e) => onUpdate(criterion.id, { answer_type: e.target.value })}>
-                <option value="yes_no">Yes/No</option>
-                <option value="yes_no_na">Yes/No/N/A</option>
-                <option value="compliant">Compliant</option>
-                <option value="rating_scale">Rating Scale</option>
-                <option value="expectations">Expectations</option>
+                <option value="yes_no">Yes / No</option>
+                <option value="yes_no_na">Yes / No / N/A</option>
+                <option value="compliant">Compliant / Partially Compliant / Non-Compliant</option>
+                <option value="rating_scale">1-5 Rating Scale</option>
+                <option value="expectations">Exceeds / Meets / Needs Improvement</option>
               </select>
             </div>
             <div className="form-group">
@@ -266,6 +304,23 @@ function CriterionEditor({
             <label>Help Text</label>
             <textarea rows={1} defaultValue={criterion.help_text}
               onBlur={(e) => onUpdate(criterion.id, { help_text: e.target.value })} />
+          </div>
+          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", padding: "0.5rem 0" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked={criterion.comments_enabled !== false}
+                onChange={(e) => onUpdate(criterion.id, { comments_enabled: e.target.checked })} />
+              Allow Comments
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked={criterion.attachments_allowed !== false}
+                onChange={(e) => onUpdate(criterion.id, { attachments_allowed: e.target.checked })} />
+              Allow Attachments
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", cursor: "pointer" }}>
+              <input type="checkbox" defaultChecked={criterion.finding_creation_enabled !== false}
+                onChange={(e) => onUpdate(criterion.id, { finding_creation_enabled: e.target.checked })} />
+              Allow Findings
+            </label>
           </div>
         </div>
       )}

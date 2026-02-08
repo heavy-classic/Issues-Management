@@ -73,7 +73,7 @@ export default function AuditTeamPanel({ auditId, team, users, onUpdate }: Props
         <div style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))" }}>
           {team.map((m: any) => (
             <div key={m.id} style={{
-              border: "1px solid #e5e7eb",
+              border: "1px solid var(--color-border, #e5e7eb)",
               borderRadius: "8px",
               padding: "0.75rem",
               display: "flex",

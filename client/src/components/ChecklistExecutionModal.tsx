@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../api/client";
 
 interface Props {
@@ -52,7 +52,7 @@ export default function ChecklistExecutionModal({ instanceId, onClose }: Props) 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-lg" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "90vh", overflow: "auto" }}>
+      <div className="modal-content modal-lg checklist-execution-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
             <h2>{instance.checklist_name}</h2>
@@ -64,7 +64,7 @@ export default function ChecklistExecutionModal({ instanceId, onClose }: Props) 
         </div>
 
         {instance.checklist_instructions && (
-          <div style={{ background: "#f0f4ff", padding: "0.75rem 1rem", borderRadius: "8px", margin: "0.5rem 0 1rem", fontSize: "0.9rem" }}>
+          <div className="checklist-instructions">
             {instance.checklist_instructions}
           </div>
         )}
@@ -75,8 +75,8 @@ export default function ChecklistExecutionModal({ instanceId, onClose }: Props) 
             <span>{instance.respondedCount}/{instance.totalCriteria} criteria completed</span>
             <span>{instance.progress}%</span>
           </div>
-          <div style={{ background: "#e5e7eb", borderRadius: "4px", height: "8px" }}>
-            <div style={{ width: `${instance.progress}%`, height: "100%", background: instance.progress === 100 ? "#10b981" : "#667eea", borderRadius: "4px" }} />
+          <div className="checklist-progress-bar">
+            <div className="checklist-progress-fill" style={{ width: `${instance.progress}%`, background: instance.progress === 100 ? "#10b981" : "var(--color-primary, #667eea)" }} />
           </div>
         </div>
 
@@ -99,7 +99,9 @@ export default function ChecklistExecutionModal({ instanceId, onClose }: Props) 
           <CriterionItem
             key={criterion.id}
             criterion={criterion}
+            instanceId={instanceId}
             onRespond={handleResponse}
+            onRefresh={fetchInstance}
             saving={saving}
           />
         ))}
@@ -119,13 +121,21 @@ export default function ChecklistExecutionModal({ instanceId, onClose }: Props) 
 }
 
 function CriterionItem({
-  criterion, onRespond, saving,
+  criterion, instanceId, onRespond, onRefresh, saving,
 }: {
-  criterion: any; onRespond: (id: string, value: string, notes: string) => void; saving: boolean;
+  criterion: any;
+  instanceId: string;
+  onRespond: (id: string, value: string, notes: string) => void;
+  onRefresh: () => void;
+  saving: boolean;
 }) {
   const [notes, setNotes] = useState(criterion.response?.notes || "");
   const [selectedValue, setSelectedValue] = useState(criterion.response?.response_value || "");
+  const [showFindingForm, setShowFindingForm] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasResponse = !!criterion.response;
+  const hasFinding = !!criterion.response?.finding_issue_id;
 
   function getAnswerOptions(): string[] {
     switch (criterion.answer_type) {
@@ -133,7 +143,7 @@ function CriterionItem({
       case "yes_no_na": return ["Yes", "No", "N/A"];
       case "compliant": return ["Compliant", "Partially Compliant", "Non-Compliant"];
       case "rating_scale": return ["1", "2", "3", "4", "5"];
-      case "expectations": return ["Exceeds", "Meets", "Below", "N/A"];
+      case "expectations": return ["Exceeds Expectations", "Meets Expectations", "Needs Improvement"];
       default: return ["Yes", "No"];
     }
   }
@@ -143,26 +153,49 @@ function CriterionItem({
     onRespond(criterion.id, value, notes);
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !hasResponse) return;
+
+    setUploadingFiles(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append("files", f));
+
+      await api.post(
+        `/checklist-instances/${instanceId}/responses/${criterion.id}/attachments`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      onRefresh();
+    } catch {
+      alert("Failed to upload files");
+    } finally {
+      setUploadingFiles(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  const attachmentCount = criterion.response?.attachment_count || 0;
+
   return (
-    <div style={{
-      border: "1px solid #e5e7eb",
-      borderRadius: "8px",
-      padding: "1rem",
-      marginBottom: "0.75rem",
-      background: hasResponse ? "#f9fafb" : "#fff",
-      borderLeft: hasResponse ? "3px solid #10b981" : "3px solid #e5e7eb",
-    }}>
+    <div className={`criterion-item${hasResponse ? " criterion-answered" : ""}`}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
             {criterion.criterion_id_display && (
-              <span className="badge" style={{ background: "#667eea", color: "#fff", fontSize: "0.75rem" }}>
+              <span className="badge" style={{ background: "var(--color-primary, #667eea)", color: "#fff", fontSize: "0.75rem" }}>
                 {criterion.criterion_id_display}
               </span>
             )}
             {criterion.risk_rating && (
               <span className={`badge badge-priority-${criterion.risk_rating}`} style={{ fontSize: "0.75rem" }}>
                 {criterion.risk_rating}
+              </span>
+            )}
+            {hasFinding && (
+              <span className="badge" style={{ background: "#ef4444", color: "#fff", fontSize: "0.7rem" }}>
+                Finding Created
               </span>
             )}
           </div>
@@ -176,6 +209,7 @@ function CriterionItem({
         </div>
       </div>
 
+      {/* Answer buttons */}
       <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
         {getAnswerOptions().map((opt) => (
           <button
@@ -190,7 +224,8 @@ function CriterionItem({
         ))}
       </div>
 
-      {criterion.comments_enabled && (
+      {/* Notes */}
+      {criterion.comments_enabled !== false && (
         <div style={{ marginTop: "0.5rem" }}>
           <textarea
             rows={1}
@@ -202,6 +237,120 @@ function CriterionItem({
           />
         </div>
       )}
+
+      {/* Action row: attachments + finding */}
+      <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+        {/* Attachment upload */}
+        {criterion.attachments_allowed !== false && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              style={{ display: "none" }}
+              disabled={!hasResponse || uploadingFiles}
+            />
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: "0.8rem", padding: "0.2rem 0.5rem" }}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!hasResponse || uploadingFiles}
+              title={!hasResponse ? "Answer the criterion first" : "Attach evidence files"}
+            >
+              {uploadingFiles ? "Uploading..." : `\u{1F4CE} Attach${attachmentCount > 0 ? ` (${attachmentCount})` : ""}`}
+            </button>
+          </div>
+        )}
+
+        {/* Create Finding button */}
+        {criterion.finding_creation_enabled !== false && !hasFinding && hasResponse && (
+          <button
+            className="btn btn-secondary"
+            style={{ fontSize: "0.8rem", padding: "0.2rem 0.5rem", color: "#ef4444" }}
+            onClick={() => setShowFindingForm(true)}
+          >
+            {"\u26A0"} Create Finding
+          </button>
+        )}
+      </div>
+
+      {/* Inline Finding Form */}
+      {showFindingForm && (
+        <InlineFindingForm
+          instanceId={instanceId}
+          criterionId={criterion.id}
+          defaultTitle={criterion.text}
+          onCreated={() => { setShowFindingForm(false); onRefresh(); }}
+          onCancel={() => setShowFindingForm(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function InlineFindingForm({
+  instanceId, criterionId, defaultTitle, onCreated, onCancel,
+}: {
+  instanceId: string;
+  criterionId: string;
+  defaultTitle: string;
+  onCreated: () => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(defaultTitle);
+  const [description, setDescription] = useState("");
+  const [severity, setSeverity] = useState<string>("minor");
+  const [priority, setPriority] = useState("medium");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    if (!title.trim()) return;
+    setSubmitting(true);
+    try {
+      await api.post(`/checklist-instances/${instanceId}/responses/${criterionId}/finding`, {
+        title,
+        description,
+        finding_severity: severity,
+        priority,
+      });
+      onCreated();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to create finding");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="inline-finding-form">
+      <div style={{ fontWeight: 600, marginBottom: "0.5rem", fontSize: "0.9rem" }}>Create Finding</div>
+      <div className="form-group" style={{ marginBottom: "0.5rem" }}>
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Finding title" style={{ fontSize: "0.85rem" }} />
+      </div>
+      <div className="form-group" style={{ marginBottom: "0.5rem" }}>
+        <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description..." style={{ fontSize: "0.85rem" }} />
+      </div>
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+        <select value={severity} onChange={(e) => setSeverity(e.target.value)} style={{ fontSize: "0.85rem" }}>
+          <option value="observation">Observation</option>
+          <option value="minor">Minor</option>
+          <option value="major">Major</option>
+          <option value="critical">Critical</option>
+        </select>
+        <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ fontSize: "0.85rem" }}>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
+        <button className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "0.3rem 0.75rem" }} onClick={handleSubmit} disabled={submitting || !title.trim()}>
+          {submitting ? "Creating..." : "Create Finding"}
+        </button>
+        <button className="btn btn-secondary" style={{ fontSize: "0.8rem", padding: "0.3rem 0.75rem" }} onClick={onCancel}>Cancel</button>
+      </div>
     </div>
   );
 }

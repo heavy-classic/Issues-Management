@@ -86,7 +86,7 @@ export default function AuditMeetingsPanel({ auditId, meetings, users, onUpdate 
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
+        <form onSubmit={handleSubmit} style={{ border: "1px solid var(--color-border, #e5e7eb)", borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
           <div className="form-row">
             <div className="form-group">
               <label>Type</label>

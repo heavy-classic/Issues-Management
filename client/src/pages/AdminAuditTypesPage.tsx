@@ -1,6 +1,18 @@
 import { useState, useEffect, FormEvent } from "react";
 import api from "../api/client";
 
+interface ChecklistSettings {
+  required: boolean;
+  default_checklists: string[];
+  include_audit_plan: boolean;
+}
+
+interface TeamSettings {
+  require_team: boolean;
+  min_team_size: number;
+  require_lead: boolean;
+}
+
 interface AuditType {
   id: string;
   name: string;
@@ -8,9 +20,36 @@ interface AuditType {
   color: string;
   icon: string;
   workflow_phases: string[];
+  checklist_settings: ChecklistSettings;
+  team_settings: TeamSettings;
   is_active: boolean;
   audit_count?: number;
 }
+
+interface ChecklistOption {
+  id: string;
+  name: string;
+}
+
+function parseJson<T>(val: unknown, fallback: T): T {
+  if (!val) return fallback;
+  if (typeof val === "string") {
+    try { return JSON.parse(val); } catch { return fallback; }
+  }
+  return val as T;
+}
+
+const defaultChecklistSettings: ChecklistSettings = {
+  required: false,
+  default_checklists: [],
+  include_audit_plan: true,
+};
+
+const defaultTeamSettings: TeamSettings = {
+  require_team: false,
+  min_team_size: 1,
+  require_lead: true,
+};
 
 export default function AdminAuditTypesPage() {
   const [types, setTypes] = useState<AuditType[]>([]);
@@ -22,7 +61,9 @@ export default function AdminAuditTypesPage() {
     const res = await api.get("/audit-types");
     setTypes(res.data.auditTypes.map((t: any) => ({
       ...t,
-      workflow_phases: typeof t.workflow_phases === "string" ? JSON.parse(t.workflow_phases) : t.workflow_phases,
+      workflow_phases: parseJson(t.workflow_phases, []),
+      checklist_settings: parseJson(t.checklist_settings, defaultChecklistSettings),
+      team_settings: parseJson(t.team_settings, defaultTeamSettings),
     })));
     setLoading(false);
   }
@@ -62,15 +103,9 @@ export default function AdminAuditTypesPage() {
       </div>
 
       {loading ? <p>Loading...</p> : (
-        <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+        <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
           {types.map((t) => (
-            <div key={t.id} style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "12px",
-              padding: "1.25rem",
-              borderTop: `4px solid ${t.color}`,
-              opacity: t.is_active ? 1 : 0.6,
-            }}>
+            <div key={t.id} className="audit-type-card" style={{ borderTopColor: t.color, opacity: t.is_active ? 1 : 0.6 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -84,6 +119,7 @@ export default function AdminAuditTypesPage() {
                 </div>
               </div>
               <p className="text-muted" style={{ margin: "0.5rem 0", fontSize: "0.9rem" }}>{t.description || "No description"}</p>
+
               <div style={{ marginTop: "0.75rem" }}>
                 <div style={{ fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.25rem" }}>Workflow Phases:</div>
                 <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
@@ -92,6 +128,24 @@ export default function AdminAuditTypesPage() {
                   ))}
                 </div>
               </div>
+
+              <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.75rem", flexWrap: "wrap", fontSize: "0.8rem" }}>
+                {t.checklist_settings?.default_checklists?.length > 0 && (
+                  <span className="text-muted">
+                    {t.checklist_settings.default_checklists.length} default checklist(s)
+                  </span>
+                )}
+                {t.checklist_settings?.required && (
+                  <span className="badge" style={{ fontSize: "0.7rem", background: "var(--color-primary, #667eea)", color: "#fff" }}>Checklists Required</span>
+                )}
+                {t.team_settings?.require_lead && (
+                  <span className="badge" style={{ fontSize: "0.7rem" }}>Lead Required</span>
+                )}
+                {t.checklist_settings?.include_audit_plan && (
+                  <span className="badge" style={{ fontSize: "0.7rem" }}>Audit Plan</span>
+                )}
+              </div>
+
               <div style={{ marginTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <button className="btn btn-secondary" style={{ fontSize: "0.8rem" }} onClick={() => handleToggleActive(t)}>
                   {t.is_active ? "Deactivate" : "Activate"}
@@ -130,15 +184,52 @@ function AuditTypeFormModal({
   const [description, setDescription] = useState(initial?.description || "");
   const [color, setColor] = useState(initial?.color || "#667eea");
   const [icon, setIcon] = useState(initial?.icon || "\u{1F50D}");
-  const [phases, setPhases] = useState<string[]>(initial?.workflow_phases || ["Planning", "Fieldwork", "Review", "Closeout"]);
+  const [phases, setPhases] = useState<string[]>(initial?.workflow_phases || ["Schedule", "Plan", "Execute", "Review", "Closeout"]);
   const [newPhase, setNewPhase] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Checklist settings
+  const initCS = initial?.checklist_settings || defaultChecklistSettings;
+  const [checklistRequired, setChecklistRequired] = useState(initCS.required);
+  const [defaultChecklists, setDefaultChecklists] = useState<string[]>(initCS.default_checklists || []);
+  const [includeAuditPlan, setIncludeAuditPlan] = useState(initCS.include_audit_plan !== false);
+
+  // Team settings
+  const initTS = initial?.team_settings || defaultTeamSettings;
+  const [requireTeam, setRequireTeam] = useState(initTS.require_team || false);
+  const [minTeamSize, setMinTeamSize] = useState(initTS.min_team_size || 1);
+  const [requireLead, setRequireLead] = useState(initTS.require_lead !== false);
+
+  // Available checklists for multi-select
+  const [availableChecklists, setAvailableChecklists] = useState<ChecklistOption[]>([]);
+
+  useEffect(() => {
+    api.get("/checklists?status=active").then((r) => {
+      setAvailableChecklists(r.data.checklists.map((c: any) => ({ id: c.id, name: c.name })));
+    });
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await onSubmit({ name, description, color, icon, workflow_phases: phases });
+      await onSubmit({
+        name,
+        description,
+        color,
+        icon,
+        workflow_phases: phases,
+        checklist_settings: {
+          required: checklistRequired,
+          default_checklists: defaultChecklists,
+          include_audit_plan: includeAuditPlan,
+        },
+        team_settings: {
+          require_team: requireTeam,
+          min_team_size: minTeamSize,
+          require_lead: requireLead,
+        },
+      });
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to save");
     } finally {
@@ -157,9 +248,15 @@ function AuditTypeFormModal({
     setPhases(phases.filter((_, i) => i !== idx));
   }
 
+  function toggleDefaultChecklist(id: string) {
+    setDefaultChecklists((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-lg" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "90vh", overflow: "auto" }}>
         <div className="modal-header">
           <h2>{initial ? "Edit Audit Type" : "New Audit Type"}</h2>
           <button className="btn-icon" onClick={onClose}>&times;</button>
@@ -183,6 +280,8 @@ function AuditTypeFormModal({
             <label>Description</label>
             <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
+
+          {/* Workflow Phases */}
           <div className="form-group">
             <label>Workflow Phases</label>
             <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
@@ -198,6 +297,67 @@ function AuditTypeFormModal({
               <button type="button" className="btn btn-secondary" onClick={addPhase}>Add</button>
             </div>
           </div>
+
+          {/* Checklist Settings */}
+          <fieldset style={{ border: "1px solid var(--color-border, #e5e7eb)", borderRadius: "8px", padding: "1rem", margin: "1rem 0" }}>
+            <legend style={{ fontSize: "0.9rem", fontWeight: 600, padding: "0 0.5rem" }}>Checklist Settings</legend>
+            <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input type="checkbox" checked={checklistRequired} onChange={(e) => setChecklistRequired(e.target.checked)} />
+                Checklists required
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input type="checkbox" checked={includeAuditPlan} onChange={(e) => setIncludeAuditPlan(e.target.checked)} />
+                Include audit plan step
+              </label>
+            </div>
+            {availableChecklists.length > 0 && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: "0.85rem" }}>Default Checklists (auto-assigned on audit creation)</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", maxHeight: "150px", overflow: "auto", padding: "0.5rem", border: "1px solid var(--color-border, #e5e7eb)", borderRadius: "6px" }}>
+                  {availableChecklists.map((c) => (
+                    <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.9rem" }}>
+                      <input
+                        type="checkbox"
+                        checked={defaultChecklists.includes(c.id)}
+                        onChange={() => toggleDefaultChecklist(c.id)}
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </fieldset>
+
+          {/* Team Settings */}
+          <fieldset style={{ border: "1px solid var(--color-border, #e5e7eb)", borderRadius: "8px", padding: "1rem", margin: "1rem 0" }}>
+            <legend style={{ fontSize: "0.9rem", fontWeight: 600, padding: "0 0.5rem" }}>Team Settings</legend>
+            <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input type="checkbox" checked={requireLead} onChange={(e) => setRequireLead(e.target.checked)} />
+                Require lead auditor
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input type="checkbox" checked={requireTeam} onChange={(e) => setRequireTeam(e.target.checked)} />
+                Require team members
+              </label>
+              {requireTeam && (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>Min team size:</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={minTeamSize}
+                    onChange={(e) => setMinTeamSize(Math.max(1, parseInt(e.target.value) || 1))}
+                    style={{ width: "60px" }}
+                  />
+                </div>
+              )}
+            </div>
+          </fieldset>
+
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>

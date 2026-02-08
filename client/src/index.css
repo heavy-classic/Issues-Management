@@ -2703,6 +2703,15 @@ a:hover {
    Audit Module Styles
    ═══════════════════════════════════════════ */
 
+.audit-type-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border-top: 4px solid #667eea;
+  background: var(--color-bg-card);
+  box-shadow: 0 1px 3px var(--color-shadow);
+}
+
 .audit-detail {
   max-width: 1200px;
 }
@@ -2830,6 +2839,93 @@ a:hover {
   .modal-lg {
     max-width: 100%;
   }
+}
+
+/* ═══════════════════════════════════════════
+   Checklist Execution Styles
+   ═══════════════════════════════════════════ */
+
+.checklist-execution-modal {
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.checklist-instructions {
+  background: var(--color-bg-subtle);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin: 0.5rem 0 1rem;
+  font-size: 0.9rem;
+}
+
+.checklist-progress-bar {
+  background: var(--color-border);
+  border-radius: 4px;
+  height: 8px;
+}
+
+.checklist-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.criterion-item {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--color-bg-card);
+  border-left: 3px solid var(--color-border);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.criterion-item.criterion-answered {
+  background: var(--color-bg-subtle);
+  border-left-color: #10b981;
+}
+
+.inline-finding-form {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-subtle);
+  border-left: 3px solid #ef4444;
+}
+
+/* Checklist Builder */
+.checklist-meta-card {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-bg-card);
+}
+
+.checklist-group-card {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  background: var(--color-bg-card);
+}
+
+.checklist-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--color-bg-subtle);
+  cursor: pointer;
+}
+
+.criterion-editor-card {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: var(--color-bg-card);
 }
 
 /* ═══════════════════════════════════════════

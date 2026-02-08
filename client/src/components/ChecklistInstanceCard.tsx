@@ -47,11 +47,11 @@ export default function ChecklistInstanceCard({ instance, onUpdate }: Props) {
             <span>{responded}/{total} criteria</span>
             <span>{progress}%</span>
           </div>
-          <div style={{ background: "#e5e7eb", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
+          <div style={{ background: "var(--color-border, #e5e7eb)", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
             <div style={{
               width: `${progress}%`,
               height: "100%",
-              background: progress === 100 ? "#10b981" : "#667eea",
+              background: progress === 100 ? "#10b981" : "var(--color-primary, #667eea)",
               borderRadius: "4px",
               transition: "width 0.3s",
             }} />

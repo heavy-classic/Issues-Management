@@ -8,6 +8,7 @@ import FindingsPanel from "../components/FindingsPanel";
 import AuditTeamPanel from "../components/AuditTeamPanel";
 import AuditMeetingsPanel from "../components/AuditMeetingsPanel";
 import AttachmentList from "../components/AttachmentList";
+import { exportAuditPDF } from "../utils/auditExportUtils";
 
 interface AuditType { id: string; name: string; }
 interface User { id: string; full_name: string | null; email: string; }
@@ -63,6 +64,15 @@ export default function AuditDetailPage() {
     fetchAudit();
   }
 
+  async function handleExportPDF() {
+    try {
+      const res = await api.get(`/audit-exports/${id}`);
+      exportAuditPDF(res.data);
+    } catch {
+      alert("Failed to generate PDF report");
+    }
+  }
+
   if (loading) return <p>Loading...</p>;
   if (!audit) return <p>Audit not found.</p>;
 
@@ -92,6 +102,7 @@ export default function AuditDetailPage() {
         </div>
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
           <button className="btn btn-secondary" onClick={() => setEditing(true)}>Edit</button>
+          <button className="btn btn-secondary" onClick={handleExportPDF}>Export PDF</button>
           {audit.status !== "closed" && audit.status !== "cancelled" && (
             <>
               <button className="btn btn-primary" onClick={handleAdvancePhase}>Advance Phase</button>

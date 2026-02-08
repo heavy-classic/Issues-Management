@@ -49,9 +49,11 @@ export default function AuditFormModal({ auditTypes, users, initial, onSubmit, o
   const [objective, setObjective] = useState(initial?.objective || "");
   const [scope, setScope] = useState(initial?.scope || "");
   const [methodology, setMethodology] = useState(initial?.methodology || "");
+  const [criteriaStandards, setCriteriaStandards] = useState(initial?.criteria_standards || "");
   const [location, setLocation] = useState(initial?.location || "");
-  const [scheduledStart, setScheduledStart] = useState(initial?.scheduled_start || "");
-  const [scheduledEnd, setScheduledEnd] = useState(initial?.scheduled_end || "");
+  const [scheduledStart, setScheduledStart] = useState(initial?.scheduled_start?.split("T")[0] || "");
+  const [scheduledEnd, setScheduledEnd] = useState(initial?.scheduled_end?.split("T")[0] || "");
+  const [reportDue, setReportDue] = useState(initial?.report_due?.split("T")[0] || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -71,9 +73,11 @@ export default function AuditFormModal({ auditTypes, users, initial, onSubmit, o
         objective,
         scope,
         methodology,
+        criteria_standards: criteriaStandards,
         location,
         scheduled_start: scheduledStart || null,
         scheduled_end: scheduledEnd || null,
+        report_due: reportDue || null,
       });
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save audit");
@@ -169,6 +173,14 @@ export default function AuditFormModal({ auditTypes, users, initial, onSubmit, o
           <div className="form-group">
             <label>Methodology</label>
             <textarea rows={2} value={methodology} onChange={(e) => setMethodology(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>Standards / Criteria</label>
+            <input type="text" value={criteriaStandards} onChange={(e) => setCriteriaStandards(e.target.value)} placeholder="e.g., ISO 9001:2015, FDA 21 CFR Part 820" maxLength={500} />
+          </div>
+          <div className="form-group">
+            <label>Report Due Date</label>
+            <input type="date" value={reportDue} onChange={(e) => setReportDue(e.target.value)} />
           </div>
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>

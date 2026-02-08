@@ -26,7 +26,7 @@ export async function seed(knex: Knex): Promise<void> {
       description: "Standard internal quality audit to assess compliance with internal procedures and standards.",
       color: "#667eea",
       icon: "\u{1F50D}",
-      workflow_phases: JSON.stringify(["Planning", "Fieldwork", "Review", "Closeout"]),
+      workflow_phases: JSON.stringify(["Schedule", "Plan", "Execute", "Review", "Closeout"]),
       checklist_settings: JSON.stringify({ required: true, max_checklists: 5 }),
       team_settings: JSON.stringify({ min_team_size: 2, require_lead: true }),
       is_active: true,
@@ -67,9 +67,33 @@ export async function seed(knex: Knex): Promise<void> {
     description: "Evaluation of specific processes for efficiency, effectiveness, and adherence to documented procedures.",
     color: "#10b981",
     icon: "\u2699\uFE0F",
-    workflow_phases: JSON.stringify(["Planning", "Observation", "Analysis", "Reporting"]),
+    workflow_phases: JSON.stringify(["Schedule", "Plan", "Execute", "Review", "Closeout"]),
     checklist_settings: JSON.stringify({ required: false, max_checklists: 5 }),
     team_settings: JSON.stringify({ min_team_size: 1, require_lead: true }),
+    is_active: true,
+    created_by: admin.id,
+  });
+
+  await knex("audit_types").insert({
+    name: "Departmental Assessment",
+    description: "Assessment of departmental processes, procedures, and compliance with organizational standards.",
+    color: "#8b5cf6",
+    icon: "\u{1F3E2}",
+    workflow_phases: JSON.stringify(["Schedule", "Plan", "Execute", "Review", "Closeout"]),
+    checklist_settings: JSON.stringify({ required: false, max_checklists: 5 }),
+    team_settings: JSON.stringify({ min_team_size: 1, require_lead: true }),
+    is_active: true,
+    created_by: admin.id,
+  });
+
+  await knex("audit_types").insert({
+    name: "External Audit",
+    description: "Audit conducted by external parties to verify compliance with external standards and regulations.",
+    color: "#06b6d4",
+    icon: "\u{1F310}",
+    workflow_phases: JSON.stringify(["Schedule", "Plan", "Execute", "Review", "Closeout"]),
+    checklist_settings: JSON.stringify({ required: true, max_checklists: 10 }),
+    team_settings: JSON.stringify({ min_team_size: 2, require_lead: true }),
     is_active: true,
     created_by: admin.id,
   });

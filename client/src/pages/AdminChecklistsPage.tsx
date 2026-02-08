@@ -39,11 +39,15 @@ export default function AdminChecklistsPage() {
 
   async function handleCreate() {
     if (!name.trim()) return;
-    const res = await api.post("/checklists", { name, description });
-    setShowCreate(false);
-    setName("");
-    setDescription("");
-    navigate(`/admin/checklists/${res.data.checklist.id}`);
+    try {
+      const res = await api.post("/checklists", { name, description });
+      setShowCreate(false);
+      setName("");
+      setDescription("");
+      navigate(`/admin/checklists/${res.data.checklist.id}`);
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to create checklist");
+    }
   }
 
   async function handleClone(id: string) {

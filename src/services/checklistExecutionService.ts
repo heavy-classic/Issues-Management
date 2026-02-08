@@ -42,7 +42,23 @@ export async function getInstance(instanceId: string) {
     .leftJoin("users", "criterion_responses.responded_by", "users.id")
     .where("criterion_responses.instance_id", instanceId);
 
-  const responseMap = new Map(responses.map((r: any) => [r.criterion_id, r]));
+  // Get attachment counts per criterion response
+  const responseIds = responses.map((r: any) => r.id);
+  let attachmentCounts = new Map<string, number>();
+  if (responseIds.length > 0) {
+    const counts = await db("attachments")
+      .select("parent_id")
+      .count("* as count")
+      .whereIn("parent_id", responseIds)
+      .where({ parent_type: "checklist_response", is_deleted: false })
+      .groupBy("parent_id");
+    attachmentCounts = new Map(counts.map((c: any) => [c.parent_id, Number(c.count)]));
+  }
+
+  const responseMap = new Map(responses.map((r: any) => [r.criterion_id, {
+    ...r,
+    attachment_count: attachmentCounts.get(r.id) || 0,
+  }]));
 
   // Nest criteria into groups with responses
   const groupsWithCriteria = groups.map((g: any) => ({
@@ -153,6 +169,19 @@ export async function saveResponse(
     await auditService.logInsert("criterion_responses", response.id, response, auditCtx);
     return response;
   }
+}
+
+export async function getResponseId(
+  instanceId: string,
+  criterionId: string
+): Promise<string> {
+  const response = await db("criterion_responses")
+    .where({ instance_id: instanceId, criterion_id: criterionId })
+    .first();
+  if (!response) {
+    throw new AppError(404, "Criterion response not found. Answer the criterion first.");
+  }
+  return response.id;
 }
 
 export async function createFindingFromCriterion(

@@ -2,7 +2,10 @@ import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/authenticate";
 import { validate } from "../middleware/validate";
+import { upload } from "../middleware/upload";
 import * as checklistExecutionService from "../services/checklistExecutionService";
+import * as attachmentService from "../services/attachmentService";
+import { AppError } from "../errors/AppError";
 import type { AuditContext } from "../services/auditService";
 
 const router = Router();
@@ -80,6 +83,46 @@ router.post(
       getAuditCtx(req)
     );
     res.status(201).json({ finding });
+  }
+);
+
+// Upload attachments to a criterion response
+router.post(
+  "/:id/responses/:criterionId/attachments",
+  upload.array("files", 20),
+  async (req, res) => {
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      throw new AppError(400, "No files provided");
+    }
+    // Get or verify the criterion response exists
+    const responseId = await checklistExecutionService.getResponseId(
+      req.params.id as string,
+      req.params.criterionId as string
+    );
+    const attachments = await attachmentService.uploadAttachments(
+      responseId,
+      "checklist_response",
+      req.files as Express.Multer.File[],
+      req.user!.userId,
+      getAuditCtx(req)
+    );
+    res.status(201).json({ attachments });
+  }
+);
+
+// List attachments for a criterion response
+router.get(
+  "/:id/responses/:criterionId/attachments",
+  async (req, res) => {
+    const responseId = await checklistExecutionService.getResponseId(
+      req.params.id as string,
+      req.params.criterionId as string
+    );
+    const attachments = await attachmentService.listAttachments(
+      responseId,
+      "checklist_response"
+    );
+    res.json({ attachments });
   }
 );
 
