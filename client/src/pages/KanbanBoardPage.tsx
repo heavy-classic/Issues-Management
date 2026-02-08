@@ -91,7 +91,7 @@ export default function KanbanBoardPage() {
   function priorityColor(priority: string) {
     const colors: Record<string, string> = {
       low: "#6b7280",
-      medium: "#2563eb",
+      medium: "#667eea",
       high: "#f59e0b",
       critical: "#dc2626",
     };

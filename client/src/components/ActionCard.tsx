@@ -1,6 +1,5 @@
 import { useState } from "react";
 import api from "../api/client";
-import ActionWorkflowStepper from "./ActionWorkflowStepper";
 import AttachmentList from "./AttachmentList";
 
 interface Action {
@@ -125,11 +124,6 @@ export default function ActionCard({
           </span>
         )}
       </div>
-
-      <ActionWorkflowStepper
-        currentStatus={action.status}
-        onStatusChange={handleStatusChange}
-      />
 
       <div className="action-card-meta">
         {action.assignee_name || action.assignee_email ? (

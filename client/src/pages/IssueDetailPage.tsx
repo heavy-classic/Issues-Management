@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
@@ -347,11 +347,31 @@ export default function IssueDetailPage() {
             )}
           </div>
 
-          <div className="issue-info">
-            <p><strong>Reporter:</strong> {issue.reporter_name || issue.reporter_email}</p>
-            <p><strong>Assignee:</strong> {issue.assignee_name || issue.assignee_email || "Unassigned"}</p>
-            <p><strong>Created:</strong> {new Date(issue.created_at).toLocaleString()}</p>
-            <p><strong>Updated:</strong> {new Date(issue.updated_at).toLocaleString()}</p>
+          <div className="issue-meta-grid">
+            <div className="meta-item">
+              <span className="meta-label">Reporter</span>
+              <span className="meta-value">{issue.reporter_name || issue.reporter_email}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">Assignee</span>
+              <span className="meta-value">{issue.assignee_name || issue.assignee_email || "Unassigned"}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">Created</span>
+              <span className="meta-value">{new Date(issue.created_at).toLocaleDateString()}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">Updated</span>
+              <span className="meta-value">{new Date(issue.updated_at).toLocaleDateString()}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">Priority</span>
+              <span className="meta-value">{issue.priority}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">Status</span>
+              <span className="meta-value">{issue.status.replace("_", " ")}</span>
+            </div>
           </div>
 
           {issue.description && (
@@ -361,82 +381,70 @@ export default function IssueDetailPage() {
             </div>
           )}
 
-          {/* Issue Attachments */}
-          {!editing && (
-            <div className="issue-attachments-section">
-              <AttachmentList
-                parentId={issue.id}
-                parentType="issue"
-                attachments={issue.attachments || []}
-                onUpdate={fetchIssue}
-              />
-            </div>
-          )}
-
           {/* Workflow Stage Progress */}
           {issue.stageAssignments.length > 0 && (
-            <div className="stage-progress">
-              <h3>Workflow Progress</h3>
-              <div className="stage-progress-bar">
-                {issue.stageAssignments.map((sa) => {
+            <div className="workflow-container">
+              <div className="workflow-title">WORKFLOW PROGRESS</div>
+              <div className="workflow-steps">
+                {issue.stageAssignments.map((sa, idx) => {
                   const isCurrent = sa.stage_id === issue.current_stage_id;
                   const isComplete = !!sa.completed_at;
-                  const sigs = stageSignatures(sa.stage_id);
-                  const hasSig = sigs.length > 0;
+                  const stateClass = isComplete
+                    ? "completed"
+                    : isCurrent
+                      ? "active"
+                      : "pending";
 
                   return (
-                    <div
-                      key={sa.id}
-                      className={`stage-step ${isCurrent ? "stage-current" : ""} ${isComplete ? "stage-complete" : ""}`}
-                      style={{ borderColor: sa.stage_color }}
-                    >
-                      <div className="stage-step-header">
-                        <span
-                          className="stage-step-dot"
-                          style={{
-                            backgroundColor: isCurrent
-                              ? sa.stage_color
-                              : isComplete
-                                ? "#10b981"
-                                : "#d1d5db",
-                          }}
-                        />
-                        <span className="stage-step-name">{sa.stage_name}</span>
-                        {sa.requires_signature && (
-                          <span
-                            className={`stage-sig-indicator ${hasSig ? "signed" : "unsigned"}`}
-                            title={hasSig ? "Signed" : "Signature required"}
-                          >
-                            S
-                          </span>
-                        )}
+                    <React.Fragment key={sa.id}>
+                      {idx > 0 && (
+                        <div className={`step-connector ${isComplete || isCurrent ? "step-connector-done" : ""}`} />
+                      )}
+                      <div className={`step-box ${stateClass}`}>
+                        <div className="step-icon">
+                          {isComplete ? "\u2713" : isCurrent ? "\u25CF" : "\u25CB"}
+                        </div>
+                        <div className="step-name">{sa.stage_name}</div>
+                        <div className="step-time">
+                          {isComplete ? "Completed" : isCurrent ? "Current Stage" : "Not Started"}
+                        </div>
                       </div>
-
-                      {/* Show signatures for this stage */}
-                      {sigs.map((sig) => (
-                        <SignatureDisplay
-                          key={sig.id}
-                          signature={sig}
-                          onVerify={handleVerifySignature}
-                        />
-                      ))}
-
-                      {/* Show Sign button if current stage requires signature and user hasn't signed */}
-                      {isCurrent &&
-                        sa.requires_signature &&
-                        !sigs.some((s) => s.user_id === user?.userId) && (
-                          <button
-                            onClick={() => setSigningStage(sa)}
-                            className="btn btn-primary btn-sm"
-                            style={{ marginTop: "0.5rem" }}
-                          >
-                            Sign Stage
-                          </button>
-                        )}
-                    </div>
+                    </React.Fragment>
                   );
                 })}
               </div>
+
+              {/* Signature details below workflow */}
+              {issue.stageAssignments.some((sa) => sa.requires_signature) && (
+                <div className="workflow-signatures">
+                  {issue.stageAssignments.map((sa) => {
+                    const isCurrent = sa.stage_id === issue.current_stage_id;
+                    const sigs = stageSignatures(sa.stage_id);
+                    if (!sa.requires_signature && sigs.length === 0) return null;
+                    return (
+                      <div key={sa.id} className="workflow-sig-item">
+                        {sigs.map((sig) => (
+                          <SignatureDisplay
+                            key={sig.id}
+                            signature={sig}
+                            onVerify={handleVerifySignature}
+                          />
+                        ))}
+                        {isCurrent &&
+                          sa.requires_signature &&
+                          !sigs.some((s) => s.user_id === user?.userId) && (
+                            <button
+                              onClick={() => setSigningStage(sa)}
+                              className="btn btn-primary btn-sm"
+                            >
+                              Sign "{sa.stage_name}" Stage
+                            </button>
+                          )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </>
@@ -446,7 +454,7 @@ export default function IssueDetailPage() {
       {!editing && (
         <div className="action-plan-section">
           <div className="action-plan-header">
-            <h3>Action Plan ({issue.actions?.length || 0})</h3>
+            <h3>Action Plan <span className="section-count-badge">{issue.actions?.length || 0}</span></h3>
             <button
               className="btn btn-primary btn-sm"
               onClick={() => {
@@ -483,6 +491,18 @@ export default function IssueDetailPage() {
           ) : (
             <p className="text-muted">No actions yet.</p>
           )}
+        </div>
+      )}
+
+      {/* Issue Attachments */}
+      {!editing && (
+        <div className="issue-attachments-section">
+          <AttachmentList
+            parentId={issue.id}
+            parentType="issue"
+            attachments={issue.attachments || []}
+            onUpdate={fetchIssue}
+          />
         </div>
       )}
 

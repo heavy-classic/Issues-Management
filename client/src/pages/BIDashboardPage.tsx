@@ -20,7 +20,7 @@ import KPICard from "../components/KPICard";
 import ChartCard from "../components/ChartCard";
 
 const COLORS = [
-  "#2563eb",
+  "#667eea",
   "#10b981",
   "#f59e0b",
   "#ef4444",
@@ -36,7 +36,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   critical: "#ef4444",
 };
 const STATUS_COLORS: Record<string, string> = {
-  open: "#2563eb",
+  open: "#667eea",
   in_progress: "#f59e0b",
   closed: "#10b981",
 };
@@ -215,7 +215,7 @@ export default function BIDashboardPage() {
             <KPICard
               title="Total Issues"
               value={kpis.totalIssues}
-              color="#2563eb"
+              color="#667eea"
               sparklineData={issueTrend.map((d: any) => ({
                 value: d.count,
               }))}
@@ -310,8 +310,8 @@ export default function BIDashboardPage() {
                   <Area
                     type="monotone"
                     dataKey="count"
-                    stroke="#2563eb"
-                    fill="#2563eb"
+                    stroke="#667eea"
+                    fill="#667eea"
                     fillOpacity={0.15}
                   />
                 </AreaChart>
@@ -454,7 +454,7 @@ export default function BIDashboardPage() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="open" fill="#2563eb" name="Open" />
+                  <Bar dataKey="open" fill="#667eea" name="Open" />
                   <Bar
                     dataKey="in_progress"
                     fill="#f59e0b"

@@ -42,6 +42,17 @@ function getFileIcon(mimeType: string): string {
   return "FILE";
 }
 
+function getFileIconColor(mimeType: string): string {
+  if (mimeType === "application/pdf") return "#dc2626";
+  if (mimeType.startsWith("image/")) return "#667eea";
+  if (mimeType.includes("word") || mimeType.includes("document")) return "#2563eb";
+  if (mimeType.includes("sheet") || mimeType.includes("excel")) return "#16a34a";
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) return "#ea580c";
+  if (mimeType.startsWith("text/")) return "#6b7280";
+  if (mimeType === "application/zip") return "#d97706";
+  return "#9ca3af";
+}
+
 function isPreviewable(att: Attachment): boolean {
   if (att.file_path.startsWith("legacy/")) return false;
   const m = att.mime_type;
@@ -77,38 +88,36 @@ export default function AttachmentList({
     <div className="attachment-list">
       <div className="attachment-list-header">
         <span className="attachment-list-title">
-          Attachments ({attachments.length})
+          Attachments <span className="section-count-badge">{attachments.length}</span>
         </span>
         <button
           className="btn btn-sm btn-secondary"
           onClick={() => setShowUpload(true)}
         >
-          {"\u{1F4CE}"} Upload
+          + Upload
         </button>
       </div>
 
       {attachments.length > 0 && (
-        <ul className="attachment-items">
+        <div className="attachment-cards-grid">
           {attachments.map((att) => (
-            <li key={att.id} className="attachment-item">
-              <div className="attachment-icon">
-                <span
-                  className={`file-type-badge file-type-${getFileIcon(att.mime_type).toLowerCase()}`}
-                >
-                  {getFileIcon(att.mime_type)}
-                </span>
+            <div key={att.id} className="attachment-card">
+              <div
+                className="attachment-card-icon"
+                style={{ backgroundColor: getFileIconColor(att.mime_type) + "18", color: getFileIconColor(att.mime_type) }}
+              >
+                {getFileIcon(att.mime_type)}
               </div>
-              <div className="attachment-info">
+              <div className="attachment-card-info">
                 <span className="attachment-name" title={att.original_name}>
                   {att.original_name}
                 </span>
                 <span className="attachment-meta">
                   {formatFileSize(att.file_size)} &middot;{" "}
-                  {att.uploader_name || att.uploader_email} &middot;{" "}
                   {new Date(att.uploaded_at).toLocaleDateString()}
                 </span>
               </div>
-              <div className="attachment-actions">
+              <div className="attachment-card-actions">
                 {isPreviewable(att) && (
                   <button
                     className="btn-icon"
@@ -135,9 +144,9 @@ export default function AttachmentList({
                   &times;
                 </button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       {showUpload && (

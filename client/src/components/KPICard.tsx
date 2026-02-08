@@ -17,7 +17,7 @@ export default function KPICard({
   value,
   trend,
   sparklineData,
-  color = "#2563eb",
+  color = "#667eea",
 }: Props) {
   return (
     <div className="kpi-card">

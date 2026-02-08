@@ -7,10 +7,12 @@ import {
 } from "react";
 import api from "../api/client";
 
-interface User {
+export interface User {
   userId: string;
   email: string;
   role: string;
+  name: string | null;
+  fullName: string | null;
 }
 
 interface AuthContextType {

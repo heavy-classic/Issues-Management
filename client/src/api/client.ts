@@ -17,6 +17,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Don't intercept auth endpoints — let login/register errors propagate directly
+    const url = originalRequest?.url || "";
+    if (url.includes("/auth/")) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -24,7 +30,6 @@ api.interceptors.response.use(
       if (!refreshToken) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-        window.location.href = "/login";
         return Promise.reject(error);
       }
 
@@ -38,7 +43,6 @@ api.interceptors.response.use(
       } catch {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-        window.location.href = "/login";
         return Promise.reject(error);
       }
     }

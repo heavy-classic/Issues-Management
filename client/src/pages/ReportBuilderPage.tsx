@@ -18,7 +18,7 @@ import {
 import api from "../api/client";
 
 const COLORS = [
-  "#2563eb",
+  "#667eea",
   "#10b981",
   "#f59e0b",
   "#ef4444",

@@ -12,6 +12,7 @@ async function reset() {
   await db.raw("TRUNCATE TABLE actions CASCADE");
   await db.raw("TRUNCATE TABLE issues CASCADE");
   await db.raw("TRUNCATE TABLE saved_reports CASCADE");
+  await db.raw("TRUNCATE TABLE refresh_tokens CASCADE");
   await db.raw("TRUNCATE TABLE team_members CASCADE");
   await db.raw("TRUNCATE TABLE teams CASCADE");
   await db.raw("TRUNCATE TABLE workflow_stages CASCADE");

@@ -53,9 +53,21 @@ export default function CommentThread({
     }
   }
 
+  function getInitials(name: string | null, email: string): string {
+    if (name) {
+      return name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return email.charAt(0).toUpperCase();
+  }
+
   return (
     <div className="comment-thread">
-      <h3>Comments ({comments.length})</h3>
+      <h3>Comments <span className="section-count-badge">{comments.length}</span></h3>
 
       {error && <p className="error">{error}</p>}
 
@@ -65,21 +77,26 @@ export default function CommentThread({
 
       {comments.map((c) => (
         <div key={c.id} className="comment">
-          <div className="comment-header">
-            <strong>{c.author_name || c.author_email}</strong>
-            <span className="text-muted">
-              {new Date(c.created_at).toLocaleString()}
-            </span>
-            {user?.userId === c.author_id && (
-              <button
-                onClick={() => handleDelete(c.id)}
-                className="btn btn-danger btn-sm"
-              >
-                Delete
-              </button>
-            )}
+          <div className="comment-avatar">
+            {getInitials(c.author_name, c.author_email)}
           </div>
-          <p className="comment-body">{c.body}</p>
+          <div className="comment-content">
+            <div className="comment-header">
+              <strong>{c.author_name || c.author_email}</strong>
+              <span className="text-muted">
+                {new Date(c.created_at).toLocaleString()}
+              </span>
+              {user?.userId === c.author_id && (
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  className="btn btn-danger btn-sm"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+            <p className="comment-body">{c.body}</p>
+          </div>
         </div>
       ))}
 
