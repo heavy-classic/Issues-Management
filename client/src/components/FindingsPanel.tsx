@@ -52,35 +52,29 @@ export default function FindingsPanel({ auditId, findings, users, onUpdate }: Pr
       )}
 
       {findings.length > 0 ? (
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Severity</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Assignee</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {findings.map((f) => (
-                <tr key={f.id}>
-                  <td><Link to={`/issues/${f.id}`}>{f.title}</Link></td>
-                  <td>
-                    <span className="badge" style={{ background: SEVERITY_COLORS[f.finding_severity] || "#6b7280", color: "#fff" }}>
-                      {f.finding_severity}
-                    </span>
-                  </td>
-                  <td><span className={`badge badge-priority-${f.priority}`}>{f.priority}</span></td>
-                  <td>{f.status.replace(/_/g, " ")}</td>
-                  <td>{f.assignee_name || f.assignee_email || "Unassigned"}</td>
-                  <td>{new Date(f.created_at).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="action-cards-grid">
+          {findings.map((f) => (
+            <div key={f.id} className="action-card">
+              <div className="action-card-header">
+                <h4 className="action-card-title">
+                  <Link to={`/issues/${f.id}`}>{f.title}</Link>
+                </h4>
+              </div>
+              <div className="action-card-badges">
+                <span className="badge" style={{ background: SEVERITY_COLORS[f.finding_severity] || "#6b7280", color: "#fff" }}>
+                  {f.finding_severity}
+                </span>
+                <span className={`badge badge-priority-${f.priority}`}>{f.priority}</span>
+                <span className={`badge badge-status-${f.status}`}>
+                  {f.status.replace(/_/g, " ")}
+                </span>
+              </div>
+              <div className="action-card-meta">
+                <span>{f.assignee_name || f.assignee_email || "Unassigned"}</span>
+                <span>{new Date(f.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <p className="text-muted">No findings recorded.</p>

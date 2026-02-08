@@ -52,7 +52,7 @@ interface Stage {
   name: string;
 }
 
-export default function BIDashboardPage() {
+export default function BIDashboardPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState("90d");
   const [priority, setPriority] = useState("");
@@ -164,9 +164,11 @@ export default function BIDashboardPage() {
 
   return (
     <div className="bi-dashboard">
-      <div className="bi-dashboard-header">
-        <h1>Analytics Dashboard</h1>
-      </div>
+      {!embedded && (
+        <div className="bi-dashboard-header">
+          <h1>Analytics Dashboard</h1>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="bi-filter-bar">

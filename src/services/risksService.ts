@@ -25,7 +25,26 @@ interface ListRisksFilters {
   owner_id?: string;
   treatment_strategy?: string;
   search?: string;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc";
 }
+
+const RISK_SORT_COLUMNS: Record<string, string> = {
+  risk_number: "risks.risk_number",
+  title: "risks.title",
+  status: "risks.status",
+  category: "risk_categories.name",
+  owner: "owner.full_name",
+  residual_score: "risks.residual_score",
+  residual_level: "risks.residual_level",
+  inherent_score: "risks.inherent_score",
+  velocity: "risks.velocity",
+  treatment_strategy: "risks.treatment_strategy",
+  next_review_date: "risks.next_review_date",
+  created_at: "risks.created_at",
+};
 
 async function generateRiskNumber(): Promise<string> {
   const [result] = await db.raw("SELECT nextval('risk_number_seq') as seq");
@@ -34,7 +53,34 @@ async function generateRiskNumber(): Promise<string> {
 }
 
 export async function listRisks(filters: ListRisksFilters) {
-  const query = db("risks")
+  const page = filters.page || 1;
+  const limit = filters.limit || 50;
+  const sortCol = RISK_SORT_COLUMNS[filters.sort_by || ""] || "risks.created_at";
+  const sortDir = filters.sort_dir === "asc" ? "asc" : "desc";
+
+  const baseQuery = db("risks")
+    .leftJoin("risk_categories", "risks.category_id", "risk_categories.id")
+    .leftJoin("users as owner", "risks.owner_id", "owner.id")
+    .leftJoin("users as creator", "risks.created_by", "creator.id");
+
+  if (filters.status) baseQuery.where("risks.status", filters.status);
+  if (filters.category_id) baseQuery.where("risks.category_id", filters.category_id);
+  if (filters.level) baseQuery.where("risks.residual_level", filters.level);
+  if (filters.owner_id) baseQuery.where("risks.owner_id", filters.owner_id);
+  if (filters.treatment_strategy) baseQuery.where("risks.treatment_strategy", filters.treatment_strategy);
+  if (filters.search) {
+    baseQuery.where(function () {
+      this.whereILike("risks.title", `%${filters.search}%`)
+        .orWhereILike("risks.risk_number", `%${filters.search}%`)
+        .orWhereILike("risks.description", `%${filters.search}%`);
+    });
+  }
+
+  const countResult = await baseQuery.clone().count("risks.id as count").first();
+  const total = Number(countResult?.count || 0);
+
+  const risks = await baseQuery
+    .clone()
     .select(
       "risks.*",
       "risk_categories.name as category_name",
@@ -46,25 +92,11 @@ export async function listRisks(filters: ListRisksFilters) {
       db.raw("(SELECT COUNT(*) FROM risk_mitigations WHERE risk_id = risks.id)::int as mitigation_count"),
       db.raw("(SELECT COUNT(*) FROM risk_issues WHERE risk_id = risks.id)::int as linked_issues_count")
     )
-    .leftJoin("risk_categories", "risks.category_id", "risk_categories.id")
-    .leftJoin("users as owner", "risks.owner_id", "owner.id")
-    .leftJoin("users as creator", "risks.created_by", "creator.id")
-    .orderBy("risks.created_at", "desc");
+    .orderBy(sortCol, sortDir)
+    .limit(limit)
+    .offset((page - 1) * limit);
 
-  if (filters.status) query.where("risks.status", filters.status);
-  if (filters.category_id) query.where("risks.category_id", filters.category_id);
-  if (filters.level) query.where("risks.residual_level", filters.level);
-  if (filters.owner_id) query.where("risks.owner_id", filters.owner_id);
-  if (filters.treatment_strategy) query.where("risks.treatment_strategy", filters.treatment_strategy);
-  if (filters.search) {
-    query.where(function () {
-      this.whereILike("risks.title", `%${filters.search}%`)
-        .orWhereILike("risks.risk_number", `%${filters.search}%`)
-        .orWhereILike("risks.description", `%${filters.search}%`);
-    });
-  }
-
-  return query;
+  return { risks, total, page, limit };
 }
 
 export async function getRisk(id: string) {
@@ -423,4 +455,45 @@ export async function linkAudit(riskId: string, auditId: string, relationship: s
 export async function unlinkAudit(riskId: string, auditId: string) {
   const deleted = await db("risk_audits").where({ risk_id: riskId, audit_id: auditId }).del();
   if (!deleted) throw new AppError(404, "Link not found");
+}
+
+// ── Kanban ────────────────────────────────────────────────
+
+const RISK_STATUSES = [
+  "draft", "identified", "under_assessment", "assessed",
+  "in_treatment", "monitoring", "under_review", "accepted", "closed",
+];
+
+const RISK_STATUS_COLORS: Record<string, string> = {
+  draft: "#9ca3af", identified: "#3b82f6", under_assessment: "#8b5cf6",
+  assessed: "#06b6d4", in_treatment: "#f59e0b", monitoring: "#10b981",
+  under_review: "#f97316", accepted: "#059669", closed: "#6b7280",
+};
+
+export async function getRiskKanbanData(filters: { search?: string }) {
+  const query = db("risks")
+    .select(
+      "risks.id", "risks.risk_number", "risks.title", "risks.status",
+      "risks.residual_score", "risks.residual_level",
+      "risk_categories.name as category_name", "risk_categories.color as category_color",
+      "owner.full_name as owner_name", "owner.email as owner_email"
+    )
+    .leftJoin("risk_categories", "risks.category_id", "risk_categories.id")
+    .leftJoin("users as owner", "risks.owner_id", "owner.id");
+
+  if (filters.search) {
+    query.where(function () {
+      this.whereILike("risks.title", `%${filters.search}%`)
+        .orWhereILike("risks.risk_number", `%${filters.search}%`);
+    });
+  }
+
+  const risks = await query;
+
+  return RISK_STATUSES.map((status) => ({
+    status,
+    label: status.replace(/_/g, " "),
+    color: RISK_STATUS_COLORS[status] || "#9ca3af",
+    risks: risks.filter((r: any) => r.status === status),
+  }));
 }

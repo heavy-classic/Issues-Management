@@ -52,15 +52,44 @@ const updateSchema = createSchema.partial().extend({
 
 router.get("/", async (req: any, res, next) => {
   try {
-    const risks = await risksService.listRisks({
+    const result = await risksService.listRisks({
       status: req.query.status as string,
       category_id: req.query.category_id as string,
       level: req.query.level as string,
       owner_id: req.query.owner_id as string,
       treatment_strategy: req.query.treatment_strategy as string,
       search: req.query.search as string,
+      page: req.query.page ? Number(req.query.page) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      sort_by: req.query.sort_by as string,
+      sort_dir: req.query.sort_dir as "asc" | "desc" | undefined,
     });
-    res.json({ risks });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Kanban board
+router.get("/kanban", async (req: any, res, next) => {
+  try {
+    const columns = await risksService.getRiskKanbanData({
+      search: req.query.search as string,
+    });
+    res.json({ columns });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/kanban/:id/transition", async (req: any, res, next) => {
+  try {
+    const risk = await risksService.updateRisk(
+      req.params.id as string,
+      { status: req.body.status },
+      getAuditCtx(req)
+    );
+    res.json({ risk });
   } catch (err) {
     next(err);
   }

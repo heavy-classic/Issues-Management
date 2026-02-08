@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import AuditFormModal from "../components/AuditFormModal";
+import SortableHeader from "../components/SortableHeader";
+import Pagination from "../components/Pagination";
 
 interface Audit {
   id: string;
@@ -48,6 +50,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AuditsPage() {
   const navigate = useNavigate();
   const [audits, setAudits] = useState<Audit[]>([]);
+  const [total, setTotal] = useState(0);
   const [auditTypes, setAuditTypes] = useState<AuditType[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +62,9 @@ export default function AuditsPage() {
     risk_level: "",
     search: "",
   });
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const fetchAudits = useCallback(async () => {
     const params = new URLSearchParams();
@@ -66,10 +72,15 @@ export default function AuditsPage() {
     if (filters.audit_type_id) params.set("audit_type_id", filters.audit_type_id);
     if (filters.risk_level) params.set("risk_level", filters.risk_level);
     if (filters.search) params.set("search", filters.search);
+    params.set("page", String(page));
+    params.set("limit", "50");
+    params.set("sort_by", sortBy);
+    params.set("sort_dir", sortDir);
     const res = await api.get(`/audits?${params}`);
     setAudits(res.data.audits);
+    setTotal(res.data.total);
     setLoading(false);
-  }, [filters]);
+  }, [filters, page, sortBy, sortDir]);
 
   useEffect(() => {
     fetchAudits();
@@ -80,6 +91,21 @@ export default function AuditsPage() {
     api.get("/users").then((res) => setUsers(res.data.users));
     api.get("/audit-dashboard/kpis").then((res) => setKpis(res.data));
   }, []);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  function handleSort(field: string) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+    setPage(1);
+  }
 
   async function handleCreate(data: any) {
     await api.post("/audits", data);
@@ -153,52 +179,55 @@ export default function AuditsPage() {
       ) : audits.length === 0 ? (
         <p className="text-muted" style={{ textAlign: "center", padding: "2rem" }}>No audits found.</p>
       ) : (
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Audit #</th>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Risk</th>
-                <th>Lead</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Findings</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {audits.map((a) => (
-                <tr key={a.id} onClick={() => navigate(`/audits/${a.id}`)} style={{ cursor: "pointer" }}>
-                  <td><strong>{a.audit_number}</strong></td>
-                  <td>{a.title}</td>
-                  <td>
-                    <span className="badge" style={{ background: a.type_color, color: "#fff" }}>
-                      {a.type_icon} {a.type_name}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="badge" style={{ background: STATUS_COLORS[a.status] || "#9ca3af", color: "#fff" }}>
-                      {statusLabel(a.status)}
-                    </span>
-                  </td>
-                  <td>
-                    {a.risk_level && (
-                      <span className={`badge badge-priority-${a.risk_level}`}>{a.risk_level}</span>
-                    )}
-                  </td>
-                  <td>{a.lead_name || a.lead_email || "Unassigned"}</td>
-                  <td>{a.scheduled_start ? new Date(a.scheduled_start).toLocaleDateString() : "—"}</td>
-                  <td>{a.scheduled_end ? new Date(a.scheduled_end).toLocaleDateString() : "—"}</td>
-                  <td>{a.findings_count}</td>
-                  <td>{a.compliance_score ? `${a.compliance_score}%` : "—"}</td>
+        <>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <SortableHeader label="Audit #" field="audit_number" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Title" field="title" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Type" field="type" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Status" field="status" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Risk" field="risk_level" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Lead" field="lead" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Start" field="scheduled_start" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="End" field="scheduled_end" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <th>Findings</th>
+                  <th>Score</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {audits.map((a) => (
+                  <tr key={a.id} onClick={() => navigate(`/audits/${a.id}`)} style={{ cursor: "pointer" }}>
+                    <td><strong>{a.audit_number}</strong></td>
+                    <td>{a.title}</td>
+                    <td>
+                      <span className="badge" style={{ background: a.type_color, color: "#fff" }}>
+                        {a.type_icon} {a.type_name}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="badge" style={{ background: STATUS_COLORS[a.status] || "#9ca3af", color: "#fff" }}>
+                        {statusLabel(a.status)}
+                      </span>
+                    </td>
+                    <td>
+                      {a.risk_level && (
+                        <span className={`badge badge-priority-${a.risk_level}`}>{a.risk_level}</span>
+                      )}
+                    </td>
+                    <td>{a.lead_name || a.lead_email || "Unassigned"}</td>
+                    <td>{a.scheduled_start ? new Date(a.scheduled_start).toLocaleDateString() : "\u2014"}</td>
+                    <td>{a.scheduled_end ? new Date(a.scheduled_end).toLocaleDateString() : "\u2014"}</td>
+                    <td>{a.findings_count}</td>
+                    <td>{a.compliance_score ? `${a.compliance_score}%` : "\u2014"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} total={total} limit={50} onPageChange={setPage} />
+        </>
       )}
 
       {showCreate && (

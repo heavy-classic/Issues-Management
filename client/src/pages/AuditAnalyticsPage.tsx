@@ -21,7 +21,7 @@ const RISK_COLORS: Record<string, string> = {
 
 interface AuditType { id: string; name: string; }
 
-export default function AuditAnalyticsPage() {
+export default function AuditAnalyticsPage({ embedded }: { embedded?: boolean }) {
   const [auditTypes, setAuditTypes] = useState<AuditType[]>([]);
   const [typeFilter, setTypeFilter] = useState("");
   const [riskFilter, setRiskFilter] = useState("");
@@ -67,8 +67,10 @@ export default function AuditAnalyticsPage() {
 
   return (
     <div>
-      <div className="dashboard-header">
+      {!embedded && <div className="dashboard-header">
         <h1>Audit Analytics</h1>
+      </div>}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="">All Types</option>

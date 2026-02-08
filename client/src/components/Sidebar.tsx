@@ -83,15 +83,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <div className="sidebar-section-label">Main Menu</div>
             <NavLink to="/analytics" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F4CA}"}</span>
-              <span className="sidebar-nav-text">Dashboard</span>
+              <span className="sidebar-nav-text">Analytics</span>
             </NavLink>
             <NavLink to="/board" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F4CB}"}</span>
               <span className="sidebar-nav-text">Kanban Board</span>
-            </NavLink>
-            <NavLink to="/risk-analytics" className={navClass} onClick={onToggle}>
-              <span className="sidebar-nav-icon">{"\u{1F525}"}</span>
-              <span className="sidebar-nav-text">Risk Analytics</span>
             </NavLink>
             <NavLink to="/reports" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F4D1}"}</span>
@@ -131,6 +127,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <NavLink to="/admin/risk-categories" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u{1F6E1}\uFE0F"}</span>
                 <span className="sidebar-nav-text">Risk Categories</span>
+              </NavLink>
+              <NavLink to="/admin/picklists" className={navClass} onClick={onToggle}>
+                <span className="sidebar-nav-icon">{"\u{1F4CB}"}</span>
+                <span className="sidebar-nav-text">Picklists</span>
               </NavLink>
               <NavLink to="/admin/audit" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u{1F4DC}"}</span>

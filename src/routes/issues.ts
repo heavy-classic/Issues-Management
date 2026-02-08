@@ -53,9 +53,13 @@ router.get("/", async (req, res) => {
     assignee_id: req.query.assignee_id as string | undefined,
     stage_id: req.query.stage_id as string | undefined,
     search: req.query.search as string | undefined,
+    page: req.query.page ? Number(req.query.page) : undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    sort_by: req.query.sort_by as string | undefined,
+    sort_dir: req.query.sort_dir as "asc" | "desc" | undefined,
   };
-  const issues = await issuesService.listIssues(filters);
-  res.json({ issues });
+  const result = await issuesService.listIssues(filters);
+  res.json(result);
 });
 
 router.get("/:id", async (req, res) => {

@@ -25,10 +25,60 @@ interface ListIssuesFilters {
   stage_id?: string;
   search?: string;
   audit_id?: string;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc";
 }
 
+const ISSUE_SORT_COLUMNS: Record<string, string> = {
+  title: "issues.title",
+  status: "issues.status",
+  priority: "issues.priority",
+  created_at: "issues.created_at",
+  updated_at: "issues.updated_at",
+  stage: "workflow_stages.name",
+  reporter: "reporter.name",
+  assignee: "assignee.name",
+};
+
 export async function listIssues(filters: ListIssuesFilters) {
-  const query = db("issues")
+  const page = filters.page || 1;
+  const limit = filters.limit || 50;
+  const sortCol = ISSUE_SORT_COLUMNS[filters.sort_by || ""] || "issues.created_at";
+  const sortDir = filters.sort_dir === "asc" ? "asc" : "desc";
+
+  const baseQuery = db("issues")
+    .leftJoin("users as reporter", "issues.reporter_id", "reporter.id")
+    .leftJoin("users as assignee", "issues.assignee_id", "assignee.id")
+    .leftJoin(
+      "workflow_stages",
+      "issues.current_stage_id",
+      "workflow_stages.id"
+    );
+
+  if (filters.status) baseQuery.where("issues.status", filters.status);
+  if (filters.priority) baseQuery.where("issues.priority", filters.priority);
+  if (filters.assignee_id)
+    baseQuery.where("issues.assignee_id", filters.assignee_id);
+  if (filters.stage_id)
+    baseQuery.where("issues.current_stage_id", filters.stage_id);
+  if (filters.audit_id)
+    baseQuery.where("issues.audit_id", filters.audit_id);
+  if (filters.search) {
+    baseQuery.where(function () {
+      this.whereILike("issues.title", `%${filters.search}%`).orWhereILike(
+        "issues.description",
+        `%${filters.search}%`
+      );
+    });
+  }
+
+  const countResult = await baseQuery.clone().count("issues.id as count").first();
+  const total = Number(countResult?.count || 0);
+
+  const issues = await baseQuery
+    .clone()
     .select(
       "issues.*",
       "reporter.email as reporter_email",
@@ -38,33 +88,11 @@ export async function listIssues(filters: ListIssuesFilters) {
       "workflow_stages.name as stage_name",
       "workflow_stages.color as stage_color"
     )
-    .leftJoin("users as reporter", "issues.reporter_id", "reporter.id")
-    .leftJoin("users as assignee", "issues.assignee_id", "assignee.id")
-    .leftJoin(
-      "workflow_stages",
-      "issues.current_stage_id",
-      "workflow_stages.id"
-    )
-    .orderBy("issues.created_at", "desc");
+    .orderBy(sortCol, sortDir)
+    .limit(limit)
+    .offset((page - 1) * limit);
 
-  if (filters.status) query.where("issues.status", filters.status);
-  if (filters.priority) query.where("issues.priority", filters.priority);
-  if (filters.assignee_id)
-    query.where("issues.assignee_id", filters.assignee_id);
-  if (filters.stage_id)
-    query.where("issues.current_stage_id", filters.stage_id);
-  if (filters.audit_id)
-    query.where("issues.audit_id", filters.audit_id);
-  if (filters.search) {
-    query.where(function () {
-      this.whereILike("issues.title", `%${filters.search}%`).orWhereILike(
-        "issues.description",
-        `%${filters.search}%`
-      );
-    });
-  }
-
-  return query;
+  return { issues, total, page, limit };
 }
 
 export async function getIssue(issueId: string) {

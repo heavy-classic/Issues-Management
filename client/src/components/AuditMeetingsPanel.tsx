@@ -136,8 +136,8 @@ export default function AuditMeetingsPanel({ auditId, meetings, users, onUpdate 
                   <td><span className="badge">{TYPE_LABELS[m.meeting_type] || m.meeting_type}</span></td>
                   <td>{m.title}</td>
                   <td>{new Date(m.scheduled_date).toLocaleDateString()}</td>
-                  <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {m.notes || "—"}
+                  <td>
+                    {m.notes || "\u2014"}
                   </td>
                   <td>
                     <button className="btn-icon" onClick={() => handleEdit(m)} title="Edit">&#9998;</button>

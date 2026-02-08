@@ -32,7 +32,7 @@ interface Column {
   issues: Issue[];
 }
 
-export default function KanbanBoardPage() {
+export default function KanbanBoardPage({ embedded }: { embedded?: boolean }) {
   const [columns, setColumns] = useState<Column[]>([]);
   const [filters, setFilters] = useState({
     priority: "",
@@ -102,8 +102,10 @@ export default function KanbanBoardPage() {
 
   return (
     <div className="kanban-page">
-      <div className="kanban-header">
+      {!embedded && <div className="kanban-header">
         <h1>Kanban Board</h1>
+      </div>}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
         <div className="kanban-filters">
           <select
             value={filters.priority}

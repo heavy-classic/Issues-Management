@@ -1574,11 +1574,91 @@ a:hover {
 /* Pagination */
 .pagination {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 1rem;
   margin-top: 1rem;
   font-size: 0.875rem;
+}
+.pagination-info {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Sortable table headers */
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.th-sortable:hover {
+  color: var(--color-primary);
+}
+.sort-arrow {
+  margin-left: 0.25rem;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+.th-sortable:hover .sort-arrow {
+  opacity: 1;
+}
+
+/* Table container (shared by audits, risks, meetings, etc.) */
+.table-container {
+  overflow-x: auto;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-bg-card);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px var(--color-shadow);
+}
+.table-container th,
+.table-container td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+.table-container th {
+  background: var(--color-table-header);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.table-container tr:hover {
+  background: var(--color-hover-row);
+}
+
+/* App Tabs */
+.app-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 1.5rem;
+}
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover {
+  color: var(--color-text);
+}
+.tab-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
 }
 
 /* Utilities */

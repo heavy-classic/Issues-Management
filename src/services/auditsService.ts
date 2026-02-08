@@ -55,7 +55,24 @@ interface ListAuditsFilters {
   search?: string;
   date_from?: string;
   date_to?: string;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc";
 }
+
+const AUDIT_SORT_COLUMNS: Record<string, string> = {
+  audit_number: "audits.audit_number",
+  title: "audits.title",
+  status: "audits.status",
+  priority: "audits.priority",
+  risk_level: "audits.risk_level",
+  type: "audit_types.name",
+  lead: "lead.full_name",
+  scheduled_start: "audits.scheduled_start",
+  scheduled_end: "audits.scheduled_end",
+  created_at: "audits.created_at",
+};
 
 async function generateAuditNumber(): Promise<string> {
   const year = new Date().getFullYear();
@@ -65,7 +82,34 @@ async function generateAuditNumber(): Promise<string> {
 }
 
 export async function listAudits(filters: ListAuditsFilters) {
-  const query = db("audits")
+  const page = filters.page || 1;
+  const limit = filters.limit || 50;
+  const sortCol = AUDIT_SORT_COLUMNS[filters.sort_by || ""] || "audits.created_at";
+  const sortDir = filters.sort_dir === "asc" ? "asc" : "desc";
+
+  const baseQuery = db("audits")
+    .leftJoin("audit_types", "audits.audit_type_id", "audit_types.id")
+    .leftJoin("users as lead", "audits.lead_auditor_id", "lead.id");
+
+  if (filters.status) baseQuery.where("audits.status", filters.status);
+  if (filters.audit_type_id) baseQuery.where("audits.audit_type_id", filters.audit_type_id);
+  if (filters.lead_auditor_id) baseQuery.where("audits.lead_auditor_id", filters.lead_auditor_id);
+  if (filters.risk_level) baseQuery.where("audits.risk_level", filters.risk_level);
+  if (filters.date_from) baseQuery.where("audits.scheduled_start", ">=", filters.date_from);
+  if (filters.date_to) baseQuery.where("audits.scheduled_end", "<=", filters.date_to);
+  if (filters.search) {
+    baseQuery.where(function () {
+      this.whereILike("audits.title", `%${filters.search}%`)
+        .orWhereILike("audits.audit_number", `%${filters.search}%`)
+        .orWhereILike("audits.description", `%${filters.search}%`);
+    });
+  }
+
+  const countResult = await baseQuery.clone().count("audits.id as count").first();
+  const total = Number(countResult?.count || 0);
+
+  const audits = await baseQuery
+    .clone()
     .select(
       "audits.*",
       "audit_types.name as type_name",
@@ -77,25 +121,11 @@ export async function listAudits(filters: ListAuditsFilters) {
       db.raw("(SELECT COUNT(*) FROM issues WHERE audit_id = audits.id)::int as findings_count"),
       db.raw("(SELECT COUNT(*) FROM checklist_instances WHERE audit_id = audits.id)::int as checklist_count")
     )
-    .leftJoin("audit_types", "audits.audit_type_id", "audit_types.id")
-    .leftJoin("users as lead", "audits.lead_auditor_id", "lead.id")
-    .orderBy("audits.created_at", "desc");
+    .orderBy(sortCol, sortDir)
+    .limit(limit)
+    .offset((page - 1) * limit);
 
-  if (filters.status) query.where("audits.status", filters.status);
-  if (filters.audit_type_id) query.where("audits.audit_type_id", filters.audit_type_id);
-  if (filters.lead_auditor_id) query.where("audits.lead_auditor_id", filters.lead_auditor_id);
-  if (filters.risk_level) query.where("audits.risk_level", filters.risk_level);
-  if (filters.date_from) query.where("audits.scheduled_start", ">=", filters.date_from);
-  if (filters.date_to) query.where("audits.scheduled_end", "<=", filters.date_to);
-  if (filters.search) {
-    query.where(function () {
-      this.whereILike("audits.title", `%${filters.search}%`)
-        .orWhereILike("audits.audit_number", `%${filters.search}%`)
-        .orWhereILike("audits.description", `%${filters.search}%`);
-    });
-  }
-
-  return query;
+  return { audits, total, page, limit };
 }
 
 export async function getAudit(id: string) {
@@ -504,4 +534,41 @@ export async function deleteMeeting(meetingId: string, auditCtx: AuditContext) {
   if (!existing) throw new AppError(404, "Meeting not found");
   await auditService.logDelete("audit_meetings", meetingId, existing, auditCtx);
   await db("audit_meetings").where({ id: meetingId }).del();
+}
+
+// ── Kanban ────────────────────────────────────────────────
+
+const AUDIT_STATUSES = ["draft", "scheduled", "planning", "in_progress", "under_review", "closed", "cancelled"];
+
+const AUDIT_STATUS_COLORS: Record<string, string> = {
+  draft: "#9ca3af", scheduled: "#3b82f6", planning: "#8b5cf6",
+  in_progress: "#f59e0b", under_review: "#06b6d4", closed: "#10b981", cancelled: "#ef4444",
+};
+
+export async function getAuditKanbanData(filters: { search?: string }) {
+  const query = db("audits")
+    .select(
+      "audits.id", "audits.audit_number", "audits.title", "audits.status",
+      "audits.priority", "audits.risk_level",
+      "audit_types.name as type_name", "audit_types.color as type_color",
+      "lead.full_name as lead_name", "lead.email as lead_email"
+    )
+    .leftJoin("audit_types", "audits.audit_type_id", "audit_types.id")
+    .leftJoin("users as lead", "audits.lead_auditor_id", "lead.id");
+
+  if (filters.search) {
+    query.where(function () {
+      this.whereILike("audits.title", `%${filters.search}%`)
+        .orWhereILike("audits.audit_number", `%${filters.search}%`);
+    });
+  }
+
+  const audits = await query;
+
+  return AUDIT_STATUSES.map((status) => ({
+    status,
+    label: status.replace(/_/g, " "),
+    color: AUDIT_STATUS_COLORS[status] || "#9ca3af",
+    audits: audits.filter((a: any) => a.status === status),
+  }));
 }

@@ -26,6 +26,7 @@ import auditExportsRoutes from "./routes/auditExports";
 import risksRoutes from "./routes/risks";
 import riskCategoriesRoutes from "./routes/riskCategories";
 import riskDashboardRoutes from "./routes/riskDashboard";
+import picklistsRoutes from "./routes/picklists";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -59,6 +60,7 @@ app.use("/api/audit-exports", auditExportsRoutes);
 app.use("/api/risks", risksRoutes);
 app.use("/api/risk-categories", riskCategoriesRoutes);
 app.use("/api/risk-dashboard", riskDashboardRoutes);
+app.use("/api/picklists", picklistsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

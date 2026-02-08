@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import IssueFilters from "../components/IssueFilters";
 import IssueForm from "../components/IssueForm";
+import SortableHeader from "../components/SortableHeader";
+import Pagination from "../components/Pagination";
 import { exportToCSV, exportToExcel } from "../utils/exportUtils";
 
 interface Issue {
@@ -28,6 +30,7 @@ interface User {
 export default function DashboardPage() {
   const [searchParams] = useSearchParams();
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [total, setTotal] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [filters, setFilters] = useState({
     status: searchParams.get("status") || "",
@@ -35,6 +38,9 @@ export default function DashboardPage() {
     assignee_id: searchParams.get("assignee_id") || "",
     stage_id: searchParams.get("stage_id") || "",
   });
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -44,10 +50,15 @@ export default function DashboardPage() {
     if (filters.priority) params.set("priority", filters.priority);
     if (filters.assignee_id) params.set("assignee_id", filters.assignee_id);
     if (filters.stage_id) params.set("stage_id", filters.stage_id);
+    params.set("page", String(page));
+    params.set("limit", "50");
+    params.set("sort_by", sortBy);
+    params.set("sort_dir", sortDir);
     const res = await api.get(`/issues?${params}`);
     setIssues(res.data.issues);
+    setTotal(res.data.total);
     setLoading(false);
-  }, [filters]);
+  }, [filters, page, sortBy, sortDir]);
 
   useEffect(() => {
     fetchIssues();
@@ -56,6 +67,21 @@ export default function DashboardPage() {
   useEffect(() => {
     api.get("/users").then((res) => setUsers(res.data.users));
   }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  function handleSort(field: string) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+    setPage(1);
+  }
 
   async function handleCreate(data: {
     title: string;
@@ -139,60 +165,63 @@ export default function DashboardPage() {
       ) : issues.length === 0 ? (
         <p className="text-muted">No issues found.</p>
       ) : (
-        <table className="issues-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Stage</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Reporter</th>
-              <th>Assignee</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {issues.map((issue) => (
-              <tr key={issue.id}>
-                <td>
-                  <Link to={`/issues/${issue.id}`}>{issue.title}</Link>
-                </td>
-                <td>
-                  {issue.stage_name ? (
-                    <span
-                      className="badge"
-                      style={{
-                        backgroundColor: (issue.stage_color || "#6b7280") + "20",
-                        color: issue.stage_color || "#6b7280",
-                      }}
-                    >
-                      {issue.stage_name}
-                    </span>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-                <td>
-                  <span className={`badge badge-status-${issue.status}`}>
-                    {statusLabel(issue.status)}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge badge-priority-${issue.priority}`}>
-                    {issue.priority}
-                  </span>
-                </td>
-                <td>{issue.reporter_name || issue.reporter_email}</td>
-                <td>
-                  {issue.assignee_name ||
-                    issue.assignee_email ||
-                    "Unassigned"}
-                </td>
-                <td>{new Date(issue.created_at).toLocaleDateString()}</td>
+        <>
+          <table className="issues-table">
+            <thead>
+              <tr>
+                <SortableHeader label="Title" field="title" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Stage" field="stage" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Status" field="status" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Priority" field="priority" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Reporter" field="reporter" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Assignee" field="assignee" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Created" field="created_at" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {issues.map((issue) => (
+                <tr key={issue.id}>
+                  <td>
+                    <Link to={`/issues/${issue.id}`}>{issue.title}</Link>
+                  </td>
+                  <td>
+                    {issue.stage_name ? (
+                      <span
+                        className="badge"
+                        style={{
+                          backgroundColor: (issue.stage_color || "#6b7280") + "20",
+                          color: issue.stage_color || "#6b7280",
+                        }}
+                      >
+                        {issue.stage_name}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td>
+                    <span className={`badge badge-status-${issue.status}`}>
+                      {statusLabel(issue.status)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge badge-priority-${issue.priority}`}>
+                      {issue.priority}
+                    </span>
+                  </td>
+                  <td>{issue.reporter_name || issue.reporter_email}</td>
+                  <td>
+                    {issue.assignee_name ||
+                      issue.assignee_email ||
+                      "Unassigned"}
+                  </td>
+                  <td>{new Date(issue.created_at).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Pagination page={page} total={total} limit={50} onPageChange={setPage} />
+        </>
       )}
     </div>
   );

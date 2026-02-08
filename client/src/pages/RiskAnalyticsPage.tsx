@@ -28,7 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const DEFAULT_CATEGORY_COLORS = ["#667eea", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4"];
 
-export default function RiskAnalyticsPage() {
+export default function RiskAnalyticsPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [kpis, setKpis] = useState<any>(null);
   const [heatMapData, setHeatMapData] = useState<Record<string, number>>({});
@@ -66,9 +66,11 @@ export default function RiskAnalyticsPage() {
 
   return (
     <div>
-      <div className="dashboard-header">
-        <h1>Risk Analytics</h1>
-      </div>
+      {!embedded && (
+        <div className="dashboard-header">
+          <h1>Risk Analytics</h1>
+        </div>
+      )}
 
       {/* KPI Cards */}
       {kpis && (

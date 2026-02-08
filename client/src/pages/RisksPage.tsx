@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import RiskFormModal from "../components/RiskFormModal";
+import SortableHeader from "../components/SortableHeader";
+import Pagination from "../components/Pagination";
 
 interface Risk {
   id: string;
@@ -63,6 +65,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function RisksPage() {
   const navigate = useNavigate();
   const [risks, setRisks] = useState<Risk[]>([]);
+  const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [kpis, setKpis] = useState<KPIs | null>(null);
@@ -76,6 +79,11 @@ export default function RisksPage() {
   const [filterOwner, setFilterOwner] = useState("");
   const [search, setSearch] = useState("");
 
+  // Pagination & sorting
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
   const fetchRisks = useCallback(async () => {
     const params: Record<string, string> = {};
     if (filterStatus) params.status = filterStatus;
@@ -83,11 +91,16 @@ export default function RisksPage() {
     if (filterLevel) params.level = filterLevel;
     if (filterOwner) params.owner_id = filterOwner;
     if (search) params.search = search;
+    params.page = String(page);
+    params.limit = "50";
+    params.sort_by = sortBy;
+    params.sort_dir = sortDir;
 
     const res = await api.get("/risks", { params });
     setRisks(res.data.risks);
+    setTotal(res.data.total);
     setLoading(false);
-  }, [filterStatus, filterCategory, filterLevel, filterOwner, search]);
+  }, [filterStatus, filterCategory, filterLevel, filterOwner, search, page, sortBy, sortDir]);
 
   useEffect(() => {
     fetchRisks();
@@ -104,6 +117,21 @@ export default function RisksPage() {
       setKpis(kpiRes.data);
     });
   }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filterStatus, filterCategory, filterLevel, filterOwner, search]);
+
+  function handleSort(field: string) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+    setPage(1);
+  }
 
   async function handleCreate(data: any) {
     await api.post("/risks", data);
@@ -179,60 +207,63 @@ export default function RisksPage() {
       {loading ? <p>Loading...</p> : risks.length === 0 ? (
         <p className="text-muted" style={{ textAlign: "center", padding: "2rem" }}>No risks found.</p>
       ) : (
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Risk #</th>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Inherent</th>
-                <th>Residual</th>
-                <th>Treatment</th>
-                <th>Owner</th>
-                <th>Status</th>
-                <th>Next Review</th>
-              </tr>
-            </thead>
-            <tbody>
-              {risks.map((r) => (
-                <tr key={r.id} onClick={() => navigate(`/risks/${r.id}`)} style={{ cursor: "pointer" }}>
-                  <td><strong>{r.risk_number}</strong></td>
-                  <td>{r.title}</td>
-                  <td>
-                    {r.category_name && (
-                      <span className="badge" style={{ background: r.category_color || "#9ca3af", color: "#fff" }}>
-                        {r.category_name}
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {r.inherent_score !== null ? (
-                      <span className="badge" style={{ background: LEVEL_COLORS[r.inherent_level || "low"], color: "#fff" }}>
-                        {r.inherent_score}
-                      </span>
-                    ) : "-"}
-                  </td>
-                  <td>
-                    {r.residual_score !== null ? (
-                      <span className="badge" style={{ background: LEVEL_COLORS[r.residual_level || "low"], color: "#fff" }}>
-                        {r.residual_score}
-                      </span>
-                    ) : "-"}
-                  </td>
-                  <td style={{ textTransform: "capitalize" }}>{r.treatment_strategy || "-"}</td>
-                  <td>{r.owner_name || r.owner_email || "-"}</td>
-                  <td>
-                    <span className="badge" style={{ background: STATUS_COLORS[r.status] || "#9ca3af", color: "#fff" }}>
-                      {r.status.replace(/_/g, " ")}
-                    </span>
-                  </td>
-                  <td>{r.next_review_date ? new Date(r.next_review_date).toLocaleDateString() : "-"}</td>
+        <>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <SortableHeader label="Risk #" field="risk_number" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Title" field="title" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Category" field="category" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Inherent" field="inherent_score" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Residual" field="residual_score" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Treatment" field="treatment_strategy" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Owner" field="owner" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Status" field="status" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Next Review" field="next_review_date" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {risks.map((r) => (
+                  <tr key={r.id} onClick={() => navigate(`/risks/${r.id}`)} style={{ cursor: "pointer" }}>
+                    <td><strong>{r.risk_number}</strong></td>
+                    <td>{r.title}</td>
+                    <td>
+                      {r.category_name && (
+                        <span className="badge" style={{ background: r.category_color || "#9ca3af", color: "#fff" }}>
+                          {r.category_name}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {r.inherent_score !== null ? (
+                        <span className="badge" style={{ background: LEVEL_COLORS[r.inherent_level || "low"], color: "#fff" }}>
+                          {r.inherent_score}
+                        </span>
+                      ) : "-"}
+                    </td>
+                    <td>
+                      {r.residual_score !== null ? (
+                        <span className="badge" style={{ background: LEVEL_COLORS[r.residual_level || "low"], color: "#fff" }}>
+                          {r.residual_score}
+                        </span>
+                      ) : "-"}
+                    </td>
+                    <td style={{ textTransform: "capitalize" }}>{r.treatment_strategy || "-"}</td>
+                    <td>{r.owner_name || r.owner_email || "-"}</td>
+                    <td>
+                      <span className="badge" style={{ background: STATUS_COLORS[r.status] || "#9ca3af", color: "#fff" }}>
+                        {r.status.replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td>{r.next_review_date ? new Date(r.next_review_date).toLocaleDateString() : "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} total={total} limit={50} onPageChange={setPage} />
+        </>
       )}
 
       {showCreate && (

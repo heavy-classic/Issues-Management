@@ -93,6 +93,23 @@ function getAuditCtx(req: any): AuditContext {
   };
 }
 
+// Kanban board
+router.get("/kanban", async (req, res) => {
+  const columns = await auditsService.getAuditKanbanData({
+    search: req.query.search as string | undefined,
+  });
+  res.json({ columns });
+});
+
+router.post("/kanban/:id/transition", async (req, res) => {
+  const audit = await auditsService.updateAudit(
+    req.params.id as string,
+    { status: req.body.status },
+    getAuditCtx(req)
+  );
+  res.json({ audit });
+});
+
 // List audits
 router.get("/", async (req, res) => {
   const filters = {
@@ -103,9 +120,13 @@ router.get("/", async (req, res) => {
     search: req.query.search as string | undefined,
     date_from: req.query.date_from as string | undefined,
     date_to: req.query.date_to as string | undefined,
+    page: req.query.page ? Number(req.query.page) : undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    sort_by: req.query.sort_by as string | undefined,
+    sort_dir: req.query.sort_dir as "asc" | "desc" | undefined,
   };
-  const audits = await auditsService.listAudits(filters);
-  res.json({ audits });
+  const result = await auditsService.listAudits(filters);
+  res.json(result);
 });
 
 // Get audit detail
