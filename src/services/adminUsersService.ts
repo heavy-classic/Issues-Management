@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import db from "../db";
 import { AppError } from "../errors/AppError";
 

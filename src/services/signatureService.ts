@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import db from "../db";
 import { AppError } from "../errors/AppError";
 import * as auditService from "./auditService";
