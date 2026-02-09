@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\" log --oneline -5)",
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(where:*)",
+      "Bash(dir:*)",
+      "Bash(docker:*)",
+      "Bash(ren \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\\\\migrations\\\\20260208000001_create_risk_categories.ts\" \"20260212000001_create_risk_categories.ts\")",
+      "Bash(pg_dump:*)",
+      "Bash(ls:*)",
+      "Bash(PGPASSWORD='Demotestpostgres1!' \"C:/Program Files/PostgreSQL/18/bin/pg_dump.exe\":*)",
+      "Bash(export PGPASSWORD='Demotestpostgres1!')",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/pg_dump.exe\" -h localhost -U postgres -d issues_management --data-only --no-owner -x --disable-triggers -f \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\\\\data_dump.sql\")",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/pg_dump.exe\" \"postgresql://postgres:Demotestpostgres1%21@localhost:5432/issues_management\" --data-only --no-owner -x --disable-triggers -f \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\\\\data_dump.sql\")",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/psql.exe\" \"postgresql://postgres.iddoqkukyypwileirdwv:Demotestpostgres1%21@aws-0-us-west-2.pooler.supabase.com:5432/postgres\" -f \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\\\\data_dump.sql\")",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/pg_dump.exe\" \"postgresql://postgres:Demotestpostgres1%21@localhost:5432/issues_management\" --data-only --no-owner -x -f \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\\\\data_dump.sql\")",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/psql.exe\" \"postgresql://postgres.iddoqkukyypwileirdwv:Demotestpostgres1%21@aws-0-us-west-2.pooler.supabase.com:5432/postgres\" -f \"C:\\\\Users\\\\matts\\\\projects\\\\issues-management\\\\truncate_all.sql\")",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/psql.exe\":*)",
+      "Bash(git remote set-url:*)",
+      "Bash(timeout 5 curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4OTlkNGQzYS1hZTJkLTQ3MjItYTdkOS04ODMxNWQ2YjE1NmEiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzcwNjYyODI4LCJleHAiOjE3NzA2NjM3Mjh9.3IODnJecLvbvcTIddNrZ-5HW4cgrUspdLiZGpuFXny0\")",
+      "Bash(python:*)",
+      "Bash(AUTH=\"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4OTlkNGQzYS1hZTJkLTQ3MjItYTdkOS04ODMxNWQ2YjE1NmEiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzcwNjYyODI4LCJleHAiOjE3NzA2NjM3Mjh9.3IODnJecLvbvcTIddNrZ-5HW4cgrUspdLiZGpuFXny0\")"
+    ]
+  }
+}
