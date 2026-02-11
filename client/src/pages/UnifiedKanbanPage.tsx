@@ -2,11 +2,13 @@ import { useSearchParams } from "react-router-dom";
 import KanbanBoardPage from "./KanbanBoardPage";
 import AuditKanbanBoard from "../components/AuditKanbanBoard";
 import RiskKanbanBoard from "../components/RiskKanbanBoard";
+import LessonKanbanBoard from "../components/LessonKanbanBoard";
 
 const TABS = [
   { key: "issues", label: "Issues" },
   { key: "audits", label: "Audits" },
   { key: "risks", label: "Risks" },
+  { key: "lessons", label: "Lessons Learned" },
 ];
 
 export default function UnifiedKanbanPage() {
@@ -38,6 +40,7 @@ export default function UnifiedKanbanPage() {
       {activeTab === "issues" && <KanbanBoardPage embedded />}
       {activeTab === "audits" && <AuditKanbanBoard />}
       {activeTab === "risks" && <RiskKanbanBoard />}
+      {activeTab === "lessons" && <LessonKanbanBoard />}
     </div>
   );
 }

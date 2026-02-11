@@ -16,6 +16,7 @@ import {
   Line,
 } from "recharts";
 import api from "../api/client";
+import ScheduleReportModal from "../components/ScheduleReportModal";
 
 const COLORS = [
   "#667eea",
@@ -48,6 +49,11 @@ const REPORT_TYPES = [
     id: "teams",
     label: "Teams",
     description: "Team workload, assignment distribution, productivity",
+  },
+  {
+    id: "lessons",
+    label: "Lessons Learned",
+    description: "Lesson type, category, impact, effectiveness analysis",
   },
 ];
 
@@ -157,6 +163,9 @@ export default function ReportBuilderPage() {
   const [previewData, setPreviewData] = useState<any>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Schedule
+  const [scheduleReportId, setScheduleReportId] = useState<string | null>(null);
 
   // Users for filter
   const [users, setUsers] = useState<any[]>([]);
@@ -470,6 +479,12 @@ export default function ReportBuilderPage() {
                         Run
                       </button>
                       <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setScheduleReportId(r.id)}
+                      >
+                        Schedule
+                      </button>
+                      <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleDeleteReport(r.id)}
                       >
@@ -481,6 +496,14 @@ export default function ReportBuilderPage() {
               ))}
             </tbody>
           </table>
+        )}
+
+        {scheduleReportId && (
+          <ScheduleReportModal
+            reportId={scheduleReportId}
+            onClose={() => setScheduleReportId(null)}
+            onSaved={() => setScheduleReportId(null)}
+          />
         )}
       </div>
     );

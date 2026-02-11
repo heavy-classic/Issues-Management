@@ -72,11 +72,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <span className="sidebar-nav-text">Inspections</span>
               <span className="sidebar-badge">0</span>
             </div>
-            <div className="sidebar-nav-item disabled">
+            <NavLink to="/lessons" className={navClass} onClick={onToggle}>
               <span className="sidebar-nav-icon">{"\u{1F4A1}"}</span>
               <span className="sidebar-nav-text">Lessons Learned</span>
-              <span className="sidebar-badge">0</span>
-            </div>
+            </NavLink>
           </div>
 
           <div className="sidebar-section">
@@ -123,6 +122,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <NavLink to="/admin/checklists" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u2611\uFE0F"}</span>
                 <span className="sidebar-nav-text">Checklists</span>
+              </NavLink>
+              <NavLink to="/admin/lesson-workflow" className={navClass} onClick={onToggle}>
+                <span className="sidebar-nav-icon">{"\u{1F4A1}"}</span>
+                <span className="sidebar-nav-text">LL Workflow</span>
               </NavLink>
               <NavLink to="/admin/risk-categories" className={navClass} onClick={onToggle}>
                 <span className="sidebar-nav-icon">{"\u{1F6E1}\uFE0F"}</span>

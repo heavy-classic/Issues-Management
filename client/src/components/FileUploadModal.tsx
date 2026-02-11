@@ -4,7 +4,7 @@ import api from "../api/client";
 
 interface Props {
   parentId: string;
-  parentType: "issue" | "action" | "audit";
+  parentType: "issue" | "action" | "audit" | "lesson";
   onComplete: () => void;
   onCancel: () => void;
   initialFiles?: File[];
@@ -97,10 +97,13 @@ export default function FileUploadModal({
     files.forEach((f) => formData.append("files", f.file));
 
     try {
-      const url =
-        parentType === "issue"
-          ? `/issues/${parentId}/attachments`
-          : `/actions/${parentId}/attachments`;
+      const urlMap: Record<string, string> = {
+        issue: `/issues/${parentId}/attachments`,
+        action: `/actions/${parentId}/attachments`,
+        audit: `/audits/${parentId}/attachments`,
+        lesson: `/lessons/${parentId}/attachments`,
+      };
+      const url = urlMap[parentType] || `/issues/${parentId}/attachments`;
 
       setFiles((prev) =>
         prev.map((f) => ({ ...f, status: "uploading" as const }))

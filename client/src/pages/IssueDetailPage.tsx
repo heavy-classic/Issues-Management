@@ -12,6 +12,7 @@ import AttachmentList from "../components/AttachmentList";
 import FileUploadModal from "../components/FileUploadModal";
 import DropZoneOverlay from "../components/DropZoneOverlay";
 import { exportIssuePDF } from "../utils/exportUtils";
+import LessonFormModal from "../components/LessonFormModal";
 
 interface StageAssignment {
   id: string;
@@ -133,6 +134,7 @@ export default function IssueDetailPage() {
     valid: boolean;
     signerName: string;
   } | null>(null);
+  const [showLessonForm, setShowLessonForm] = useState(false);
 
   const fetchIssue = useCallback(async () => {
     try {
@@ -315,6 +317,9 @@ export default function IssueDetailPage() {
               </button>
               <button onClick={() => setShowAudit(true)} className="btn btn-secondary">
                 History
+              </button>
+              <button onClick={() => setShowLessonForm(true)} className="btn btn-secondary">
+                Create Lesson
               </button>
               <button onClick={startEditing} className="btn btn-secondary">
                 Edit
@@ -563,6 +568,19 @@ export default function IssueDetailPage() {
             setShowDropUpload(false);
             setDroppedFiles([]);
           }}
+        />
+      )}
+
+      {showLessonForm && issue && (
+        <LessonFormModal
+          users={users.map((u) => ({ id: u.id, full_name: u.name, email: u.email }))}
+          fromIssueId={issue.id}
+          onSubmit={async (data) => {
+            await api.post("/lessons", data);
+            setShowLessonForm(false);
+            navigate(`/lessons`);
+          }}
+          onClose={() => setShowLessonForm(false)}
         />
       )}
     </div>

@@ -2,11 +2,13 @@ import { useSearchParams } from "react-router-dom";
 import BIDashboardPage from "./BIDashboardPage";
 import AuditAnalyticsPage from "./AuditAnalyticsPage";
 import RiskAnalyticsPage from "./RiskAnalyticsPage";
+import LessonAnalyticsPage from "./LessonAnalyticsPage";
 
 const TABS = [
   { key: "issues", label: "Issues" },
   { key: "audits", label: "Audits" },
   { key: "risks", label: "Risks" },
+  { key: "lessons", label: "Lessons Learned" },
 ];
 
 export default function AnalyticsPage() {
@@ -38,6 +40,7 @@ export default function AnalyticsPage() {
       {activeTab === "issues" && <BIDashboardPage embedded />}
       {activeTab === "audits" && <AuditAnalyticsPage embedded />}
       {activeTab === "risks" && <RiskAnalyticsPage embedded />}
+      {activeTab === "lessons" && <LessonAnalyticsPage embedded />}
     </div>
   );
 }

@@ -25,6 +25,9 @@ import RisksPage from "./pages/RisksPage";
 import RiskDetailPage from "./pages/RiskDetailPage";
 import AdminRiskCategoriesPage from "./pages/AdminRiskCategoriesPage";
 import AdminPicklistsPage from "./pages/AdminPicklistsPage";
+import LessonsPage from "./pages/LessonsPage";
+import LessonDetailPage from "./pages/LessonDetailPage";
+import AdminLessonWorkflowPage from "./pages/AdminLessonWorkflowPage";
 import type { ReactNode } from "react";
 
 function LayoutRoute({ children }: { children: ReactNode }) {
@@ -72,6 +75,9 @@ export default function App() {
           <Route path="/risk-analytics" element={<Navigate to="/analytics?tab=risks" replace />} />
           <Route path="/admin/risk-categories" element={<AdminLayoutRoute><AdminRiskCategoriesPage /></AdminLayoutRoute>} />
           <Route path="/admin/picklists" element={<AdminLayoutRoute><AdminPicklistsPage /></AdminLayoutRoute>} />
+          <Route path="/lessons" element={<LayoutRoute><LessonsPage /></LayoutRoute>} />
+          <Route path="/lessons/:id" element={<LayoutRoute><LessonDetailPage /></LayoutRoute>} />
+          <Route path="/admin/lesson-workflow" element={<AdminLayoutRoute><AdminLessonWorkflowPage /></AdminLayoutRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

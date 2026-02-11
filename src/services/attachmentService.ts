@@ -23,13 +23,14 @@ function getAbsolutePath(relativePath: string): string {
   return path.join(projectRoot, relativePath);
 }
 
-type AttachmentParentType = "issue" | "action" | "audit" | "checklist_response";
+type AttachmentParentType = "issue" | "action" | "audit" | "checklist_response" | "lesson";
 
 const parentTableMap: Record<AttachmentParentType, string> = {
   issue: "issues",
   action: "actions",
   audit: "audits",
   checklist_response: "criterion_responses",
+  lesson: "lessons",
 };
 
 async function verifyParentExists(

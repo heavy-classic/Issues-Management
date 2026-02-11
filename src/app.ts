@@ -27,6 +27,11 @@ import risksRoutes from "./routes/risks";
 import riskCategoriesRoutes from "./routes/riskCategories";
 import riskDashboardRoutes from "./routes/riskDashboard";
 import picklistsRoutes from "./routes/picklists";
+import lessonsRoutes from "./routes/lessons";
+import lessonWorkflowRoutes from "./routes/lessonWorkflow";
+import lessonWorkflowStagesRoutes from "./routes/lessonWorkflowStages";
+import lessonDashboardRoutes from "./routes/lessonDashboard";
+import reportSchedulesRoutes from "./routes/reportSchedules";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -61,6 +66,11 @@ app.use("/api/risks", risksRoutes);
 app.use("/api/risk-categories", riskCategoriesRoutes);
 app.use("/api/risk-dashboard", riskDashboardRoutes);
 app.use("/api/picklists", picklistsRoutes);
+app.use("/api/lessons", lessonsRoutes);
+app.use("/api/lesson-workflow", lessonWorkflowRoutes);
+app.use("/api/lesson-workflow-stages", lessonWorkflowStagesRoutes);
+app.use("/api/lesson-dashboard", lessonDashboardRoutes);
+app.use("/api/report-schedules", reportSchedulesRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
