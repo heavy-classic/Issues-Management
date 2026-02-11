@@ -20,7 +20,8 @@ export default function LoginPage() {
       await login(email, password);
       navigate("/");
     } catch (err: any) {
-      setError(err.response?.data?.error || "Login failed");
+      const errMsg = err.response?.data?.error;
+      setError(typeof errMsg === "string" ? errMsg : "Login failed");
     } finally {
       setSubmitting(false);
     }

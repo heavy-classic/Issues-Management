@@ -1,5 +1,5 @@
 import type { Knex } from "knex";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function seed(knex: Knex): Promise<void> {
   // Idempotency check - look for a known extended-seed user

@@ -21,7 +21,8 @@ export default function RegisterPage() {
       await register(email, password, name || undefined);
       navigate("/");
     } catch (err: any) {
-      setError(err.response?.data?.error || "Registration failed");
+      const errMsg = err.response?.data?.error;
+      setError(typeof errMsg === "string" ? errMsg : "Registration failed");
     } finally {
       setSubmitting(false);
     }

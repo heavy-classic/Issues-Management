@@ -15,6 +15,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Normalize error.response.data.error to always be a string
+    // (Vercel returns { error: { code, message } } on function crashes)
+    if (error.response?.data?.error && typeof error.response.data.error !== "string") {
+      error.response.data.error = error.response.data.error.message || "Server error";
+    }
+
     const originalRequest = error.config;
 
     // Don't intercept auth endpoints — let login/register errors propagate directly
