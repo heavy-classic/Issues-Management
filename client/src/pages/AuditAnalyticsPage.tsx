@@ -97,7 +97,7 @@ export default function AuditAnalyticsPage({ embedded }: { embedded?: boolean })
         <ChartCard title="Audits by Status">
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={byStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={100} label={({ status, count }) => `${status} (${count})`}>
+              <Pie data={byStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={100} label={(entry: any) => `${entry.status} (${entry.count})`}>
                 {byStatus.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
               </Pie>
               <Tooltip />
@@ -149,7 +149,7 @@ export default function AuditAnalyticsPage({ embedded }: { embedded?: boolean })
         <ChartCard title="Risk Distribution">
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={riskDistribution} dataKey="count" nameKey="risk_level" cx="50%" cy="50%" innerRadius={40} outerRadius={100} label={({ risk_level, count }) => `${risk_level} (${count})`}>
+              <Pie data={riskDistribution} dataKey="count" nameKey="risk_level" cx="50%" cy="50%" innerRadius={40} outerRadius={100} label={(entry: any) => `${entry.risk_level} (${entry.count})`}>
                 {riskDistribution.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
               </Pie>
               <Tooltip />

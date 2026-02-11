@@ -8,6 +8,7 @@ interface Filters {
   status: string;
   priority: string;
   assignee_id: string;
+  stage_id: string;
 }
 
 interface IssueFiltersProps {

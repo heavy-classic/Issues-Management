@@ -7,12 +7,7 @@ import {
   AreaChart, Area, ResponsiveContainer,
 } from "recharts";
 
-const LEVEL_COLORS: Record<string, string> = {
-  low: "#10b981",
-  medium: "#f59e0b",
-  high: "#f97316",
-  extreme: "#ef4444",
-};
+
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "#9ca3af",

@@ -7,7 +7,7 @@ interface Props {
 
 export default function DropZoneOverlay({ onDrop, children }: Props) {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragCounter, setDragCounter] = useState(0);
+  const [, setDragCounter] = useState(0);
 
   const handleDragEnter = useCallback((e: DragEvent) => {
     e.preventDefault();

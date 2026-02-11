@@ -25,7 +25,7 @@ import RisksPage from "./pages/RisksPage";
 import RiskDetailPage from "./pages/RiskDetailPage";
 import AdminRiskCategoriesPage from "./pages/AdminRiskCategoriesPage";
 import AdminPicklistsPage from "./pages/AdminPicklistsPage";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 function LayoutRoute({ children }: { children: ReactNode }) {
   return (

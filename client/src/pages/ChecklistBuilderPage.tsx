@@ -231,7 +231,7 @@ function GroupSection({
 }
 
 function CriterionEditor({
-  criterion, onUpdate, onDelete, saving,
+  criterion, onUpdate, onDelete,
 }: {
   criterion: any; onUpdate: (id: string, data: any) => void; onDelete: (id: string) => void; saving: boolean;
 }) {

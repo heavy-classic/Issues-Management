@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import api from "../api/client";
 
 interface Props {
@@ -15,7 +15,7 @@ const TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-export default function AuditMeetingsPanel({ auditId, meetings, users, onUpdate }: Props) {
+export default function AuditMeetingsPanel({ auditId, meetings, onUpdate }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [meetingType, setMeetingType] = useState("other");

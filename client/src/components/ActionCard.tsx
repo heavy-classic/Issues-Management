@@ -55,15 +55,6 @@ export default function ActionCard({
     action.status !== "completed" &&
     new Date(action.due_date) < new Date();
 
-  async function handleStatusChange(newStatus: string) {
-    try {
-      await api.patch(`/actions/${action.id}`, { status: newStatus });
-      onUpdate();
-    } catch {
-      alert("Failed to update status");
-    }
-  }
-
   async function toggleExpand() {
     if (!expanded && !loadedAttachments) {
       try {
