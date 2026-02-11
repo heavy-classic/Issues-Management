@@ -1,9 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
-import multer from "multer";
-import path from "path";
 import { authenticate } from "../middleware/authenticate";
 import { validate } from "../middleware/validate";
+import { upload } from "../middleware/upload";
 import * as lessonsService from "../services/lessonsService";
 import * as lessonCommentsService from "../services/lessonCommentsService";
 import * as attachmentService from "../services/attachmentService";
@@ -13,11 +12,6 @@ import { AppError } from "../errors/AppError";
 const router = Router();
 
 router.use(authenticate);
-
-const upload = multer({
-  dest: path.join(__dirname, "../../uploads"),
-  limits: { fileSize: 25 * 1024 * 1024 },
-});
 
 function getAuditCtx(req: any): AuditContext {
   return {
