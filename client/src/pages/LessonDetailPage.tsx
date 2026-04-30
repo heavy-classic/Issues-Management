@@ -20,12 +20,10 @@ const IMPACT_COLORS: Record<string, string> = {
   critical: "#ef4444",
 };
 
-const EFFECTIVENESS_COLORS: Record<string, string> = {
-  not_rated: "#9ca3af",
-  ineffective: "#ef4444",
-  partially_effective: "#f59e0b",
-  effective: "#10b981",
-  highly_effective: "#059669",
+const STATUS_COLORS: Record<string, string> = {
+  draft: "#9ca3af", identified: "#3b82f6", under_review: "#8b5cf6",
+  approved: "#06b6d4", in_implementation: "#f59e0b", implemented: "#10b981",
+  validated: "#059669", archived: "#6b7280", closed: "#374151",
 };
 
 interface User { id: string; full_name: string | null; email: string; }
@@ -41,6 +39,21 @@ interface StageAssignment {
   assignee_name: string | null;
   assignee_email: string | null;
   completed_at: string | null;
+}
+
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function TextBlock({ label, content }: { label: string; content: string | null | undefined }) {
+  if (!content) return null;
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div className="bento-team-k" style={{ marginBottom: 6 }}>{label}</div>
+      <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{content}</p>
+    </div>
+  );
 }
 
 export default function LessonDetailPage() {
@@ -112,196 +125,352 @@ export default function LessonDetailPage() {
     fetchRelated();
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="loading">Loading…</p>;
   if (!lesson) return <p>Lesson not found.</p>;
 
+  const typeColor = TYPE_COLORS[lesson.lesson_type] || "#9ca3af";
+  const impactColor = IMPACT_COLORS[lesson.impact_level] || "#9ca3af";
+
   return (
-    <div>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-        <div>
-          <button className="btn-icon" onClick={() => navigate("/lessons")} style={{ marginBottom: "0.5rem" }}>
-            &larr; Back to Lessons Learned
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <h1 style={{ margin: 0 }}>{lesson.lesson_number}: {lesson.title}</h1>
-            <span className="badge" style={{ background: TYPE_COLORS[lesson.lesson_type] || "#9ca3af", color: "#fff", fontSize: "0.85rem" }}>
-              {lesson.lesson_type}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button className="btn btn-secondary" onClick={() => setShowEdit(true)}>Edit</button>
-          <button className="btn btn-secondary" onClick={() => setShowUpload(true)}>Attach</button>
-          <button className="btn btn-secondary btn-danger-icon" onClick={handleDelete}>Delete</button>
-        </div>
-      </div>
+    <>
+      <div className="bento-layout-wrap">
+        <div className="bento-area">
+          <div className="bento">
 
-      {/* Status Change */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <label style={{ fontWeight: 600, marginRight: "0.5rem" }}>Status:</label>
-        <select
-          value={lesson.status}
-          onChange={(e) => handleStatusChange(e.target.value)}
-          style={{ padding: "0.25rem 0.5rem", borderRadius: 4, border: "1px solid var(--color-border)" }}
-        >
-          {["draft", "identified", "under_review", "approved", "in_implementation", "implemented", "validated", "archived", "closed"].map((s) => (
-            <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Workflow Stepper */}
-      {workflow && workflow.assignments.length > 0 && (
-        <div className="card" style={{ padding: "1rem", marginBottom: "1.5rem" }}>
-          <h3 style={{ marginTop: 0 }}>Workflow Progress</h3>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            {workflow.assignments.map((a) => {
-              const isCurrent = a.stage_id === workflow.currentStageId;
-              const isCompleted = !!a.completed_at;
-              return (
-                <div
-                  key={a.id}
-                  onClick={() => !isCurrent && handleTransition(a.stage_id)}
-                  style={{
-                    flex: 1,
-                    minWidth: 100,
-                    padding: "0.5rem",
-                    borderRadius: 8,
-                    border: isCurrent ? `2px solid ${a.stage_color}` : "1px solid var(--color-border)",
-                    background: isCompleted ? `${a.stage_color}20` : "transparent",
-                    cursor: isCurrent ? "default" : "pointer",
-                    textAlign: "center",
-                    opacity: isCompleted ? 0.8 : 1,
-                  }}
-                >
-                  <div style={{ fontSize: "0.75rem", color: a.stage_color, fontWeight: 700 }}>
-                    {a.stage_name}
+            {/* ── Header tile ── */}
+            <div className="tile t-header">
+              <div className="bento-header-row">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="rec-type">
+                    <div className="rec-type-dot" style={{ background: typeColor }} />
+                    Lesson Learned
+                    {lesson.lesson_type && (
+                      <span style={{ background: typeColor + "20", color: typeColor, padding: "1px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, textTransform: "capitalize" }}>
+                        {lesson.lesson_type}
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontSize: "0.65rem" }} className="text-muted">
-                    {isCompleted ? "Completed" : isCurrent ? "Current" : "Pending"}
-                  </div>
-                  {a.requires_signature && (
-                    <div style={{ fontSize: "0.6rem", color: "#f59e0b" }}>Signature Req.</div>
+                  <div className="rec-title">{lesson.lesson_number ? `${lesson.lesson_number}: ` : ""}{lesson.title}</div>
+                </div>
+                <div className="bento-header-actions">
+                  <button className="btn btn-secondary" onClick={() => setShowEdit(true)}>✏ Edit</button>
+                  <button className="btn btn-secondary" onClick={() => setShowUpload(true)}>📎 Attach</button>
+                  <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+                  <select
+                    value={lesson.status}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e0e7ff", fontSize: 12, background: "#fff", color: "#1e1b4b" }}
+                  >
+                    {["draft", "identified", "under_review", "approved", "in_implementation", "implemented", "validated", "archived", "closed"].map((s) => (
+                      <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                    ))}
+                  </select>
+                  {lesson.status !== "validated" && lesson.status !== "closed" && lesson.status !== "archived" && (
+                    <button
+                      className="btn-submit"
+                      style={{ background: "#10b981", borderColor: "#10b981", boxShadow: "0 3px 14px rgba(16,185,129,.4)" }}
+                      onClick={() => handleStatusChange("validated")}
+                    >
+                      Publish →
+                    </button>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+              </div>
 
-      {/* Metadata Grid */}
-      <div className="card" style={{ padding: "1rem", marginBottom: "1.5rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Category</div>
-            <div>{lesson.category || "-"}</div>
+              {/* Meta strip */}
+              <div className="meta-strip">
+                <div className="ms-item">
+                  <div className="ms-status-dot" style={{ background: STATUS_COLORS[lesson.status] || "#9ca3af" }} />
+                  <strong>{lesson.status.replace(/_/g, " ")}</strong>
+                </div>
+                {lesson.impact_level && (
+                  <div className="ms-item" style={{ color: impactColor, fontWeight: 600 }}>
+                    ⚡ {lesson.impact_level} impact
+                  </div>
+                )}
+                {lesson.category && <div className="ms-item">🏷 {lesson.category}</div>}
+                {lesson.root_cause_category && <div className="ms-item">🔍 {lesson.root_cause_category}</div>}
+                <div className="ms-item">👤 {lesson.owner_name || lesson.owner_email || "No owner"}</div>
+                {lesson.identified_date && <div className="ms-item">📅 {fmtDate(lesson.identified_date)}</div>}
+              </div>
+            </div>
+
+            {/* ── Workflow tile ── */}
+            {workflow && workflow.assignments.length > 0 && (
+              <div className="tile t-workflow">
+                <div className="tile-label acc">
+                  Workflow Progress — {workflow.assignments.find((a) => a.stage_id === workflow?.currentStageId)?.stage_name || "Not started"}
+                </div>
+                <div className="bento-wf-row">
+                  {workflow.assignments.map((a, idx) => {
+                    const isCurrent = a.stage_id === workflow.currentStageId;
+                    const isCompleted = !!a.completed_at;
+                    const cls = isCompleted ? "wf-done" : isCurrent ? "wf-cur" : "";
+                    return (
+                      <div
+                        key={a.id}
+                        className={`bento-wf-step ${cls}`}
+                        onClick={() => !isCurrent && !isCompleted && handleTransition(a.stage_id)}
+                        style={{ cursor: isCurrent || isCompleted ? "default" : "pointer" }}
+                      >
+                        <div className="bento-wf-icon" style={isCurrent ? { background: a.stage_color, color: "#fff", boxShadow: `0 0 0 4px ${a.stage_color}30, 0 4px 14px ${a.stage_color}60` } : {}}>
+                          {isCompleted ? "✓" : idx + 1}
+                        </div>
+                        <div className="bento-wf-name">{a.stage_name}</div>
+                        <div className="bento-wf-sub">
+                          {isCompleted ? "Completed" : isCurrent ? "Current" : "Pending"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Description / What happened tile ── */}
+            <div className="tile t-desc">
+              <div className="tile-label">Lesson Content</div>
+              <TextBlock label="Description" content={lesson.description} />
+              <TextBlock label="What Happened" content={lesson.what_happened} />
+              <TextBlock label="Root Cause" content={lesson.root_cause} />
+              <TextBlock label="Recommendation" content={lesson.recommendation} />
+              {!lesson.description && !lesson.what_happened && !lesson.root_cause && !lesson.recommendation && (
+                <p style={{ color: "#a5b4fc", fontSize: 13 }}>No content recorded yet.</p>
+              )}
+            </div>
+
+            {/* ── Details tile ── */}
+            <div className="tile t-team">
+              <div className="tile-label">Details</div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Owner</div>
+                <div className="bento-team-v">
+                  {lesson.owner_email ? (
+                    <>
+                      <div className="bento-av">{(lesson.owner_name || lesson.owner_email).charAt(0).toUpperCase()}</div>
+                      {lesson.owner_name || lesson.owner_email}
+                    </>
+                  ) : <span style={{ color: "#a5b4fc" }}>Unassigned</span>}
+                </div>
+              </div>
+              {lesson.reviewer_email && (
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Reviewer</div>
+                  <div className="bento-team-v">
+                    <div className="bento-av" style={{ background: "#3b82f6" }}>
+                      {(lesson.reviewer_name || lesson.reviewer_email).charAt(0).toUpperCase()}
+                    </div>
+                    {lesson.reviewer_name || lesson.reviewer_email}
+                  </div>
+                </div>
+              )}
+              <div className="bento-team-row">
+                <div className="bento-team-k">Category</div>
+                <div className="bento-team-v">{lesson.category || "—"}</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Type</div>
+                <div className="bento-team-v" style={{ color: typeColor, fontWeight: 600, textTransform: "capitalize" }}>
+                  {lesson.lesson_type || "—"}
+                </div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Impact</div>
+                <div className="bento-team-v" style={{ color: impactColor, fontWeight: 600, textTransform: "capitalize" }}>
+                  {lesson.impact_level || "—"}
+                </div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Root Cause</div>
+                <div className="bento-team-v">{lesson.root_cause_category || "—"}</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Effectiveness</div>
+                <div className="bento-team-v" style={{ textTransform: "capitalize" }}>
+                  {lesson.effectiveness_rating?.replace(/_/g, " ") || "Not rated"}
+                </div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Identified</div>
+                <div className="bento-team-v">{fmtDate(lesson.identified_date)}</div>
+              </div>
+            </div>
+
+            {/* ── Actions tile (preventive / corrective) ── */}
+            {(lesson.preventive_action || lesson.corrective_action || lesson.outcome) && (
+              <div className="tile t-actions">
+                <div className="tile-label">Actions & Outcome</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  {lesson.preventive_action && (
+                    <div>
+                      <div className="bento-team-k" style={{ marginBottom: 6 }}>Preventive Action</div>
+                      <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{lesson.preventive_action}</p>
+                    </div>
+                  )}
+                  {lesson.corrective_action && (
+                    <div>
+                      <div className="bento-team-k" style={{ marginBottom: 6 }}>Corrective Action</div>
+                      <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{lesson.corrective_action}</p>
+                    </div>
+                  )}
+                  {lesson.outcome && (
+                    <div>
+                      <div className="bento-team-k" style={{ marginBottom: 6 }}>Outcome</div>
+                      <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{lesson.outcome}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Linked Issues tile ── */}
+            <div className="tile t-comments">
+              <LessonLinkedIssuesPanel lessonId={id!} issues={linkedIssues} onRefresh={handleRefresh} />
+            </div>
+
+            {/* ── Attachments tile ── */}
+            <div className="tile t-attach">
+              <div className="tile-label">Attachments</div>
+              {attachments.length > 0 ? (
+                <AttachmentList
+                  parentId={id!}
+                  parentType="lesson"
+                  attachments={attachments}
+                  onUpdate={handleRefresh}
+                />
+              ) : (
+                <div className="bento-attach-zone" onClick={() => setShowUpload(true)}>
+                  <div style={{ fontSize: 28 }}>📎</div>
+                  <div>No attachments</div>
+                  <div style={{ fontSize: 11, color: "#c7d2fe" }}>Click to upload</div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Comments tile ── */}
+            <div className="tile" style={{ gridColumn: "span 6" }}>
+              <div className="tile-label">Discussion</div>
+              <LessonCommentThread lessonId={id!} />
+            </div>
+
+          </div>{/* end .bento */}
+        </div>{/* end .bento-area */}
+
+        {/* ── AI Panel ── */}
+        <div className="ai-panel">
+          <div className="ai-hdr">
+            <div className="ai-title">
+              <div className="ai-dot" />
+              AI Assistant
+            </div>
+            <div className="ai-sub">Powered by Claude · Live analysis</div>
           </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Impact Level</div>
-            <div>
-              {lesson.impact_level ? (
-                <span className="badge" style={{ background: IMPACT_COLORS[lesson.impact_level] || "#9ca3af", color: "#fff" }}>
-                  {lesson.impact_level}
-                </span>
-              ) : "-"}
+          <div className="ai-body">
+            {/* Smart Summary */}
+            <div className="ai-card">
+              <div className="ai-card-hd">
+                <div className="ai-card-ico">📋</div>
+                <div className="ai-card-ttl">Smart Summary</div>
+                <div className="ai-card-bdg">Auto-generated</div>
+              </div>
+              <div className="ai-sum">
+                <span className="hl" style={{ textTransform: "capitalize" }}>{lesson.lesson_type || "Lesson"}</span> lesson{" "}
+                <span className="hl">{lesson.title}</span> is{" "}
+                <span className="hl">{lesson.status.replace(/_/g, " ")}</span>
+                {lesson.impact_level && <> with <span className="hl">{lesson.impact_level} impact</span></>}
+                . Owner: <span className="hl">{lesson.owner_name || lesson.owner_email || "unassigned"}</span>
+                {linkedIssues.length > 0 && <>. Linked to <span className="hl">{linkedIssues.length} issue{linkedIssues.length !== 1 ? "s" : ""}</span></>}
+                .
+              </div>
+            </div>
+
+            {/* Suggested Next Steps */}
+            <div className="ai-card">
+              <div className="ai-card-hd">
+                <div className="ai-card-ico">✨</div>
+                <div className="ai-card-ttl">Suggested Next Steps</div>
+              </div>
+              {lesson.status === "draft" && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">1</div>
+                  <div className="ai-sug-t">
+                    <strong>Submit for review</strong>
+                    Draft lesson — move to under review when ready.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+              {lesson.status === "under_review" && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">1</div>
+                  <div className="ai-sug-t">
+                    <strong>Approve or revise</strong>
+                    Awaiting review decision — approve to proceed.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+              {lesson.status === "implemented" && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">1</div>
+                  <div className="ai-sug-t">
+                    <strong>Validate effectiveness</strong>
+                    Implemented — validate to confirm it worked.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+              {!lesson.recommendation && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">2</div>
+                  <div className="ai-sug-t">
+                    <strong>Add a recommendation</strong>
+                    No recommendation recorded — capture the key takeaway.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+            </div>
+
+            {/* Risk Signals */}
+            <div className="ai-card">
+              <div className="ai-card-hd">
+                <div className="ai-card-ico">⚠️</div>
+                <div className="ai-card-ttl">Risk Signals</div>
+              </div>
+              {(lesson.impact_level === "critical" || lesson.impact_level === "high") && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: impactColor }} />
+                  <div className="ai-risk-txt">{lesson.impact_level} impact — ensure actions are tracked</div>
+                  <div className="ai-risk-lvl" style={{ color: impactColor }}>High</div>
+                </div>
+              )}
+              {!lesson.owner_email && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: "#f59e0b" }} />
+                  <div className="ai-risk-txt">No owner — lesson may not be acted on</div>
+                  <div className="ai-risk-lvl" style={{ color: "#f59e0b" }}>Med</div>
+                </div>
+              )}
+              {lesson.impact_level !== "critical" && lesson.impact_level !== "high" && lesson.owner_email && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: "#818cf8" }} />
+                  <div className="ai-risk-txt">No significant risks detected</div>
+                  <div className="ai-risk-lvl" style={{ color: "#818cf8" }}>Low</div>
+                </div>
+              )}
             </div>
           </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Owner</div>
-            <div>{lesson.owner_name || lesson.owner_email || "-"}</div>
-          </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Reviewer</div>
-            <div>{lesson.reviewer_name || lesson.reviewer_email || "-"}</div>
-          </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Root Cause Category</div>
-            <div>{lesson.root_cause_category || "-"}</div>
-          </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Effectiveness</div>
-            <div>
-              {lesson.effectiveness_rating && lesson.effectiveness_rating !== "not_rated" ? (
-                <span className="badge" style={{ background: EFFECTIVENESS_COLORS[lesson.effectiveness_rating] || "#9ca3af", color: "#fff" }}>
-                  {lesson.effectiveness_rating.replace(/_/g, " ")}
-                </span>
-              ) : "-"}
+
+          {/* AI input */}
+          <div className="ai-in">
+            <div className="ai-in-row">
+              <input className="ai-input" placeholder="Ask AI about this lesson…" />
+              <div className="ai-send-btn">↑</div>
             </div>
-          </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Identified Date</div>
-            <div>{lesson.identified_date ? new Date(lesson.identified_date).toLocaleDateString() : "-"}</div>
-          </div>
-          <div>
-            <div className="text-muted" style={{ fontSize: "0.75rem", fontWeight: 600 }}>Created By</div>
-            <div>{lesson.creator_name || lesson.creator_email || "-"}</div>
           </div>
         </div>
       </div>
-
-      {/* Text Sections */}
-      {lesson.description && (
-        <div className="card" style={{ padding: "1rem", marginBottom: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>Description</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{lesson.description}</p>
-        </div>
-      )}
-      {lesson.what_happened && (
-        <div className="card" style={{ padding: "1rem", marginBottom: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>What Happened</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{lesson.what_happened}</p>
-        </div>
-      )}
-      {lesson.root_cause && (
-        <div className="card" style={{ padding: "1rem", marginBottom: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>Root Cause</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{lesson.root_cause}</p>
-        </div>
-      )}
-      {lesson.recommendation && (
-        <div className="card" style={{ padding: "1rem", marginBottom: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>Recommendation</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{lesson.recommendation}</p>
-        </div>
-      )}
-      {(lesson.preventive_action || lesson.corrective_action) && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-          {lesson.preventive_action && (
-            <div className="card" style={{ padding: "1rem" }}>
-              <h3 style={{ marginTop: 0 }}>Preventive Action</h3>
-              <p style={{ whiteSpace: "pre-wrap" }}>{lesson.preventive_action}</p>
-            </div>
-          )}
-          {lesson.corrective_action && (
-            <div className="card" style={{ padding: "1rem" }}>
-              <h3 style={{ marginTop: 0 }}>Corrective Action</h3>
-              <p style={{ whiteSpace: "pre-wrap" }}>{lesson.corrective_action}</p>
-            </div>
-          )}
-        </div>
-      )}
-      {lesson.outcome && (
-        <div className="card" style={{ padding: "1rem", marginBottom: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>Outcome</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{lesson.outcome}</p>
-        </div>
-      )}
-
-      {/* Panels */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "1.5rem" }}>
-        <LessonLinkedIssuesPanel lessonId={id!} issues={linkedIssues} onRefresh={handleRefresh} />
-        <LessonCommentThread lessonId={id!} />
-      </div>
-
-      {/* Attachments */}
-      <AttachmentList
-        parentId={id!}
-        parentType="lesson"
-        attachments={attachments}
-        onUpdate={handleRefresh}
-      />
 
       {/* Modals */}
       {showEdit && (
@@ -323,6 +492,6 @@ export default function LessonDetailPage() {
           onCancel={() => setShowUpload(false)}
         />
       )}
-    </div>
+    </>
   );
 }

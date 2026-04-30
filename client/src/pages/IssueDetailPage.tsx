@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
@@ -108,6 +108,15 @@ interface User {
   name: string | null;
 }
 
+function initials(name: string | null | undefined, email: string): string {
+  if (name) return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  return email.charAt(0).toUpperCase();
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function IssueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -135,6 +144,7 @@ export default function IssueDetailPage() {
     signerName: string;
   } | null>(null);
   const [showLessonForm, setShowLessonForm] = useState(false);
+  const rteRef = useRef<HTMLDivElement>(null);
 
   const fetchIssue = useCallback(async () => {
     try {
@@ -160,15 +170,20 @@ export default function IssueDetailPage() {
       assignee_id: issue.assignee_id || "",
     });
     setEditing(true);
+    // Populate RTE after state updates
+    setTimeout(() => {
+      if (rteRef.current) rteRef.current.innerHTML = issue.description || "";
+    }, 0);
   }
 
   async function handleSave() {
     setError("");
     setSaving(true);
     try {
+      const description = rteRef.current ? rteRef.current.innerHTML : editData.description;
       await api.patch(`/issues/${id}`, {
         title: editData.title,
-        description: editData.description,
+        description,
         status: editData.status,
         priority: editData.priority,
         assignee_id: editData.assignee_id || null,
@@ -205,16 +220,31 @@ export default function IssueDetailPage() {
     }
   }
 
+  function rteExec(cmd: string) {
+    document.execCommand(cmd, false, undefined);
+    rteRef.current?.focus();
+  }
+
   if (error && !issue) {
     return <p className="error">{error}</p>;
   }
   if (!issue) {
-    return <p>Loading...</p>;
+    return <p className="loading">Loading…</p>;
   }
 
   const isReporter = user?.userId === issue.reporter_id;
   const stageSignatures = (stageId: string) =>
     issue.signatures.filter((s) => s.workflow_stage_id === stageId);
+
+  // Current stage index for workflow display
+  const currentStageIdx = issue.stageAssignments.findIndex(
+    (sa) => sa.stage_id === issue.current_stage_id
+  );
+
+  // AI panel summary data
+  const openActions = issue.actions?.filter((a) => a.status !== "completed") || [];
+  const assigneeName = issue.assignee_name || issue.assignee_email || "Unassigned";
+  const reporterName = issue.reporter_name || issue.reporter_email;
 
   return (
     <DropZoneOverlay
@@ -223,294 +253,526 @@ export default function IssueDetailPage() {
         setShowDropUpload(true);
       }}
     >
-    <div className="issue-detail">
-      {error && <p className="error">{error}</p>}
-
-      {verifyResult && (
-        <div className={`verify-banner ${verifyResult.valid ? "verify-valid" : "verify-invalid"}`}>
-          Signature by {verifyResult.signerName}:{" "}
-          {verifyResult.valid ? "VALID - Hash verified" : "INVALID - Hash mismatch"}
+      {/* Edit form overlay */}
+      {editing && (
+        <div style={{ padding: "1.5rem", maxWidth: 800, margin: "0 auto" }}>
+          <div className="issue-edit">
+            {error && <p className="error">{error}</p>}
+            <div className="form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                value={editData.title}
+                onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Description</label>
+              <div className="rte">
+                <div className="rte-toolbar">
+                  <button className="rte-btn" title="Bold" onMouseDown={(e) => { e.preventDefault(); rteExec("bold"); }}><b>B</b></button>
+                  <button className="rte-btn" title="Italic" onMouseDown={(e) => { e.preventDefault(); rteExec("italic"); }}><i>I</i></button>
+                  <button className="rte-btn" title="Underline" onMouseDown={(e) => { e.preventDefault(); rteExec("underline"); }}><u>U</u></button>
+                  <div className="rte-sep" />
+                  <button className="rte-btn" title="Bullets" onMouseDown={(e) => { e.preventDefault(); rteExec("insertUnorderedList"); }}>≡</button>
+                  <button className="rte-btn" title="Numbered" onMouseDown={(e) => { e.preventDefault(); rteExec("insertOrderedList"); }}>①</button>
+                </div>
+                <div
+                  ref={rteRef}
+                  className="rte-content"
+                  contentEditable
+                  data-placeholder="Enter a description…"
+                  suppressContentEditableWarning
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Status</label>
+                <select
+                  value={editData.status}
+                  onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                >
+                  <option value="open">Open</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Priority</label>
+                <select
+                  value={editData.priority}
+                  onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Assignee</label>
+                <select
+                  value={editData.assignee_id}
+                  onChange={(e) => setEditData({ ...editData, assignee_id: e.target.value })}
+                >
+                  <option value="">Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-actions">
+              <button onClick={handleSave} className="btn-submit" disabled={saving}>
+                {saving ? "Saving…" : "Save Changes →"}
+              </button>
+              <button onClick={() => setEditing(false)} className="btn btn-secondary">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {editing ? (
-        <div className="issue-edit">
-          <div className="form-group">
-            <label>Title</label>
-            <input
-              type="text"
-              value={editData.title}
-              onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              value={editData.description}
-              onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-              rows={6}
-            />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Status</label>
-              <select
-                value={editData.status}
-                onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-              >
-                <option value="open">Open</option>
-                <option value="in_progress">In Progress</option>
-                <option value="closed">Closed</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Priority</label>
-              <select
-                value={editData.priority}
-                onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Assignee</label>
-              <select
-                value={editData.assignee_id}
-                onChange={(e) => setEditData({ ...editData, assignee_id: e.target.value })}
-              >
-                <option value="">Unassigned</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name || u.email}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="form-actions">
-            <button onClick={handleSave} className="btn btn-primary" disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-            <button onClick={() => setEditing(false)} className="btn btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="issue-header">
-            <h1>{issue.title}</h1>
-            <div className="issue-actions">
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await api.get(`/exports/issues/${id}`);
-                    exportIssuePDF(res.data);
-                  } catch {
-                    alert("Failed to export PDF");
-                  }
-                }}
-                className="btn btn-secondary"
-              >
-                Export PDF
-              </button>
-              <button onClick={() => setShowAudit(true)} className="btn btn-secondary">
-                History
-              </button>
-              <button onClick={() => setShowLessonForm(true)} className="btn btn-secondary">
-                Create Lesson
-              </button>
-              <button onClick={startEditing} className="btn btn-secondary">
-                Edit
-              </button>
-              {isReporter && (
-                <button onClick={handleDelete} className="btn btn-danger">
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="issue-meta">
-            <span className={`badge badge-status-${issue.status}`}>
-              {issue.status.replace("_", " ")}
-            </span>
-            <span className={`badge badge-priority-${issue.priority}`}>
-              {issue.priority}
-            </span>
-            {issue.stage_name && (
-              <span
-                className="badge"
-                style={{
-                  backgroundColor: (issue.stage_color || "#6b7280") + "20",
-                  color: issue.stage_color || "#6b7280",
-                }}
-              >
-                {issue.stage_name}
-              </span>
+      {/* Bento detail view */}
+      {!editing && (
+        <div className="bento-layout-wrap">
+          {/* Scrollable bento grid */}
+          <div className="bento-area">
+            {verifyResult && (
+              <div className={`verify-banner ${verifyResult.valid ? "verify-valid" : "verify-invalid"}`}
+                style={{ marginBottom: 12 }}>
+                Signature by {verifyResult.signerName}:{" "}
+                {verifyResult.valid ? "VALID — Hash verified" : "INVALID — Hash mismatch"}
+              </div>
             )}
-          </div>
 
-          <div className="issue-meta-grid">
-            <div className="meta-item">
-              <span className="meta-label">Reporter</span>
-              <span className="meta-value">{issue.reporter_name || issue.reporter_email}</span>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Assignee</span>
-              <span className="meta-value">{issue.assignee_name || issue.assignee_email || "Unassigned"}</span>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Created</span>
-              <span className="meta-value">{new Date(issue.created_at).toLocaleDateString()}</span>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Updated</span>
-              <span className="meta-value">{new Date(issue.updated_at).toLocaleDateString()}</span>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Priority</span>
-              <span className="meta-value">{issue.priority}</span>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Status</span>
-              <span className="meta-value">{issue.status.replace("_", " ")}</span>
-            </div>
-          </div>
+            <div className="bento">
 
-          {issue.description && (
-            <div className="issue-description">
-              <h3>Description</h3>
-              <p>{issue.description}</p>
-            </div>
-          )}
-
-          {/* Workflow Stage Progress */}
-          {issue.stageAssignments.length > 0 && (
-            <div className="workflow-container">
-              <div className="workflow-title">WORKFLOW PROGRESS</div>
-              <div className="workflow-steps">
-                {issue.stageAssignments.map((sa, idx) => {
-                  const isCurrent = sa.stage_id === issue.current_stage_id;
-                  const isComplete = !!sa.completed_at;
-                  const stateClass = isComplete
-                    ? "completed"
-                    : isCurrent
-                      ? "active"
-                      : "pending";
-
-                  return (
-                    <React.Fragment key={sa.id}>
-                      {idx > 0 && (
-                        <div className={`step-connector ${isComplete || isCurrent ? "step-connector-done" : ""}`} />
-                      )}
-                      <div className={`step-box ${stateClass}`}>
-                        <div className="step-icon">
-                          {isComplete ? "\u2713" : isCurrent ? "\u25CF" : "\u25CB"}
-                        </div>
-                        <div className="step-name">{sa.stage_name}</div>
-                        <div className="step-time">
-                          {isComplete ? "Completed" : isCurrent ? "Current Stage" : "Not Started"}
-                        </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
+              {/* ── Header tile ── */}
+              <div className="tile t-header">
+                <div className="bento-header-row">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="rec-type">
+                      <div className="rec-type-dot" />
+                      Issue Record
+                    </div>
+                    <div className="rec-title">{issue.title}</div>
+                  </div>
+                  <div className="bento-header-actions">
+                    <button
+                      className="btn btn-secondary"
+                      onClick={async () => {
+                        try {
+                          const res = await api.get(`/exports/issues/${id}`);
+                          exportIssuePDF(res.data);
+                        } catch {
+                          alert("Failed to export PDF");
+                        }
+                      }}
+                    >
+                      📤 Export PDF
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setShowAudit(true)}>
+                      🕐 History
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setShowLessonForm(true)}>
+                      📚 Lesson
+                    </button>
+                    <button className="btn btn-secondary" onClick={startEditing}>
+                      ✏ Edit
+                    </button>
+                    {isReporter && (
+                      <button className="btn btn-danger" onClick={handleDelete}>
+                        Delete
+                      </button>
+                    )}
+                    {issue.stageAssignments.length > 0 && (
+                      <button
+                        className="btn-submit"
+                        onClick={() => {
+                          const currentStage = issue.stageAssignments.find(
+                            (sa) => sa.stage_id === issue.current_stage_id
+                          );
+                          if (currentStage?.requires_signature) {
+                            setSigningStage(currentStage);
+                          }
+                        }}
+                      >
+                        Submit →
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* Meta strip */}
+                <div className="meta-strip">
+                  <div className="ms-item">
+                    <div className="ms-status-dot" style={{
+                      background: issue.status === "closed" ? "#10b981"
+                        : issue.status === "in_progress" ? "#f59e0b"
+                        : "#4f46e5"
+                    }} />
+                    <strong>{issue.status.replace("_", " ")}</strong>
+                  </div>
+                  <div className="ms-item">
+                    {issue.priority === "critical" ? "🔴"
+                      : issue.priority === "high" ? "🟠"
+                      : issue.priority === "medium" ? "🟡"
+                      : "🔵"}{" "}
+                    {issue.priority} priority
+                  </div>
+                  {issue.stage_name && (
+                    <div className="ms-item">
+                      🏷 {issue.stage_name}
+                    </div>
+                  )}
+                  <div className="ms-item">📅 {fmtDate(issue.created_at)}</div>
+                  <div className="ms-item">👤 {assigneeName}</div>
+                </div>
               </div>
 
-              {/* Signature details below workflow */}
-              {issue.stageAssignments.some((sa) => sa.requires_signature) && (
-                <div className="workflow-signatures">
-                  {issue.stageAssignments.map((sa) => {
-                    const isCurrent = sa.stage_id === issue.current_stage_id;
-                    const sigs = stageSignatures(sa.stage_id);
-                    if (!sa.requires_signature && sigs.length === 0) return null;
-                    return (
-                      <div key={sa.id} className="workflow-sig-item">
-                        {sigs.map((sig) => (
-                          <SignatureDisplay
-                            key={sig.id}
-                            signature={sig}
-                            onVerify={handleVerifySignature}
-                          />
-                        ))}
-                        {isCurrent &&
-                          sa.requires_signature &&
-                          !sigs.some((s) => s.user_id === user?.userId) && (
-                            <button
-                              onClick={() => setSigningStage(sa)}
-                              className="btn btn-primary btn-sm"
-                            >
-                              Sign "{sa.stage_name}" Stage
-                            </button>
-                          )}
-                      </div>
-                    );
-                  })}
+              {/* ── Workflow tile ── */}
+              {issue.stageAssignments.length > 0 && (
+                <div className="tile t-workflow">
+                  <div className="tile-label acc">
+                    Workflow
+                    {currentStageIdx >= 0 && (
+                      <> — Stage {currentStageIdx + 1} of {issue.stageAssignments.length}</>
+                    )}
+                  </div>
+                  <div className="bento-wf-row">
+                    {issue.stageAssignments.map((sa, idx) => {
+                      const isCurrent = sa.stage_id === issue.current_stage_id;
+                      const isComplete = !!sa.completed_at;
+                      const cls = isComplete ? "wf-done" : isCurrent ? "wf-cur" : "";
+                      return (
+                        <React.Fragment key={sa.id}>
+                          <div className={`bento-wf-step ${cls}`}>
+                            <div className="bento-wf-icon">
+                              {isComplete ? "✓" : idx + 1}
+                            </div>
+                            <div className="bento-wf-name">{sa.stage_name}</div>
+                            <div className="bento-wf-sub">
+                              {isComplete ? "Completed" : isCurrent ? "In progress" : "Not started"}
+                            </div>
+                          </div>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+
+                  {/* Signatures under workflow */}
+                  {issue.stageAssignments.some((sa) => sa.requires_signature) && (
+                    <div className="bento-wf-sigs">
+                      {issue.stageAssignments.map((sa) => {
+                        const isCurrent = sa.stage_id === issue.current_stage_id;
+                        const sigs = stageSignatures(sa.stage_id);
+                        if (!sa.requires_signature && sigs.length === 0) return null;
+                        return (
+                          <div key={sa.id} style={{ marginBottom: 8 }}>
+                            {sigs.map((sig) => (
+                              <SignatureDisplay
+                                key={sig.id}
+                                signature={sig}
+                                onVerify={handleVerifySignature}
+                              />
+                            ))}
+                            {isCurrent &&
+                              sa.requires_signature &&
+                              !sigs.some((s) => s.user_id === user?.userId) && (
+                                <button
+                                  onClick={() => setSigningStage(sa)}
+                                  className="btn btn-primary btn-sm"
+                                >
+                                  Sign "{sa.stage_name}" Stage
+                                </button>
+                              )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
-        </>
-      )}
 
-      {/* Action Plan */}
-      {!editing && (
-        <div className="action-plan-section">
-          <div className="action-plan-header">
-            <h3>Action Plan <span className="section-count-badge">{issue.actions?.length || 0}</span></h3>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                setEditingAction(null);
-                setShowActionForm(true);
-              }}
-            >
-              + Add Action
-            </button>
-          </div>
-          {issue.actions && issue.actions.length > 0 ? (
-            <div className="action-cards-grid">
-              {issue.actions.map((a) => (
-                <ActionCard
-                  key={a.id}
-                  action={a}
-                  onEdit={(action) => {
-                    setEditingAction(action);
+              {/* ── Description tile ── */}
+              <div className="tile t-desc">
+                <div className="tile-label">Description</div>
+                <div className="rte">
+                  <div className="rte-toolbar">
+                    <span style={{ fontSize: 11, color: "#a5b4fc", padding: "0 4px" }}>Read-only</span>
+                  </div>
+                  <div
+                    className="rte-content"
+                    data-placeholder="No description provided."
+                    dangerouslySetInnerHTML={{ __html: issue.description || "" }}
+                    style={{ minHeight: 120 }}
+                  />
+                </div>
+              </div>
+
+              {/* ── Details tile ── */}
+              <div className="tile t-team">
+                <div className="tile-label">Details</div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Reporter</div>
+                  <div className="bento-team-v">
+                    <div className="bento-av">{initials(issue.reporter_name, issue.reporter_email)}</div>
+                    {reporterName}
+                  </div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Assignee</div>
+                  <div className="bento-team-v">
+                    {issue.assignee_email ? (
+                      <>
+                        <div className="bento-av" style={{ background: "#3b82f6" }}>
+                          {initials(issue.assignee_name, issue.assignee_email)}
+                        </div>
+                        {assigneeName}
+                      </>
+                    ) : (
+                      <span style={{ color: "#a5b4fc" }}>Unassigned</span>
+                    )}
+                  </div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Status</div>
+                  <div className="bento-team-v" style={{ color: "#4f46e5", fontWeight: 600 }}>
+                    ● {issue.status.replace("_", " ")}
+                  </div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Priority</div>
+                  <div className="bento-team-v">{issue.priority}</div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Created</div>
+                  <div className="bento-team-v">{fmtDate(issue.created_at)}</div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Updated</div>
+                  <div className="bento-team-v">{fmtDate(issue.updated_at)}</div>
+                </div>
+              </div>
+
+              {/* ── Action Plan tile ── */}
+              <div className="tile t-actions">
+                <div className="tile-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>
+                    Action Plan{" "}
+                    <span style={{ background: "#ede9fe", color: "#4f46e5", fontSize: 10, padding: "1px 7px", borderRadius: 8, marginLeft: 4, fontWeight: 600 }}>
+                      {issue.actions?.length || 0}
+                    </span>
+                  </span>
+                </div>
+                <div className="bento-action-grid">
+                  {issue.actions && issue.actions.length > 0 ? (
+                    issue.actions.map((a) => (
+                      <ActionCard
+                        key={a.id}
+                        action={a}
+                        onEdit={(action) => {
+                          setEditingAction(action);
+                          setShowActionForm(true);
+                        }}
+                        onDelete={async (actionId) => {
+                          if (!confirm("Delete this action?")) return;
+                          try {
+                            await api.delete(`/actions/${actionId}`);
+                            fetchIssue();
+                          } catch {
+                            alert("Failed to delete action");
+                          }
+                        }}
+                        onUpdate={fetchIssue}
+                      />
+                    ))
+                  ) : null}
+                </div>
+                <div
+                  className="bento-ag-add"
+                  onClick={() => {
+                    setEditingAction(null);
                     setShowActionForm(true);
                   }}
-                  onDelete={async (actionId) => {
-                    if (!confirm("Delete this action?")) return;
-                    try {
-                      await api.delete(`/actions/${actionId}`);
-                      fetchIssue();
-                    } catch {
-                      alert("Failed to delete action");
-                    }
-                  }}
+                >
+                  + Add action item
+                </div>
+              </div>
+
+              {/* ── Attachments tile ── */}
+              <div className="tile t-attach">
+                <div className="tile-label">Attachments</div>
+                {issue.attachments && issue.attachments.length > 0 ? (
+                  <AttachmentList
+                    parentId={issue.id}
+                    parentType="issue"
+                    attachments={issue.attachments}
+                    onUpdate={fetchIssue}
+                  />
+                ) : (
+                  <div
+                    className="bento-attach-zone"
+                    onClick={() => {
+                      setDroppedFiles([]);
+                      setShowDropUpload(true);
+                    }}
+                  >
+                    <div style={{ fontSize: 28 }}>📎</div>
+                    <div>Drop files here</div>
+                    <div style={{ fontSize: 11, color: "#c7d2fe" }}>or click to upload</div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Comments tile ── */}
+              <div className="tile t-comments">
+                <div className="tile-label">Comments</div>
+                <CommentThread
+                  issueId={issue.id}
+                  comments={issue.comments}
                   onUpdate={fetchIssue}
                 />
-              ))}
+              </div>
+
+            </div>{/* end .bento */}
+          </div>{/* end .bento-area */}
+
+          {/* ── AI Panel ── */}
+          <div className="ai-panel">
+            <div className="ai-hdr">
+              <div className="ai-title">
+                <div className="ai-dot" />
+                AI Assistant
+              </div>
+              <div className="ai-sub">Powered by Claude · Live analysis</div>
             </div>
-          ) : (
-            <p className="text-muted">No actions yet.</p>
-          )}
+            <div className="ai-body">
+              {/* Smart Summary */}
+              <div className="ai-card">
+                <div className="ai-card-hd">
+                  <div className="ai-card-ico">📋</div>
+                  <div className="ai-card-ttl">Smart Summary</div>
+                  <div className="ai-card-bdg">Auto-generated</div>
+                </div>
+                <div className="ai-sum">
+                  This issue is currently{" "}
+                  <span className="hl">{issue.status.replace("_", " ")}</span> with{" "}
+                  <span className="hl">{issue.priority} priority</span>
+                  {issue.stage_name && (
+                    <>, in the <span className="hl">{issue.stage_name}</span> stage</>
+                  )}
+                  . Assigned to <span className="hl">{assigneeName}</span>
+                  {openActions.length > 0 && (
+                    <>. <span className="hl">{openActions.length} open action{openActions.length !== 1 ? "s" : ""}</span> pending</>
+                  )}
+                  .
+                </div>
+              </div>
+
+              {/* Suggested Next Steps */}
+              <div className="ai-card">
+                <div className="ai-card-hd">
+                  <div className="ai-card-ico">✨</div>
+                  <div className="ai-card-ttl">Suggested Next Steps</div>
+                </div>
+                {issue.assignee_id === null && (
+                  <div className="ai-sug">
+                    <div className="ai-sug-n">1</div>
+                    <div className="ai-sug-t">
+                      <strong>Assign an owner</strong>
+                      No assignee set — assign someone to drive resolution.
+                    </div>
+                    <div className="ai-arr">›</div>
+                  </div>
+                )}
+                {openActions.length === 0 && (
+                  <div className="ai-sug">
+                    <div className="ai-sug-n">{issue.assignee_id === null ? "2" : "1"}</div>
+                    <div className="ai-sug-t">
+                      <strong>Create an action item</strong>
+                      No actions yet — break this issue into concrete tasks.
+                    </div>
+                    <div className="ai-arr">›</div>
+                  </div>
+                )}
+                {issue.stageAssignments.length > 0 && currentStageIdx < issue.stageAssignments.length - 1 && (
+                  <div className="ai-sug">
+                    <div className="ai-sug-n">
+                      {(issue.assignee_id === null ? 1 : 0) + (openActions.length === 0 ? 1 : 0) + 1}
+                    </div>
+                    <div className="ai-sug-t">
+                      <strong>Advance the workflow</strong>
+                      Ready to move to the next stage: {issue.stageAssignments[currentStageIdx + 1]?.stage_name}.
+                    </div>
+                    <div className="ai-arr">›</div>
+                  </div>
+                )}
+                {issue.status !== "closed" && issue.stageAssignments.length === 0 && (
+                  <div className="ai-sug">
+                    <div className="ai-sug-n">1</div>
+                    <div className="ai-sug-t">
+                      <strong>Configure a workflow</strong>
+                      No workflow stages — add one in Admin settings.
+                    </div>
+                    <div className="ai-arr">›</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Risk Signals */}
+              <div className="ai-card">
+                <div className="ai-card-hd">
+                  <div className="ai-card-ico">⚠️</div>
+                  <div className="ai-card-ttl">Risk Signals</div>
+                </div>
+                {(issue.priority === "critical" || issue.priority === "high") && (
+                  <div className="ai-risk">
+                    <div className="ai-risk-dot" style={{ background: "#ef4444" }} />
+                    <div className="ai-risk-txt">
+                      {issue.priority === "critical" ? "Critical" : "High"} priority issue — escalation may be needed
+                    </div>
+                    <div className="ai-risk-lvl" style={{ color: "#ef4444" }}>High</div>
+                  </div>
+                )}
+                {openActions.length > 2 && (
+                  <div className="ai-risk">
+                    <div className="ai-risk-dot" style={{ background: "#fbbf24" }} />
+                    <div className="ai-risk-txt">{openActions.length} open actions — review for blockers</div>
+                    <div className="ai-risk-lvl" style={{ color: "#fbbf24" }}>Med</div>
+                  </div>
+                )}
+                {issue.assignee_id === null && (
+                  <div className="ai-risk">
+                    <div className="ai-risk-dot" style={{ background: "#f59e0b" }} />
+                    <div className="ai-risk-txt">No assignee — issue may stall without an owner</div>
+                    <div className="ai-risk-lvl" style={{ color: "#f59e0b" }}>Med</div>
+                  </div>
+                )}
+                {issue.priority !== "critical" && issue.priority !== "high" && openActions.length <= 2 && issue.assignee_id !== null && (
+                  <div className="ai-risk">
+                    <div className="ai-risk-dot" style={{ background: "#818cf8" }} />
+                    <div className="ai-risk-txt">No significant risks detected at this time</div>
+                    <div className="ai-risk-lvl" style={{ color: "#818cf8" }}>Low</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* AI input */}
+            <div className="ai-in">
+              <div className="ai-in-row">
+                <input className="ai-input" placeholder="Ask AI about this issue…" />
+                <div className="ai-send-btn">↑</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Issue Attachments */}
-      {!editing && (
-        <div className="issue-attachments-section">
-          <AttachmentList
-            parentId={issue.id}
-            parentType="issue"
-            attachments={issue.attachments || []}
-            onUpdate={fetchIssue}
-          />
-        </div>
-      )}
-
+      {/* ── Modals ── */}
       {showActionForm && (
         <ActionFormModal
           issueId={issue.id}
@@ -530,12 +792,6 @@ export default function IssueDetailPage() {
           }}
         />
       )}
-
-      <CommentThread
-        issueId={issue.id}
-        comments={issue.comments}
-        onUpdate={fetchIssue}
-      />
 
       {signingStage && (
         <SignatureDialog
@@ -583,7 +839,6 @@ export default function IssueDetailPage() {
           onClose={() => setShowLessonForm(false)}
         />
       )}
-    </div>
     </DropZoneOverlay>
   );
 }

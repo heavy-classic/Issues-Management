@@ -18,6 +18,11 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: "#f59e0b", under_review: "#06b6d4", closed: "#10b981", cancelled: "#ef4444",
 };
 
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function AuditDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -73,185 +78,352 @@ export default function AuditDetailPage() {
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="loading">Loading…</p>;
   if (!audit) return <p>Audit not found.</p>;
 
   const phases = typeof audit.workflow_phases === "string"
     ? JSON.parse(audit.workflow_phases)
     : audit.workflow_phases || [];
 
+  const openFindings = (audit.findings || []).filter((f: any) => f.status !== "closed");
+
   return (
-    <div className="audit-detail">
-      {/* Header */}
-      <div className="audit-header">
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
-            <span className="text-muted">{audit.audit_number}</span>
-            <span className="badge" style={{ background: audit.type_color, color: "#fff" }}>
-              {audit.type_icon} {audit.type_name}
-            </span>
-            <span className="badge" style={{ background: STATUS_COLORS[audit.status], color: "#fff" }}>
-              {audit.status.replace(/_/g, " ")}
-            </span>
-            {audit.risk_level && (
-              <span className={`badge badge-priority-${audit.risk_level}`}>{audit.risk_level} risk</span>
+    <>
+      <div className="bento-layout-wrap">
+        {/* Scrollable bento area */}
+        <div className="bento-area">
+          <div className="bento">
+
+            {/* ── Header tile ── */}
+            <div className="tile t-header">
+              <div className="bento-header-row">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="rec-type">
+                    <div className="rec-type-dot" style={{ background: audit.type_color || "#4f46e5" }} />
+                    {audit.type_icon && <span>{audit.type_icon}</span>}
+                    Audit Record
+                  </div>
+                  <div className="rec-title">{audit.title}</div>
+                </div>
+                <div className="bento-header-actions">
+                  <button className="btn btn-secondary" onClick={() => setEditing(true)}>✏ Edit</button>
+                  <button className="btn btn-secondary" onClick={handleExportPDF}>📤 Export PDF</button>
+                  {audit.status !== "closed" && audit.status !== "cancelled" && (
+                    <>
+                      <select
+                        value={audit.status}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e0e7ff", fontSize: 12, background: "#fff", color: "#1e1b4b" }}
+                      >
+                        {["draft", "scheduled", "planning", "in_progress", "under_review", "closed", "cancelled"].map((s) => (
+                          <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                        ))}
+                      </select>
+                      <button className="btn-submit" onClick={handleAdvancePhase}>
+                        Advance Phase →
+                      </button>
+                    </>
+                  )}
+                  <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+                </div>
+              </div>
+
+              {/* Meta strip */}
+              <div className="meta-strip">
+                <div className="ms-item">
+                  <div className="ms-status-dot" style={{ background: STATUS_COLORS[audit.status] || "#4f46e5" }} />
+                  <strong>{audit.status.replace(/_/g, " ")}</strong>
+                </div>
+                {audit.audit_number && (
+                  <div className="ms-item" style={{ fontFamily: "monospace", fontSize: 11, color: "#7c5cbf" }}>
+                    {audit.audit_number}
+                  </div>
+                )}
+                {audit.type_name && <div className="ms-item">🏷 {audit.type_name}</div>}
+                {audit.risk_level && <div className="ms-item">⚠ {audit.risk_level} risk</div>}
+                <div className="ms-item">📅 {fmtDate(audit.scheduled_start)}</div>
+                <div className="ms-item">👤 {audit.lead_name || audit.lead_email || "No lead"}</div>
+                {audit.compliance_score && (
+                  <div className="ms-item">✓ {audit.compliance_score}% compliant</div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Workflow / Phases tile ── */}
+            {phases.length > 0 && (
+              <div className="tile t-workflow">
+                <div className="tile-label acc">
+                  Workflow Phases — {audit.current_phase || "Not started"}
+                </div>
+                <AuditPhaseProgress
+                  phases={phases}
+                  currentPhase={audit.current_phase}
+                  status={audit.status}
+                />
+              </div>
             )}
+
+            {/* ── Audit Plan tile ── */}
+            {(audit.objective || audit.scope || audit.methodology || audit.criteria_standards) && (
+              <div className="tile t-desc">
+                <div className="tile-label">Audit Plan</div>
+                {audit.objective && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div className="bento-team-k" style={{ marginBottom: 4 }}>Objective</div>
+                    <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{audit.objective}</p>
+                  </div>
+                )}
+                {audit.scope && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div className="bento-team-k" style={{ marginBottom: 4 }}>Scope</div>
+                    <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{audit.scope}</p>
+                  </div>
+                )}
+                {audit.methodology && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div className="bento-team-k" style={{ marginBottom: 4 }}>Methodology</div>
+                    <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{audit.methodology}</p>
+                  </div>
+                )}
+                {audit.criteria_standards && (
+                  <div>
+                    <div className="bento-team-k" style={{ marginBottom: 4 }}>Standards</div>
+                    <p style={{ margin: 0, fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{audit.criteria_standards}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Details tile ── */}
+            <div className="tile t-team">
+              <div className="tile-label">Details</div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Lead Auditor</div>
+                <div className="bento-team-v">
+                  {audit.lead_name || audit.lead_email ? (
+                    <>
+                      <div className="bento-av">{(audit.lead_name || audit.lead_email || "?").charAt(0).toUpperCase()}</div>
+                      {audit.lead_name || audit.lead_email}
+                    </>
+                  ) : <span style={{ color: "#a5b4fc" }}>Unassigned</span>}
+                </div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Team Size</div>
+                <div className="bento-team-v">{audit.team?.length || 0} members</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Department</div>
+                <div className="bento-team-v">{audit.auditee_department || "—"}</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Location</div>
+                <div className="bento-team-v">{audit.location || "—"}</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Scheduled</div>
+                <div className="bento-team-v">{fmtDate(audit.scheduled_start)} → {fmtDate(audit.scheduled_end)}</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Rating</div>
+                <div className="bento-team-v">{audit.overall_rating || "Not rated"}</div>
+              </div>
+              <div className="bento-team-row">
+                <div className="bento-team-k">Score</div>
+                <div className="bento-team-v" style={{ color: "#4f46e5", fontWeight: 600 }}>
+                  {audit.compliance_score ? `${audit.compliance_score}%` : "Not scored"}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Findings tile ── */}
+            <div className="tile t-actions">
+              <FindingsPanel
+                auditId={id!}
+                findings={audit.findings || []}
+                users={users}
+                onUpdate={fetchAudit}
+              />
+            </div>
+
+            {/* ── Checklists tile ── */}
+            <div className="tile t-comments">
+              <div className="tile-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>
+                  Checklists{" "}
+                  <span style={{ background: "#ede9fe", color: "#4f46e5", fontSize: 10, padding: "1px 7px", borderRadius: 8, marginLeft: 4, fontWeight: 600 }}>
+                    {audit.instances?.length || 0}
+                  </span>
+                </span>
+                <AssignChecklistButton auditId={id!} checklists={checklists} users={users} onAssigned={fetchAudit} />
+              </div>
+              {audit.instances?.length > 0 ? (
+                <div style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginTop: 8 }}>
+                  {audit.instances.map((inst: any) => (
+                    <ChecklistInstanceCard key={inst.id} instance={inst} onUpdate={fetchAudit} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted" style={{ marginTop: 8 }}>No checklists assigned.</p>
+              )}
+            </div>
+
+            {/* ── Evidence tile ── */}
+            <div className="tile t-attach">
+              <div className="tile-label">Evidence</div>
+              {audit.attachments?.length > 0 ? (
+                <AttachmentList
+                  parentId={id!}
+                  parentType="audit"
+                  attachments={audit.attachments || []}
+                  onUpdate={fetchAudit}
+                />
+              ) : (
+                <div className="bento-attach-zone">
+                  <div style={{ fontSize: 28 }}>📎</div>
+                  <div>No evidence attached</div>
+                  <div style={{ fontSize: 11, color: "#c7d2fe" }}>Upload via Edit</div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Team tile ── */}
+            <div className="tile" style={{ gridColumn: "span 3" }}>
+              <AuditTeamPanel
+                auditId={id!}
+                team={audit.team || []}
+                users={users}
+                onUpdate={fetchAudit}
+              />
+            </div>
+
+            {/* ── Meetings tile ── */}
+            <div className="tile" style={{ gridColumn: "span 3" }}>
+              <AuditMeetingsPanel
+                auditId={id!}
+                meetings={audit.meetings || []}
+                users={users}
+                onUpdate={fetchAudit}
+              />
+            </div>
+
+          </div>{/* end .bento */}
+        </div>{/* end .bento-area */}
+
+        {/* ── AI Panel ── */}
+        <div className="ai-panel">
+          <div className="ai-hdr">
+            <div className="ai-title">
+              <div className="ai-dot" />
+              AI Assistant
+            </div>
+            <div className="ai-sub">Powered by Claude · Live analysis</div>
           </div>
-          <h1 style={{ margin: 0 }}>{audit.title}</h1>
-          {audit.description && <p className="text-muted" style={{ marginTop: "0.5rem" }}>{audit.description}</p>}
-        </div>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
-          <button className="btn btn-secondary" onClick={() => setEditing(true)}>Edit</button>
-          <button className="btn btn-secondary" onClick={handleExportPDF}>Export PDF</button>
-          {audit.status !== "closed" && audit.status !== "cancelled" && (
-            <>
-              <button className="btn btn-primary" onClick={handleAdvancePhase}>Advance Phase</button>
-              <select
-                value={audit.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                style={{ padding: "0.5rem" }}
-              >
-                {["draft", "scheduled", "planning", "in_progress", "under_review", "closed", "cancelled"].map((s) => (
-                  <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-                ))}
-              </select>
-            </>
-          )}
-          <button className="btn btn-secondary" style={{ color: "#ef4444" }} onClick={handleDelete}>Delete</button>
-        </div>
-      </div>
+          <div className="ai-body">
+            {/* Smart Summary */}
+            <div className="ai-card">
+              <div className="ai-card-hd">
+                <div className="ai-card-ico">📋</div>
+                <div className="ai-card-ttl">Smart Summary</div>
+                <div className="ai-card-bdg">Auto-generated</div>
+              </div>
+              <div className="ai-sum">
+                Audit <span className="hl">{audit.audit_number || audit.title}</span> is{" "}
+                <span className="hl">{audit.status.replace(/_/g, " ")}</span>
+                {audit.type_name && <>, type: <span className="hl">{audit.type_name}</span></>}
+                . Led by <span className="hl">{audit.lead_name || audit.lead_email || "no lead assigned"}</span>
+                {audit.findings?.length > 0 && (
+                  <>. <span className="hl">{audit.findings.length} finding{audit.findings.length !== 1 ? "s" : ""}</span>
+                  {openFindings.length > 0 && <>, {openFindings.length} open</>}</>
+                )}
+                .
+              </div>
+            </div>
 
-      {/* Phase Progress */}
-      {phases.length > 0 && (
-        <AuditPhaseProgress phases={phases} currentPhase={audit.current_phase} status={audit.status} />
-      )}
+            {/* Suggested Next Steps */}
+            <div className="ai-card">
+              <div className="ai-card-hd">
+                <div className="ai-card-ico">✨</div>
+                <div className="ai-card-ttl">Suggested Next Steps</div>
+              </div>
+              {!audit.lead_email && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">1</div>
+                  <div className="ai-sug-t">
+                    <strong>Assign a lead auditor</strong>
+                    No lead assigned — the audit needs an owner.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+              {openFindings.length > 0 && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">{audit.lead_email ? "1" : "2"}</div>
+                  <div className="ai-sug-t">
+                    <strong>Close open findings</strong>
+                    {openFindings.length} finding{openFindings.length !== 1 ? "s" : ""} still open.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+              {audit.status === "in_progress" && phases.length > 0 && (
+                <div className="ai-sug">
+                  <div className="ai-sug-n">{(audit.lead_email ? 0 : 1) + (openFindings.length > 0 ? 1 : 0) + 1}</div>
+                  <div className="ai-sug-t">
+                    <strong>Advance to next phase</strong>
+                    Current: {audit.current_phase || "—"}. Move forward when ready.
+                  </div>
+                  <div className="ai-arr">›</div>
+                </div>
+              )}
+            </div>
 
-      {/* Metadata Grid */}
-      <div className="issue-meta-grid" style={{ marginBottom: "1.5rem" }}>
-        <div className="meta-item">
-          <div className="meta-label">Lead Auditor</div>
-          <div className="meta-value">{audit.lead_name || audit.lead_email || "Unassigned"}</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Team Size</div>
-          <div className="meta-value">{audit.team?.length || 0} members</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Department</div>
-          <div className="meta-value">{audit.auditee_department || "—"}</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Location</div>
-          <div className="meta-value">{audit.location || "—"}</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Scheduled</div>
-          <div className="meta-value">
-            {audit.scheduled_start ? new Date(audit.scheduled_start).toLocaleDateString() : "—"}
-            {" — "}
-            {audit.scheduled_end ? new Date(audit.scheduled_end).toLocaleDateString() : "—"}
+            {/* Risk Signals */}
+            <div className="ai-card">
+              <div className="ai-card-hd">
+                <div className="ai-card-ico">⚠️</div>
+                <div className="ai-card-ttl">Risk Signals</div>
+              </div>
+              {(audit.risk_level === "high" || audit.risk_level === "critical") && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: "#ef4444" }} />
+                  <div className="ai-risk-txt">{audit.risk_level} risk audit — needs close monitoring</div>
+                  <div className="ai-risk-lvl" style={{ color: "#ef4444" }}>High</div>
+                </div>
+              )}
+              {openFindings.length > 3 && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: "#fbbf24" }} />
+                  <div className="ai-risk-txt">{openFindings.length} open findings — review urgently</div>
+                  <div className="ai-risk-lvl" style={{ color: "#fbbf24" }}>Med</div>
+                </div>
+              )}
+              {!audit.lead_email && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: "#f59e0b" }} />
+                  <div className="ai-risk-txt">No lead auditor — audit may stall</div>
+                  <div className="ai-risk-lvl" style={{ color: "#f59e0b" }}>Med</div>
+                </div>
+              )}
+              {audit.risk_level !== "high" && audit.risk_level !== "critical" && openFindings.length <= 3 && audit.lead_email && (
+                <div className="ai-risk">
+                  <div className="ai-risk-dot" style={{ background: "#818cf8" }} />
+                  <div className="ai-risk-txt">No significant risks detected</div>
+                  <div className="ai-risk-lvl" style={{ color: "#818cf8" }}>Low</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* AI input */}
+          <div className="ai-in">
+            <div className="ai-in-row">
+              <input className="ai-input" placeholder="Ask AI about this audit…" />
+              <div className="ai-send-btn">↑</div>
+            </div>
           </div>
         </div>
-        <div className="meta-item">
-          <div className="meta-label">Compliance Score</div>
-          <div className="meta-value">{audit.compliance_score ? `${audit.compliance_score}%` : "Not scored"}</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Overall Rating</div>
-          <div className="meta-value">{audit.overall_rating || "Not rated"}</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Findings</div>
-          <div className="meta-value">{audit.findings?.length || 0}</div>
-        </div>
-        <div className="meta-item">
-          <div className="meta-label">Created By</div>
-          <div className="meta-value">{audit.creator_name || audit.creator_email}</div>
-        </div>
       </div>
-
-      {/* Audit Plan */}
-      {(audit.objective || audit.scope || audit.methodology) && (
-        <div className="detail-section">
-          <h3>Audit Plan</h3>
-          {audit.objective && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <strong>Objective:</strong>
-              <p style={{ margin: "0.25rem 0" }}>{audit.objective}</p>
-            </div>
-          )}
-          {audit.scope && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <strong>Scope:</strong>
-              <p style={{ margin: "0.25rem 0" }}>{audit.scope}</p>
-            </div>
-          )}
-          {audit.methodology && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <strong>Methodology:</strong>
-              <p style={{ margin: "0.25rem 0" }}>{audit.methodology}</p>
-            </div>
-          )}
-          {audit.criteria_standards && (
-            <div>
-              <strong>Standards:</strong>
-              <p style={{ margin: "0.25rem 0" }}>{audit.criteria_standards}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Checklists */}
-      <div className="detail-section">
-        <div className="section-header-row">
-          <h3>Checklists <span className="section-count-badge">{audit.instances?.length || 0}</span></h3>
-          <AssignChecklistButton auditId={id!} checklists={checklists} users={users} onAssigned={fetchAudit} />
-        </div>
-        {audit.instances?.length > 0 ? (
-          <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
-            {audit.instances.map((inst: any) => (
-              <ChecklistInstanceCard key={inst.id} instance={inst} onUpdate={fetchAudit} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-muted">No checklists assigned.</p>
-        )}
-      </div>
-
-      {/* Findings */}
-      <FindingsPanel
-        auditId={id!}
-        findings={audit.findings || []}
-        users={users}
-        onUpdate={fetchAudit}
-      />
-
-      {/* Evidence / Attachments */}
-      <div className="detail-section">
-        <h3>Evidence</h3>
-        <AttachmentList
-          parentId={id!}
-          parentType="audit"
-          attachments={audit.attachments || []}
-          onUpdate={fetchAudit}
-        />
-      </div>
-
-      {/* Team */}
-      <AuditTeamPanel
-        auditId={id!}
-        team={audit.team || []}
-        users={users}
-        onUpdate={fetchAudit}
-      />
-
-      {/* Meetings */}
-      <AuditMeetingsPanel
-        auditId={id!}
-        meetings={audit.meetings || []}
-        users={users}
-        onUpdate={fetchAudit}
-      />
 
       {editing && (
         <AuditFormModal
@@ -262,7 +434,7 @@ export default function AuditDetailPage() {
           onClose={() => setEditing(false)}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -287,15 +459,15 @@ function AssignChecklistButton({
     onAssigned();
   }
 
-  if (!show) return <button className="btn btn-secondary" onClick={() => setShow(true)}>+ Assign Checklist</button>;
+  if (!show) return <button className="btn btn-secondary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => setShow(true)}>+ Assign</button>;
 
   return (
     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-      <select value={checklistId} onChange={(e) => setChecklistId(e.target.value)}>
+      <select value={checklistId} onChange={(e) => setChecklistId(e.target.value)} style={{ fontSize: 12, padding: "4px 6px" }}>
         <option value="">Select checklist...</option>
         {checklists.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
-      <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+      <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} style={{ fontSize: 12, padding: "4px 6px" }}>
         <option value="">Assign to...</option>
         {users.map((u: any) => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
       </select>

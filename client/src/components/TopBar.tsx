@@ -21,8 +21,17 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
         onClick={onMenuToggle}
         aria-label="Toggle menu"
       >
-        {"\u2630"}
+        {"☰"}
       </button>
+
+      {/* Logo — shown on desktop next to breadcrumbs */}
+      <div className="topbar-logo">
+        <div className="topbar-logo-dot">IT</div>
+        <span className="topbar-logo-name">IssueTrack</span>
+      </div>
+
+      <span className="topbar-sep">/</span>
+
       <nav className="topbar-breadcrumbs" aria-label="Breadcrumb">
         {displayCrumbs.map((crumb, i) => (
           <span key={i} className="topbar-breadcrumb">
@@ -37,6 +46,7 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
           </span>
         ))}
       </nav>
+
       <div className="topbar-actions" />
     </header>
   );
