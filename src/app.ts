@@ -1,6 +1,7 @@
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
+import path from "path";
 import { requestContext } from "./middleware/requestContext";
 import authRoutes from "./routes/auth";
 import protectedRoutes from "./routes/protected";
@@ -72,7 +73,17 @@ app.use("/api/lesson-workflow-stages", lessonWorkflowStagesRoutes);
 app.use("/api/lesson-dashboard", lessonDashboardRoutes);
 app.use("/api/report-schedules", reportSchedulesRoutes);
 
-app.use((_req, res) => {
+// Serve built React frontend static files
+const clientDist = path.join(__dirname, "../client/dist");
+app.use(express.static(clientDist));
+
+// SPA fallback — non-API routes serve index.html so React Router works
+app.get(/^(?!\/api).*/, (_req, res) => {
+  res.sendFile(path.join(clientDist, "index.html"));
+});
+
+// API 404
+app.use("/api", (_req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
