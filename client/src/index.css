@@ -4517,3 +4517,109 @@ a:hover {
 [data-theme="dark"] .db-act-text   { color: var(--color-text-muted); }
 [data-theme="dark"] .db-qa-btn     { background: var(--color-bg-subtle); border-color: var(--color-border); }
 [data-theme="dark"] .db-sp-bar     { background: var(--color-bg-elevated); }
+
+/* ── Action Plan Table ─────────────────────────────────────── */
+.ap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.ap-th {
+  padding: 7px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  border-bottom: 1px solid #f0eeff;
+  white-space: nowrap;
+}
+.ap-row {
+  transition: background .12s;
+}
+.ap-row:hover {
+  background: #faf9ff;
+}
+.ap-row + .ap-row .ap-td {
+  border-top: 1px solid #f5f3ff;
+}
+.ap-td {
+  padding: 10px 12px;
+  color: #1e1b4b;
+  vertical-align: middle;
+}
+.ap-name {
+  font-weight: 500;
+  max-width: 280px;
+}
+.ap-assignee {
+  color: #374151;
+  font-size: 12px;
+}
+.ap-empty {
+  padding: 20px 12px;
+  color: #c7d2fe;
+  font-size: 12px;
+  font-style: italic;
+}
+/* Status chips */
+.ap-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ap-status-open        { background: #ede9fe; color: #5b21b6; }
+.ap-status-in_progress { background: #dbeafe; color: #1d4ed8; }
+.ap-status-completed   { background: #d1fae5; color: #065f46; }
+/* Priority chips */
+.ap-pri {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ap-pri-critical { background: #fee2e2; color: #dc2626; }
+.ap-pri-high     { background: #ffedd5; color: #ea580c; }
+.ap-pri-medium   { background: #fef3c7; color: #d97706; }
+.ap-pri-low      { background: #ede9fe; color: #6d6d9e; }
+/* Action buttons */
+.ap-actions-cell { white-space: nowrap; }
+.ap-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: opacity .15s;
+}
+.ap-btn:hover { opacity: .85; }
+.ap-btn-edit { background: #4f46e5; color: #fff; }
+.ap-btn-del  { background: #ef4444; color: #fff; }
+/* Add button in header */
+.ap-add-btn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.ap-add-btn:hover { opacity: .85; }
+/* Dark mode */
+[data-theme="dark"] .ap-th    { color: #6b7280; border-bottom-color: var(--color-border); }
+[data-theme="dark"] .ap-row:hover { background: var(--color-bg-subtle); }
+[data-theme="dark"] .ap-row + .ap-row .ap-td { border-top-color: var(--color-border); }
+[data-theme="dark"] .ap-td    { color: var(--color-text); }
+[data-theme="dark"] .ap-name  { color: var(--color-text); }

@@ -6,7 +6,6 @@ import CommentThread from "../components/CommentThread";
 import SignatureDialog from "../components/SignatureDialog";
 import SignatureDisplay from "../components/SignatureDisplay";
 import AuditHistoryModal from "../components/AuditHistoryModal";
-import ActionCard from "../components/ActionCard";
 import ActionFormModal from "../components/ActionFormModal";
 import AttachmentList from "../components/AttachmentList";
 import FileUploadModal from "../components/FileUploadModal";
@@ -566,40 +565,65 @@ export default function IssueDetailPage() {
                       {issue.actions?.length || 0}
                     </span>
                   </span>
+                  <button
+                    className="ap-add-btn"
+                    onClick={() => { setEditingAction(null); setShowActionForm(true); }}
+                  >
+                    + Add
+                  </button>
                 </div>
-                <div className="bento-action-grid">
-                  {issue.actions && issue.actions.length > 0 ? (
-                    issue.actions.map((a) => (
-                      <ActionCard
-                        key={a.id}
-                        action={a}
-                        onEdit={(action) => {
-                          setEditingAction(action);
-                          setShowActionForm(true);
-                        }}
-                        onDelete={async (actionId) => {
-                          if (!confirm("Delete this action?")) return;
-                          try {
-                            await api.delete(`/actions/${actionId}`);
-                            fetchIssue();
-                          } catch {
-                            alert("Failed to delete action");
-                          }
-                        }}
-                        onUpdate={fetchIssue}
-                      />
-                    ))
-                  ) : null}
-                </div>
-                <div
-                  className="bento-ag-add"
-                  onClick={() => {
-                    setEditingAction(null);
-                    setShowActionForm(true);
-                  }}
-                >
-                  + Add action item
-                </div>
+                <table className="ap-table">
+                  <thead>
+                    <tr>
+                      <th className="ap-th">Name</th>
+                      <th className="ap-th">Status</th>
+                      <th className="ap-th">Priority</th>
+                      <th className="ap-th">Assignee</th>
+                      <th className="ap-th">Due Date</th>
+                      <th className="ap-th">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {issue.actions && issue.actions.length > 0 ? (
+                      issue.actions.map((a) => {
+                        const isOverdue = a.due_date && a.status !== "completed" && new Date(a.due_date) < new Date();
+                        return (
+                          <tr key={a.id} className="ap-row">
+                            <td className="ap-td ap-name">{a.title}</td>
+                            <td className="ap-td">
+                              <span className={`ap-status ap-status-${a.status}`}>{a.status.replace("_", " ")}</span>
+                            </td>
+                            <td className="ap-td">
+                              <span className={`ap-pri ap-pri-${a.priority}`}>{a.priority}</span>
+                            </td>
+                            <td className="ap-td ap-assignee">{a.assignee_name || a.assignee_email || <span style={{ color: "#c7d2fe" }}>—</span>}</td>
+                            <td className="ap-td" style={{ color: isOverdue ? "#ef4444" : undefined }}>
+                              {a.due_date ? fmtDate(a.due_date) : <span style={{ color: "#c7d2fe" }}>—</span>}
+                            </td>
+                            <td className="ap-td ap-actions-cell">
+                              <button
+                                className="ap-btn ap-btn-edit"
+                                onClick={() => { setEditingAction(a); setShowActionForm(true); }}
+                              >Edit</button>
+                              <button
+                                className="ap-btn ap-btn-del"
+                                onClick={async () => {
+                                  if (!confirm("Delete this action?")) return;
+                                  try { await api.delete(`/actions/${a.id}`); fetchIssue(); }
+                                  catch { alert("Failed to delete action"); }
+                                }}
+                              >Delete</button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="ap-empty">No action items yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
 
               {/* ── Attachments tile ── */}
