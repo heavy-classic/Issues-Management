@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import IssueForm from "../components/IssueForm";
 import { exportToCSV, exportToExcel } from "../utils/exportUtils";

@@ -315,7 +315,7 @@ function OverviewDashboard() {
 
           <div style={{ marginTop: 16 }}>
             <div className="db-tile-label acc">Priority Mix</div>
-            {["critical", "high", "medium", "low"].map((p, i) => {
+            {["critical", "high", "medium", "low"].map((p) => {
               const colors: Record<string, string> = { critical: "#dc2626", high: "#ea580c", medium: "#d97706", low: "#10b981" };
               return (
                 <div key={p} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
