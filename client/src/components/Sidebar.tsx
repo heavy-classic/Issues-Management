@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface SidebarProps {
@@ -8,23 +9,15 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function getInitials(): string {
     if (user?.fullName) {
-      return user.fullName
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+      return user.fullName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
     }
     if (user?.name) {
-      return user.name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+      return user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
     }
     return user?.email?.charAt(0).toUpperCase() || "?";
   }
@@ -33,11 +26,22 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return `sb-item${isActive ? " active" : ""}`;
   }
 
+  async function handleLogout() {
+    setMenuOpen(false);
+    await logout();
+    navigate("/login");
+  }
+
   return (
     <>
       {!collapsed && (
         <div className="sidebar-overlay" onClick={onToggle} />
       )}
+      {/* Avatar dropdown overlay */}
+      {menuOpen && (
+        <div className="sb-menu-overlay" onClick={() => setMenuOpen(false)} />
+      )}
+
       <aside className={`sidebar${!collapsed ? " sidebar-open" : ""}`}>
 
         {/* Logo */}
@@ -101,8 +105,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <div className="sb-group">
               <NavLink to="/admin" end className={navClass} onClick={onToggle}>
                 <span className="sb-icon">⚙</span>
-                <span className="sb-label">Admin</span>
-                <span className="sb-tip">Admin</span>
+                <span className="sb-label">System Admin</span>
+                <span className="sb-tip">System Admin</span>
               </NavLink>
               <NavLink to="/admin/users" className={navClass} onClick={onToggle}>
                 <span className="sb-icon">👤</span>
@@ -133,11 +137,47 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </>
         )}
 
-        {/* Bottom: avatar */}
-        <div className="sb-bot">
-          <div className="sb-av" onClick={logout} title="Sign out">
+        {/* Bottom: avatar with popover menu */}
+        <div className="sb-bot" style={{ position: "relative" }}>
+          {menuOpen && (
+            <div className="sb-popover">
+              <div className="sb-popover-name">{user?.fullName || user?.name || user?.email}</div>
+              <div className="sb-popover-email" style={{ display: user?.fullName || user?.name ? "block" : "none" }}>
+                {user?.email}
+              </div>
+              {isAdmin && (
+                <NavLink
+                  to="/admin"
+                  className="sb-popover-item"
+                  onClick={() => { setMenuOpen(false); onToggle(); }}
+                >
+                  ⚙ System Admin
+                </NavLink>
+              )}
+              <NavLink
+                to="/admin/users"
+                className="sb-popover-item"
+                onClick={() => { setMenuOpen(false); onToggle(); }}
+                style={{ display: isAdmin ? "flex" : "none" }}
+              >
+                👤 User Management
+              </NavLink>
+              <div className="sb-popover-div" />
+              <button className="sb-popover-signout" onClick={handleLogout}>
+                Sign out
+              </button>
+            </div>
+          )}
+          <div
+            className="sb-av"
+            onClick={() => setMenuOpen((v) => !v)}
+            title={user?.fullName || user?.name || user?.email || "Account"}
+            style={{ cursor: "pointer" }}
+          >
             {getInitials()}
-            <span className="sb-tip">{user?.fullName || user?.name || user?.email || "Sign out"}</span>
+            {!menuOpen && (
+              <span className="sb-tip">{user?.fullName || user?.name || user?.email}</span>
+            )}
           </div>
         </div>
 

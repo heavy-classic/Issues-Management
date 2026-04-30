@@ -277,6 +277,89 @@ a:hover {
   opacity: 1;
 }
 
+/* Avatar popover menu */
+.sb-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+.sb-popover {
+  position: absolute;
+  bottom: 44px;
+  left: 4px;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 12px 0 8px;
+  z-index: 200;
+  animation: fadeInUp .12s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sb-popover-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e1b4b;
+  padding: 0 14px 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-popover-email {
+  font-size: 11px;
+  color: #9ca3af;
+  padding: 0 14px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #374151;
+  text-decoration: none;
+  transition: background .1s;
+}
+.sb-popover-item:hover {
+  background: #f5f3ff;
+  color: #4f46e5;
+}
+.sb-popover-div {
+  height: 1px;
+  background: #f0eeff;
+  margin: 6px 0;
+}
+.sb-popover-signout {
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #ef4444;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background .1s;
+}
+.sb-popover-signout:hover {
+  background: #fef2f2;
+}
+[data-theme="dark"] .sb-popover {
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .sb-popover-name { color: var(--color-text); }
+[data-theme="dark"] .sb-popover-item { color: var(--color-text-muted); }
+[data-theme="dark"] .sb-popover-item:hover { background: var(--color-bg-subtle); }
+[data-theme="dark"] .sb-popover-div  { background: var(--color-border); }
+[data-theme="dark"] .sb-popover-signout:hover { background: rgba(239,68,68,.1); }
+
 /* Keep legacy classes for backward compat */
 .sidebar-overlay {
   display: none;
