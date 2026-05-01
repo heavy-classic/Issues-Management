@@ -6,6 +6,7 @@ import CommentThread from "../components/CommentThread";
 import SignatureDialog from "../components/SignatureDialog";
 import SignatureDisplay from "../components/SignatureDisplay";
 import AuditHistoryModal from "../components/AuditHistoryModal";
+import HistoryPanel from "../components/HistoryPanel";
 import ActionFormModal from "../components/ActionFormModal";
 import AttachmentList from "../components/AttachmentList";
 import FileUploadModal from "../components/FileUploadModal";
@@ -134,6 +135,7 @@ export default function IssueDetailPage() {
   const [saving, setSaving] = useState(false);
   const [signingStage, setSigningStage] = useState<StageAssignment | null>(null);
   const [showAudit, setShowAudit] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [showActionForm, setShowActionForm] = useState(false);
   const [editingAction, setEditingAction] = useState<ActionItem | null>(null);
   const [showDropUpload, setShowDropUpload] = useState(false);
@@ -373,7 +375,7 @@ export default function IssueDetailPage() {
                     >
                       📤 Export PDF
                     </button>
-                    <button className="btn btn-secondary" onClick={() => setShowAudit(true)}>
+                    <button className="btn btn-secondary" onClick={() => setShowHistoryPanel((v) => !v)}>
                       🕐 History
                     </button>
                     <button className="btn btn-secondary" onClick={() => setShowLessonForm(true)}>
@@ -661,6 +663,17 @@ export default function IssueDetailPage() {
                 />
               </div>
 
+              {/* ── History tile ── */}
+              {showHistoryPanel && (
+                <div className="tile" style={{ gridColumn: "span 12" }}>
+                  <div className="tile-label" style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>🕐 Change History</span>
+                    <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--color-text-muted)" }} onClick={() => setShowHistoryPanel(false)}>×</button>
+                  </div>
+                  <HistoryPanel parentType="issues" parentId={issue.id} />
+                </div>
+              )}
+
             </div>{/* end .bento */}
           </div>{/* end .bento-area */}
 
@@ -671,7 +684,14 @@ export default function IssueDetailPage() {
                 <div className="ai-dot" />
                 AI Assistant
               </div>
-              <div className="ai-sub">Powered by Claude · Live analysis</div>
+              <div className="ai-sub">Preview Mode · Not enabled</div>
+            </div>
+            <div className="ai-demo-banner">
+              <div className="ai-demo-icon">🔮</div>
+              <div className="ai-demo-txt">
+                <strong>AI features coming soon</strong>
+                This panel previews how AI-powered analysis will work. Content shown is rule-based. Live AI is disabled.
+              </div>
             </div>
             <div className="ai-body">
               {/* Smart Summary */}
@@ -788,8 +808,8 @@ export default function IssueDetailPage() {
             {/* AI input */}
             <div className="ai-in">
               <div className="ai-in-row">
-                <input className="ai-input" placeholder="Ask AI about this issue…" />
-                <div className="ai-send-btn">↑</div>
+                <input className="ai-input" placeholder="Ask AI about this issue… (coming soon)" disabled />
+                <div className="ai-send-btn ai-send-disabled">↑</div>
               </div>
             </div>
           </div>

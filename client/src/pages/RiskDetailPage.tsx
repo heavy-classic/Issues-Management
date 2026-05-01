@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import RiskFormModal from "../components/RiskFormModal";
+import HistoryPanel from "../components/HistoryPanel";
 import RiskScoreDisplay from "../components/RiskScoreDisplay";
 import RiskAssessmentPanel from "../components/RiskAssessmentPanel";
 import RiskMitigationsPanel from "../components/RiskMitigationsPanel";
@@ -48,6 +49,7 @@ export default function RiskDetailPage() {
   const [linkedIssues, setLinkedIssues] = useState<any[]>([]);
   const [linkedAudits, setLinkedAudits] = useState<any[]>([]);
   const [showEdit, setShowEdit] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchRisk = useCallback(async () => {
@@ -129,6 +131,13 @@ export default function RiskDetailPage() {
                 </div>
                 <div className="bento-header-actions">
                   <button className="btn btn-secondary" onClick={() => setShowEdit(true)}>✏ Edit</button>
+                  <button className="btn btn-secondary" onClick={() => setShowHistory((v) => !v)}>🕐 History</button>
+                  <button className="btn btn-secondary" onClick={async () => {
+                    try {
+                      const { exportRiskPDF } = await import("../utils/exportUtils");
+                      exportRiskPDF({ risk, mitigations: mitigations || [], linked_issues: linkedIssues || [] });
+                    } catch(e) { console.error(e); }
+                  }}>⬇ Export PDF</button>
                   <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
                   <select
                     value={risk.status}
@@ -316,6 +325,17 @@ export default function RiskDetailPage() {
               <RiskLinkedAuditsPanel riskId={id as string} audits={linkedAudits} onRefresh={handleRefresh} />
             </div>
 
+            {/* ── History tile ── */}
+            {showHistory && (
+              <div className="tile" style={{ gridColumn: "span 12" }}>
+                <div className="tile-label" style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>🕐 Change History</span>
+                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--color-text-muted)" }} onClick={() => setShowHistory(false)}>×</button>
+                </div>
+                <HistoryPanel parentType="risks" parentId={id as string} />
+              </div>
+            )}
+
           </div>{/* end .bento */}
         </div>{/* end .bento-area */}
 
@@ -326,7 +346,14 @@ export default function RiskDetailPage() {
               <div className="ai-dot" />
               AI Assistant
             </div>
-            <div className="ai-sub">Powered by Claude · Live analysis</div>
+            <div className="ai-sub">Preview Mode · Not enabled</div>
+          </div>
+          <div className="ai-demo-banner">
+            <div className="ai-demo-icon">🔮</div>
+            <div className="ai-demo-txt">
+              <strong>AI features coming soon</strong>
+              This panel previews how AI-powered analysis will work. Content shown is rule-based. Live AI is disabled.
+            </div>
           </div>
           <div className="ai-body">
             {/* Smart Summary */}
@@ -429,8 +456,8 @@ export default function RiskDetailPage() {
           {/* AI input */}
           <div className="ai-in">
             <div className="ai-in-row">
-              <input className="ai-input" placeholder="Ask AI about this risk…" />
-              <div className="ai-send-btn">↑</div>
+              <input className="ai-input" placeholder="Ask AI about this risk… (coming soon)" disabled />
+              <div className="ai-send-btn ai-send-disabled">↑</div>
             </div>
           </div>
         </div>

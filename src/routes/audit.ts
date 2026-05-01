@@ -13,6 +13,16 @@ router.get("/issues/:issueId", async (req, res) => {
   res.json({ entries });
 });
 
+// Get audit history for any table/record — any authenticated user
+router.get("/entity/:tableName/:recordId", async (req, res) => {
+  const result = await auditService.getAuditHistory({
+    tableName: req.params.tableName,
+    recordId: req.params.recordId,
+    limit: 200,
+  });
+  res.json(result);
+});
+
 // Full audit log - admin only
 router.get("/", authorize("admin"), async (req, res) => {
   const filters = {

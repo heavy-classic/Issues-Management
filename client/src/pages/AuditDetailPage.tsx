@@ -9,6 +9,7 @@ import AuditTeamPanel from "../components/AuditTeamPanel";
 import AuditMeetingsPanel from "../components/AuditMeetingsPanel";
 import AttachmentList from "../components/AttachmentList";
 import { exportAuditPDF } from "../utils/auditExportUtils";
+import HistoryPanel from "../components/HistoryPanel";
 
 interface AuditType { id: string; name: string; }
 interface User { id: string; full_name: string | null; email: string; }
@@ -29,6 +30,7 @@ export default function AuditDetailPage() {
   const [audit, setAudit] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [auditTypes, setAuditTypes] = useState<AuditType[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [checklists, setChecklists] = useState<any[]>([]);
@@ -107,7 +109,8 @@ export default function AuditDetailPage() {
                 </div>
                 <div className="bento-header-actions">
                   <button className="btn btn-secondary" onClick={() => setEditing(true)}>✏ Edit</button>
-                  <button className="btn btn-secondary" onClick={handleExportPDF}>📤 Export PDF</button>
+                  <button className="btn btn-secondary" onClick={() => setShowHistory((v) => !v)}>🕐 History</button>
+                  <button className="btn btn-secondary" onClick={handleExportPDF}>⬇ Export PDF</button>
                   {audit.status !== "closed" && audit.status !== "cancelled" && (
                     <>
                       <select
@@ -307,6 +310,17 @@ export default function AuditDetailPage() {
               />
             </div>
 
+            {/* ── History tile ── */}
+            {showHistory && (
+              <div className="tile" style={{ gridColumn: "span 12" }}>
+                <div className="tile-label" style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>🕐 Change History</span>
+                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--color-text-muted)" }} onClick={() => setShowHistory(false)}>×</button>
+                </div>
+                <HistoryPanel parentType="audits" parentId={id as string} />
+              </div>
+            )}
+
           </div>{/* end .bento */}
         </div>{/* end .bento-area */}
 
@@ -317,7 +331,14 @@ export default function AuditDetailPage() {
               <div className="ai-dot" />
               AI Assistant
             </div>
-            <div className="ai-sub">Powered by Claude · Live analysis</div>
+            <div className="ai-sub">Preview Mode · Not enabled</div>
+          </div>
+          <div className="ai-demo-banner">
+            <div className="ai-demo-icon">🔮</div>
+            <div className="ai-demo-txt">
+              <strong>AI features coming soon</strong>
+              This panel previews how AI-powered analysis will work. Content shown is rule-based. Live AI is disabled.
+            </div>
           </div>
           <div className="ai-body">
             {/* Smart Summary */}
@@ -418,8 +439,8 @@ export default function AuditDetailPage() {
           {/* AI input */}
           <div className="ai-in">
             <div className="ai-in-row">
-              <input className="ai-input" placeholder="Ask AI about this audit…" />
-              <div className="ai-send-btn">↑</div>
+              <input className="ai-input" placeholder="Ask AI about this audit… (coming soon)" disabled />
+              <div className="ai-send-btn ai-send-disabled">↑</div>
             </div>
           </div>
         </div>

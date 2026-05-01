@@ -29,6 +29,9 @@ import LessonsPage from "./pages/LessonsPage";
 import LessonDetailPage from "./pages/LessonDetailPage";
 import AdminLessonWorkflowPage from "./pages/AdminLessonWorkflowPage";
 import AdminInstructionsPage from "./pages/AdminInstructionsPage";
+import WorkQueuePage from "./pages/WorkQueuePage";
+import ProceduresPage from "./pages/ProceduresPage";
+import ProcedureDetailPage from "./pages/ProcedureDetailPage";
 import type { ReactNode } from "react";
 
 function LayoutRoute({ children }: { children: ReactNode }) {
@@ -80,6 +83,9 @@ export default function App() {
           <Route path="/lessons/:id" element={<LayoutRoute><LessonDetailPage /></LayoutRoute>} />
           <Route path="/admin/lesson-workflow" element={<AdminLayoutRoute><AdminLessonWorkflowPage /></AdminLayoutRoute>} />
           <Route path="/admin/instructions" element={<AdminLayoutRoute><AdminInstructionsPage /></AdminLayoutRoute>} />
+          <Route path="/queue" element={<LayoutRoute><WorkQueuePage /></LayoutRoute>} />
+          <Route path="/procedures" element={<LayoutRoute><ProceduresPage /></LayoutRoute>} />
+          <Route path="/procedures/:id" element={<LayoutRoute><ProcedureDetailPage /></LayoutRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

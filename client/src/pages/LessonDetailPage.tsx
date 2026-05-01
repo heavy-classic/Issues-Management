@@ -6,6 +6,7 @@ import LessonLinkedIssuesPanel from "../components/LessonLinkedIssuesPanel";
 import LessonCommentThread from "../components/LessonCommentThread";
 import AttachmentList from "../components/AttachmentList";
 import FileUploadModal from "../components/FileUploadModal";
+import HistoryPanel from "../components/HistoryPanel";
 
 const TYPE_COLORS: Record<string, string> = {
   positive: "#10b981",
@@ -66,6 +67,7 @@ export default function LessonDetailPage() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [showEdit, setShowEdit] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchLesson = useCallback(async () => {
@@ -155,6 +157,13 @@ export default function LessonDetailPage() {
                 <div className="bento-header-actions">
                   <button className="btn btn-secondary" onClick={() => setShowEdit(true)}>✏ Edit</button>
                   <button className="btn btn-secondary" onClick={() => setShowUpload(true)}>📎 Attach</button>
+                  <button className="btn btn-secondary" onClick={() => setShowHistory((v) => !v)}>🕐 History</button>
+                  <button className="btn btn-secondary" onClick={async () => {
+                    try {
+                      const { exportLessonPDF } = await import("../utils/exportUtils");
+                      exportLessonPDF({ lesson, comments: [] });
+                    } catch(e) { console.error(e); }
+                  }}>⬇ Export PDF</button>
                   <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
                   <select
                     value={lesson.status}
@@ -353,6 +362,17 @@ export default function LessonDetailPage() {
               <LessonCommentThread lessonId={id!} />
             </div>
 
+            {/* ── History tile ── */}
+            {showHistory && (
+              <div className="tile" style={{ gridColumn: "span 12" }}>
+                <div className="tile-label" style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>🕐 Change History</span>
+                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--color-text-muted)" }} onClick={() => setShowHistory(false)}>×</button>
+                </div>
+                <HistoryPanel parentType="lessons" parentId={id!} />
+              </div>
+            )}
+
           </div>{/* end .bento */}
         </div>{/* end .bento-area */}
 
@@ -363,7 +383,14 @@ export default function LessonDetailPage() {
               <div className="ai-dot" />
               AI Assistant
             </div>
-            <div className="ai-sub">Powered by Claude · Live analysis</div>
+            <div className="ai-sub">Preview Mode · Not enabled</div>
+          </div>
+          <div className="ai-demo-banner">
+            <div className="ai-demo-icon">🔮</div>
+            <div className="ai-demo-txt">
+              <strong>AI features coming soon</strong>
+              This panel previews how AI-powered analysis will work. Content shown is rule-based. Live AI is disabled.
+            </div>
           </div>
           <div className="ai-body">
             {/* Smart Summary */}
@@ -465,8 +492,8 @@ export default function LessonDetailPage() {
           {/* AI input */}
           <div className="ai-in">
             <div className="ai-in-row">
-              <input className="ai-input" placeholder="Ask AI about this lesson…" />
-              <div className="ai-send-btn">↑</div>
+              <input className="ai-input" placeholder="Ask AI about this lesson… (coming soon)" disabled />
+              <div className="ai-send-btn ai-send-disabled">↑</div>
             </div>
           </div>
         </div>

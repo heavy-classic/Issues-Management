@@ -34,6 +34,7 @@ import lessonWorkflowStagesRoutes from "./routes/lessonWorkflowStages";
 import lessonDashboardRoutes from "./routes/lessonDashboard";
 import reportSchedulesRoutes from "./routes/reportSchedules";
 import settingsRoutes from "./routes/settings";
+import proceduresRoutes from "./routes/procedures";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -74,6 +75,7 @@ app.use("/api/lesson-workflow-stages", lessonWorkflowStagesRoutes);
 app.use("/api/lesson-dashboard", lessonDashboardRoutes);
 app.use("/api/report-schedules", reportSchedulesRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/procedures", proceduresRoutes);
 
 // Serve built React frontend static files
 const clientDist = path.join(__dirname, "../client/dist");
