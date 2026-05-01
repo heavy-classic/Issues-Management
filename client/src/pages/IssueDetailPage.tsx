@@ -720,7 +720,7 @@ export default function IssueDetailPage() {
               <div className="tile">
                 <InvestigationPanel
                   issueId={issue.id}
-                  isReadOnly={isReadOnly}
+                  isReadOnly={false}
                 />
               </div>
 
