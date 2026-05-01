@@ -20,6 +20,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  full_name: string | null;
 }
 
 export default function AdminTeamsPage() {
@@ -178,7 +179,7 @@ export default function AdminTeamsPage() {
                 {users
                   .filter((u) => !members.some((m) => m.user_id === u.id))
                   .map((u) => (
-                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                    <option key={u.id} value={u.id}>{u.full_name || u.name || u.email}</option>
                   ))}
               </select>
               <select value={addMemberRole} onChange={(e) => setAddMemberRole(e.target.value)}>
@@ -200,7 +201,7 @@ export default function AdminTeamsPage() {
               <tbody>
                 {members.map((m) => (
                   <tr key={m.id}>
-                    <td>{m.name || m.email}</td>
+                    <td>{m.full_name || m.name || m.email}</td>
                     <td><span className="badge badge-role-user">{m.role}</span></td>
                     <td>
                       <button onClick={() => handleRemoveMember(m.user_id)} className="btn btn-danger btn-sm">

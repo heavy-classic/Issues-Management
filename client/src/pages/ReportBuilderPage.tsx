@@ -708,7 +708,7 @@ export default function ReportBuilderPage() {
                   <option value="">All</option>
                   {users.map((u: any) => (
                     <option key={u.id} value={u.id}>
-                      {u.name || u.email}
+                      {u.full_name || u.name || u.email}
                     </option>
                   ))}
                 </select>

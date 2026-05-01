@@ -65,6 +65,7 @@ export default function LessonDetailPage() {
   const [linkedIssues, setLinkedIssues] = useState<any[]>([]);
   const [workflow, setWorkflow] = useState<{ currentStageId: string | null; assignments: StageAssignment[] } | null>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [showEdit, setShowEdit] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -74,6 +75,13 @@ export default function LessonDetailPage() {
     const res = await api.get(`/lessons/${id}`);
     setLesson(res.data.lesson);
     setLoading(false);
+  }, [id]);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await api.get(`/lessons/${id}/comments`);
+      setComments(res.data.comments || []);
+    } catch { /* ignore */ }
   }, [id]);
 
   const fetchRelated = useCallback(async () => {
@@ -90,8 +98,9 @@ export default function LessonDetailPage() {
   useEffect(() => {
     fetchLesson();
     fetchRelated();
+    fetchComments();
     api.get("/users").then((res) => setUsers(res.data.users));
-  }, [fetchLesson, fetchRelated]);
+  }, [fetchLesson, fetchRelated, fetchComments]);
 
   async function handleUpdate(data: any) {
     await api.put(`/lessons/${id}`, data);
@@ -125,6 +134,7 @@ export default function LessonDetailPage() {
   function handleRefresh() {
     fetchLesson();
     fetchRelated();
+    fetchComments();
   }
 
   if (loading) return <p className="loading">Loading…</p>;
@@ -357,9 +367,8 @@ export default function LessonDetailPage() {
             </div>
 
             {/* ── Comments tile ── */}
-            <div className="tile" style={{ gridColumn: "span 6" }}>
-              <div className="tile-label">Discussion</div>
-              <LessonCommentThread lessonId={id!} />
+            <div className="tile t-comments">
+              <LessonCommentThread lessonId={id!} comments={comments} onUpdate={fetchComments} />
             </div>
 
             {/* ── History tile ── */}

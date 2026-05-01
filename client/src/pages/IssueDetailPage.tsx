@@ -112,6 +112,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  full_name: string | null;
 }
 
 const SOURCES = ["Internal Audit", "External Audit", "Observation", "Inspection", "Self-Identified"] as const;
@@ -345,7 +346,7 @@ export default function IssueDetailPage() {
                 >
                   <option value="">Unassigned</option>
                   {users.map((u) => (
-                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                    <option key={u.id} value={u.id}>{u.full_name || u.name || u.email}</option>
                   ))}
                 </select>
               </div>
@@ -389,7 +390,7 @@ export default function IssueDetailPage() {
                 >
                   <option value="">— Self (reporter) —</option>
                   {users.map((u) => (
-                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                    <option key={u.id} value={u.id}>{u.full_name || u.name || u.email}</option>
                   ))}
                 </select>
               </div>

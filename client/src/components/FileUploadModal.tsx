@@ -56,7 +56,7 @@ export default function FileUploadModal({
     []
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     maxSize: MAX_SIZE,
     accept: {
@@ -212,11 +212,13 @@ export default function FileUploadModal({
         <div className="form-actions">
           <button
             className="btn btn-primary"
-            onClick={handleUpload}
-            disabled={uploading || files.length === 0}
+            onClick={files.length === 0 ? open : handleUpload}
+            disabled={uploading}
           >
             {uploading
-              ? "Uploading..."
+              ? "Uploading…"
+              : files.length === 0
+              ? "Browse files"
               : `Upload ${files.length} file${files.length !== 1 ? "s" : ""}`}
           </button>
           <button

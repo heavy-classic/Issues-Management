@@ -418,25 +418,25 @@ a:hover {
 }
 
 .topbar-breadcrumb-sep {
-  color: #3a3876;
+  color: #6d6aaa;
   margin: 0 0.25rem;
   font-size: 16px;
 }
 
 .topbar-breadcrumb-link {
-  color: #7b7aac;
+  color: #a5b4fc;
   text-decoration: none;
   font-size: 12px;
 }
 
 .topbar-breadcrumb-link:hover {
-  color: #a5a3d4;
+  color: #c7d2fe;
   text-decoration: none;
 }
 
 .topbar-breadcrumb-current {
-  color: #c7c7e8;
-  font-weight: 600;
+  color: #e0e7ff;
+  font-weight: 700;
   font-size: 12px;
 }
 
@@ -926,7 +926,7 @@ a:hover {
 .il-sort-arrow { font-size: 10px; }
 
 .il-td {
-  padding: 12px 14px;
+  padding: 8px 14px;
   vertical-align: middle;
   border-bottom: 1px solid #f5f3ff;
 }
@@ -4783,11 +4783,11 @@ a:hover {
   cursor: pointer;
   position: relative;
   transition: background .14s, opacity .14s;
-  opacity: .7;
+  opacity: .85;
   box-sizing: border-box;
 }
-.sb-tile:hover { opacity: 1; background: rgba(255,255,255,.07); }
-.sb-tile.sb-tile-active { opacity: 1; background: rgba(255,255,255,.1); }
+.sb-tile:hover { opacity: 1; background: rgba(255,255,255,.09); }
+.sb-tile.sb-tile-active { opacity: 1; background: rgba(255,255,255,.12); }
 /* Icon tile box */
 .sb-tile-ico {
   width: 30px; height: 30px;
@@ -4804,7 +4804,7 @@ a:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .01em;
-  color: rgba(255,255,255,.8);
+  color: rgba(255,255,255,.95);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;

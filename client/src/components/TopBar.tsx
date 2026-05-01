@@ -24,13 +24,6 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
         {"☰"}
       </button>
 
-      {/* Logo — shown on desktop next to breadcrumbs */}
-      <div className="topbar-logo">
-        <span className="invoke-wordmark">INVOKE</span>
-      </div>
-
-      <span className="topbar-sep">/</span>
-
       <nav className="topbar-breadcrumbs" aria-label="Breadcrumb">
         {displayCrumbs.map((crumb, i) => (
           <span key={i} className="topbar-breadcrumb">

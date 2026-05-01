@@ -90,9 +90,9 @@ export async function listIssues(filters: ListIssuesFilters) {
     .select(
       "issues.*",
       "reporter.email as reporter_email",
-      "reporter.name as reporter_name",
+      db.raw("COALESCE(reporter.full_name, reporter.name) as reporter_name"),
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "workflow_stages.name as stage_name",
       "workflow_stages.color as stage_color"
     )

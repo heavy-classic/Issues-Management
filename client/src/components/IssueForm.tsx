@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 
@@ -6,6 +6,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  full_name: string | null;
 }
 
 interface IssueFormProps {
@@ -53,7 +54,7 @@ function todayISO() {
 export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const rteRef = useRef<HTMLDivElement>(null);
   const [priority, setPriority] = useState("medium");
   const [assigneeId, setAssigneeId] = useState("");
   const [source, setSource] = useState("");
@@ -86,7 +87,7 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
     try {
       await onSubmit({
         title,
-        description,
+        description: rteRef.current ? rteRef.current.innerHTML : "",
         priority,
         assignee_id: assigneeId || null,
         source: source || null,
@@ -185,7 +186,7 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
             <option value="">— Select person —</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name || u.email}
+                {u.full_name || u.name || u.email}
               </option>
             ))}
           </select>
@@ -196,22 +197,33 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
             <option value="">Unassigned</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name || u.email}
+                {u.full_name || u.name || u.email}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Description */}
+      {/* Description — rich text */}
       <div className="form-group">
         <label>Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={5}
-          placeholder="Describe the issue in detail — what happened, where, when, and the impact…"
-        />
+        <div className="rte">
+          <div className="rte-toolbar">
+            <button type="button" className="rte-btn" title="Bold" onMouseDown={(e) => { e.preventDefault(); document.execCommand("bold"); rteRef.current?.focus(); }}><b>B</b></button>
+            <button type="button" className="rte-btn" title="Italic" onMouseDown={(e) => { e.preventDefault(); document.execCommand("italic"); rteRef.current?.focus(); }}><i>I</i></button>
+            <button type="button" className="rte-btn" title="Underline" onMouseDown={(e) => { e.preventDefault(); document.execCommand("underline"); rteRef.current?.focus(); }}><u>U</u></button>
+            <div className="rte-sep" />
+            <button type="button" className="rte-btn" title="Bullet list" onMouseDown={(e) => { e.preventDefault(); document.execCommand("insertUnorderedList"); rteRef.current?.focus(); }}>≡</button>
+            <button type="button" className="rte-btn" title="Numbered list" onMouseDown={(e) => { e.preventDefault(); document.execCommand("insertOrderedList"); rteRef.current?.focus(); }}>①</button>
+          </div>
+          <div
+            ref={rteRef}
+            className="rte-content"
+            contentEditable
+            data-placeholder="Describe the issue in detail — what happened, where, when, and the impact…"
+            suppressContentEditableWarning
+          />
+        </div>
       </div>
 
       <div className="form-actions">

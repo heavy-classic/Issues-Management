@@ -5,6 +5,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  full_name: string | null;
 }
 
 interface ActionData {
@@ -115,7 +116,7 @@ export default function ActionFormModal({
                 <option value="">Unassigned</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name || u.email}
+                    {u.full_name || u.name || u.email}
                   </option>
                 ))}
               </select>

@@ -22,6 +22,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  full_name: string | null;
 }
 
 const STATUS_TABS = [
@@ -248,10 +249,9 @@ export default function DashboardPage() {
             <thead>
               <tr>
                 <SortTh field="title" label="Title" />
-                <th className="il-th">Status</th>
+                <th className="il-th">Stage</th>
                 <SortTh field="priority" label="Priority" />
                 <th className="il-th">Assignee</th>
-                <th className="il-th">Stage</th>
                 <SortTh field="created_at" label="Created" />
                 <th className="il-th" />
               </tr>
@@ -259,7 +259,7 @@ export default function DashboardPage() {
             <tbody>
               {displayed.length === 0 ? (
                 <tr className="il-empty-row">
-                  <td colSpan={7}>
+                  <td colSpan={6}>
                     {search ? `No issues matching "${search}"` : "No issues found."}
                   </td>
                 </tr>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                   const pill = STATUS_PILL[issue.status] || { bg: "#f3f4f6", color: "#374151", dot: "#9ca3af" };
                   const priColor = PRIORITY_COLORS[issue.priority] || "#6d6d9e";
                   const priIcon = PRIORITY_ICONS[issue.priority] || "";
-                  const assigneeName = issue.assignee_name || issue.assignee_email;
+                  const assigneeName = issue.assignee_name || issue.assignee_email || null;
                   const assigneeKey = issue.assignee_email || "x";
                   const avColor = getAvatarColor(assigneeKey);
 
@@ -278,21 +278,28 @@ export default function DashboardPage() {
                       <td className="il-td">
                         <div className="il-title-cell">
                           {issue.title}
-                          {issue.stage_name && (
-                            <small>🏷 {issue.stage_name}</small>
-                          )}
                         </div>
                       </td>
 
-                      {/* Status */}
+                      {/* Stage (replaces Status) */}
                       <td className="il-td">
-                        <span
-                          className="il-status-pill"
-                          style={{ background: pill.bg, color: pill.color }}
-                        >
-                          <span className="il-s-dot" style={{ background: pill.dot }} />
-                          {issue.status.replace("_", " ")}
-                        </span>
+                        {issue.stage_name ? (
+                          <div className="il-stage-badge">
+                            <div
+                              className="il-stage-dot"
+                              style={{ background: issue.stage_color || "#4f46e5" }}
+                            />
+                            {issue.stage_name}
+                          </div>
+                        ) : (
+                          <span
+                            className="il-status-pill"
+                            style={{ background: pill.bg, color: pill.color }}
+                          >
+                            <span className="il-s-dot" style={{ background: pill.dot }} />
+                            {issue.status.replace("_", " ")}
+                          </span>
+                        )}
                       </td>
 
                       {/* Priority */}
@@ -313,21 +320,6 @@ export default function DashboardPage() {
                           </div>
                         ) : (
                           <span style={{ color: "#c7d2fe", fontSize: 12 }}>Unassigned</span>
-                        )}
-                      </td>
-
-                      {/* Stage */}
-                      <td className="il-td">
-                        {issue.stage_name ? (
-                          <div className="il-stage-badge">
-                            <div
-                              className="il-stage-dot"
-                              style={{ background: issue.stage_color || "#4f46e5" }}
-                            />
-                            {issue.stage_name}
-                          </div>
-                        ) : (
-                          <span style={{ color: "#c7d2fe", fontSize: 12 }}>—</span>
                         )}
                       </td>
 

@@ -194,7 +194,7 @@ export default function BIDashboardPage({ embedded }: { embedded?: boolean }) {
           <option value="">All Assignees</option>
           {users.map((u) => (
             <option key={u.id} value={u.id}>
-              {u.name || u.email}
+              {(u as any).full_name || u.name || u.email}
             </option>
           ))}
         </select>
