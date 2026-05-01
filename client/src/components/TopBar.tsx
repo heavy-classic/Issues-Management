@@ -26,8 +26,7 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
 
       {/* Logo — shown on desktop next to breadcrumbs */}
       <div className="topbar-logo">
-        <div className="topbar-logo-dot">IT</div>
-        <span className="topbar-logo-name">IssueTrack</span>
+        <span className="invoke-wordmark">INVOKE</span>
       </div>
 
       <span className="topbar-sep">/</span>

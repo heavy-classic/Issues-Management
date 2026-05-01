@@ -34,6 +34,10 @@ const updateIssueSchema = z.object({
   status: z.enum(["open", "in_progress", "closed"]).optional(),
   priority: z.enum(["low", "medium", "high", "critical"]).optional(),
   assignee_id: z.string().uuid("Invalid assignee ID").nullable().optional(),
+  source: z.enum(SOURCES).nullable().optional(),
+  on_behalf_of_id: z.string().uuid("Invalid user ID").nullable().optional(),
+  department: z.string().max(100).nullable().optional(),
+  date_identified: z.string().nullable().optional(),
 });
 
 const addCommentSchema = z.object({

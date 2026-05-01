@@ -72,6 +72,12 @@ interface Issue {
   assignee_id: string | null;
   assignee_email: string | null;
   assignee_name: string | null;
+  source: string | null;
+  on_behalf_of_id: string | null;
+  on_behalf_of_name: string | null;
+  on_behalf_of_email: string | null;
+  department: string | null;
+  date_identified: string | null;
   current_stage_id: string | null;
   stage_name: string | null;
   stage_color: string | null;
@@ -108,6 +114,14 @@ interface User {
   name: string | null;
 }
 
+const SOURCES = ["Internal Audit", "External Audit", "Observation", "Inspection", "Self-Identified"] as const;
+const DEPARTMENTS = [
+  "Engineering", "Manufacturing / Production", "Quality Assurance",
+  "Supply Chain / Procurement", "Safety & Environment (EHS)", "Maintenance & Facilities",
+  "Finance & Accounting", "Human Resources", "Information Technology",
+  "Program Management", "Sales & Business Development", "Contracts & Legal",
+];
+
 function initials(name: string | null | undefined, email: string): string {
   if (name) return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   return email.charAt(0).toUpperCase();
@@ -130,6 +144,10 @@ export default function IssueDetailPage() {
     status: "",
     priority: "",
     assignee_id: "",
+    source: "",
+    on_behalf_of_id: "",
+    department: "",
+    date_identified: "",
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -169,6 +187,10 @@ export default function IssueDetailPage() {
       status: issue.status,
       priority: issue.priority,
       assignee_id: issue.assignee_id || "",
+      source: issue.source || "",
+      on_behalf_of_id: issue.on_behalf_of_id || "",
+      department: issue.department || "",
+      date_identified: issue.date_identified ? issue.date_identified.slice(0, 10) : "",
     });
     setEditing(true);
     // Populate RTE after state updates
@@ -188,6 +210,10 @@ export default function IssueDetailPage() {
         status: editData.status,
         priority: editData.priority,
         assignee_id: editData.assignee_id || null,
+        source: editData.source || null,
+        on_behalf_of_id: editData.on_behalf_of_id || null,
+        department: editData.department || null,
+        date_identified: editData.date_identified || null,
       });
       setEditing(false);
       fetchIssue();
@@ -318,6 +344,50 @@ export default function IssueDetailPage() {
                   onChange={(e) => setEditData({ ...editData, assignee_id: e.target.value })}
                 >
                   <option value="">Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Source</label>
+                <select
+                  value={editData.source}
+                  onChange={(e) => setEditData({ ...editData, source: e.target.value })}
+                >
+                  <option value="">— Select source —</option>
+                  {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Department</label>
+                <select
+                  value={editData.department}
+                  onChange={(e) => setEditData({ ...editData, department: e.target.value })}
+                >
+                  <option value="">— Select department —</option>
+                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Date Identified</label>
+                <input
+                  type="date"
+                  value={editData.date_identified}
+                  onChange={(e) => setEditData({ ...editData, date_identified: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Submitted on Behalf of</label>
+                <select
+                  value={editData.on_behalf_of_id}
+                  onChange={(e) => setEditData({ ...editData, on_behalf_of_id: e.target.value })}
+                >
+                  <option value="">— Self (reporter) —</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>{u.name || u.email}</option>
                   ))}
@@ -548,6 +618,30 @@ export default function IssueDetailPage() {
                   <div className="bento-team-k">Priority</div>
                   <div className="bento-team-v">{issue.priority}</div>
                 </div>
+                {issue.source && (
+                  <div className="bento-team-row">
+                    <div className="bento-team-k">Source</div>
+                    <div className="bento-team-v">{issue.source}</div>
+                  </div>
+                )}
+                {issue.department && (
+                  <div className="bento-team-row">
+                    <div className="bento-team-k">Department</div>
+                    <div className="bento-team-v">{issue.department}</div>
+                  </div>
+                )}
+                {issue.date_identified && (
+                  <div className="bento-team-row">
+                    <div className="bento-team-k">Date Identified</div>
+                    <div className="bento-team-v">{fmtDate(issue.date_identified)}</div>
+                  </div>
+                )}
+                {(issue.on_behalf_of_name || issue.on_behalf_of_email) && (
+                  <div className="bento-team-row">
+                    <div className="bento-team-k">On Behalf of</div>
+                    <div className="bento-team-v">{issue.on_behalf_of_name || issue.on_behalf_of_email}</div>
+                  </div>
+                )}
                 <div className="bento-team-row">
                   <div className="bento-team-k">Created</div>
                   <div className="bento-team-v">{fmtDate(issue.created_at)}</div>

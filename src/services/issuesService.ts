@@ -20,6 +20,10 @@ interface UpdateIssueParams {
   status?: "open" | "in_progress" | "closed";
   priority?: "low" | "medium" | "high" | "critical";
   assignee_id?: string | null;
+  source?: string | null;
+  on_behalf_of_id?: string | null;
+  department?: string | null;
+  date_identified?: string | null;
 }
 
 interface ListIssuesFilters {
@@ -107,11 +111,14 @@ export async function getIssue(issueId: string) {
       "reporter.name as reporter_name",
       "assignee.email as assignee_email",
       "assignee.name as assignee_name",
+      "on_behalf_user.email as on_behalf_of_email",
+      "on_behalf_user.name as on_behalf_of_name",
       "workflow_stages.name as stage_name",
       "workflow_stages.color as stage_color"
     )
     .leftJoin("users as reporter", "issues.reporter_id", "reporter.id")
     .leftJoin("users as assignee", "issues.assignee_id", "assignee.id")
+    .leftJoin("users as on_behalf_user", "issues.on_behalf_of_id", "on_behalf_user.id")
     .leftJoin(
       "workflow_stages",
       "issues.current_stage_id",
@@ -238,6 +245,12 @@ export async function updateIssue(
   if (params.priority !== undefined) updateData.priority = params.priority;
   if (params.assignee_id !== undefined)
     updateData.assignee_id = params.assignee_id;
+  if (params.source !== undefined) updateData.source = params.source;
+  if (params.on_behalf_of_id !== undefined)
+    updateData.on_behalf_of_id = params.on_behalf_of_id;
+  if (params.department !== undefined) updateData.department = params.department;
+  if (params.date_identified !== undefined)
+    updateData.date_identified = params.date_identified;
 
   if (Object.keys(updateData).length === 0) {
     throw new AppError(400, "No fields to update");
