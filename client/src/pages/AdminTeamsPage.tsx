@@ -13,6 +13,7 @@ interface Member {
   user_id: string;
   email: string;
   name: string | null;
+  full_name?: string | null;
   role: string;
 }
 
