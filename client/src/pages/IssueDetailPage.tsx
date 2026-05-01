@@ -620,30 +620,22 @@ export default function IssueDetailPage() {
                   <div className="bento-team-k">Priority</div>
                   <div className="bento-team-v">{issue.priority}</div>
                 </div>
-                {issue.source && (
-                  <div className="bento-team-row">
-                    <div className="bento-team-k">Source</div>
-                    <div className="bento-team-v">{issue.source}</div>
-                  </div>
-                )}
-                {issue.department && (
-                  <div className="bento-team-row">
-                    <div className="bento-team-k">Department</div>
-                    <div className="bento-team-v">{issue.department}</div>
-                  </div>
-                )}
-                {issue.date_identified && (
-                  <div className="bento-team-row">
-                    <div className="bento-team-k">Date Identified</div>
-                    <div className="bento-team-v">{fmtDate(issue.date_identified)}</div>
-                  </div>
-                )}
-                {(issue.on_behalf_of_name || issue.on_behalf_of_email) && (
-                  <div className="bento-team-row">
-                    <div className="bento-team-k">On Behalf of</div>
-                    <div className="bento-team-v">{issue.on_behalf_of_name || issue.on_behalf_of_email}</div>
-                  </div>
-                )}
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Source</div>
+                  <div className="bento-team-v">{issue.source || <span className="bento-team-empty">—</span>}</div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Department</div>
+                  <div className="bento-team-v">{issue.department || <span className="bento-team-empty">—</span>}</div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">Date Identified</div>
+                  <div className="bento-team-v">{issue.date_identified ? fmtDate(issue.date_identified) : <span className="bento-team-empty">—</span>}</div>
+                </div>
+                <div className="bento-team-row">
+                  <div className="bento-team-k">On Behalf of</div>
+                  <div className="bento-team-v">{issue.on_behalf_of_name || issue.on_behalf_of_email || <span className="bento-team-empty">—</span>}</div>
+                </div>
                 <div className="bento-team-row">
                   <div className="bento-team-k">Created</div>
                   <div className="bento-team-v">{fmtDate(issue.created_at)}</div>

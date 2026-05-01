@@ -169,7 +169,7 @@ function EmptyState({ message }: { message: string }) {
       style={{
         padding: "32px 20px",
         textAlign: "center",
-        color: "rgba(199,210,254,0.4)",
+        color: "rgba(199,210,254,0.75)",
         fontSize: 13,
         fontStyle: "italic",
       }}
@@ -255,7 +255,7 @@ export default function WorkQueuePage() {
             <span
               style={{
                 fontSize: 13,
-                color: "rgba(199,210,254,0.5)",
+                color: "rgba(199,210,254,0.9)",
                 fontWeight: 500,
                 marginTop: 2,
               }}
@@ -264,7 +264,7 @@ export default function WorkQueuePage() {
             </span>
           )}
         </div>
-        <p style={{ margin: "6px 0 0", color: "rgba(199,210,254,0.55)", fontSize: 14 }}>
+        <p style={{ margin: "6px 0 0", color: "rgba(199,210,254,0.9)", fontSize: 14 }}>
           Your assigned tasks and pending reviews
         </p>
       </div>
@@ -298,7 +298,7 @@ export default function WorkQueuePage() {
                         textAlign: "left",
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "rgba(199,210,254,0.45)",
+                        color: "rgba(199,210,254,0.85)",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -321,7 +321,7 @@ export default function WorkQueuePage() {
                         {action.title}
                       </div>
                       {action.issue_title && (
-                        <div style={{ fontSize: 11, color: "rgba(199,210,254,0.45)", marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: "rgba(199,210,254,0.85)", marginTop: 2 }}>
                           {action.issue_title}
                         </div>
                       )}
@@ -333,7 +333,7 @@ export default function WorkQueuePage() {
                       <span
                         style={{
                           fontSize: 12,
-                          color: isOverdue(action.due_date) ? "#f87171" : "rgba(199,210,254,0.6)",
+                          color: isOverdue(action.due_date) ? "#f87171" : "rgba(199,210,254,0.9)",
                           fontWeight: isOverdue(action.due_date) ? 600 : 400,
                         }}
                       >
@@ -388,7 +388,7 @@ export default function WorkQueuePage() {
                         textAlign: "left",
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "rgba(199,210,254,0.45)",
+                        color: "rgba(199,210,254,0.85)",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -411,7 +411,7 @@ export default function WorkQueuePage() {
                         {action.title}
                       </div>
                       {action.issue_title && (
-                        <div style={{ fontSize: 11, color: "rgba(199,210,254,0.45)", marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: "rgba(199,210,254,0.85)", marginTop: 2 }}>
                           {action.issue_title}
                         </div>
                       )}
@@ -423,7 +423,7 @@ export default function WorkQueuePage() {
                       <span
                         style={{
                           fontSize: 12,
-                          color: isOverdue(action.due_date) ? "#f87171" : "rgba(199,210,254,0.6)",
+                          color: isOverdue(action.due_date) ? "#f87171" : "rgba(199,210,254,0.9)",
                           fontWeight: isOverdue(action.due_date) ? 600 : 400,
                         }}
                       >
@@ -478,7 +478,7 @@ export default function WorkQueuePage() {
                         textAlign: "left",
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "rgba(199,210,254,0.45)",
+                        color: "rgba(199,210,254,0.85)",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -500,7 +500,7 @@ export default function WorkQueuePage() {
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e7ff" }}>
                         {issue.title}
                       </div>
-                      <div style={{ fontSize: 11, color: "rgba(199,210,254,0.4)", marginTop: 2 }}>
+                      <div style={{ fontSize: 11, color: "rgba(199,210,254,0.75)", marginTop: 2 }}>
                         Created {fmtDate(issue.created_at)}
                       </div>
                     </td>
@@ -509,7 +509,7 @@ export default function WorkQueuePage() {
                     </td>
                     <td style={{ padding: "10px 12px" }}>
                       {issue.stage_name ? (
-                        <span style={{ fontSize: 12, color: "rgba(199,210,254,0.6)" }}>
+                        <span style={{ fontSize: 12, color: "rgba(199,210,254,0.9)" }}>
                           {issue.stage_name}
                         </span>
                       ) : (
@@ -562,7 +562,7 @@ export default function WorkQueuePage() {
                         textAlign: "left",
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "rgba(199,210,254,0.45)",
+                        color: "rgba(199,210,254,0.85)",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -584,7 +584,7 @@ export default function WorkQueuePage() {
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e7ff" }}>
                         {proc.title}
                       </div>
-                      <div style={{ fontSize: 11, color: "rgba(199,210,254,0.4)", marginTop: 2 }}>
+                      <div style={{ fontSize: 11, color: "rgba(199,210,254,0.75)", marginTop: 2 }}>
                         Updated {fmtDate(proc.updated_at)}
                       </div>
                     </td>
@@ -608,7 +608,7 @@ export default function WorkQueuePage() {
                       )}
                     </td>
                     <td style={{ padding: "10px 12px" }}>
-                      <span style={{ fontSize: 12, color: "rgba(199,210,254,0.6)" }}>
+                      <span style={{ fontSize: 12, color: "rgba(199,210,254,0.9)" }}>
                         {proc.owner_name || "—"}
                       </span>
                     </td>
