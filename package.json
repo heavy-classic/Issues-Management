@@ -23,6 +23,7 @@
     "knex": "^3.1.0",
     "multer": "^2.0.2",
     "pg": "^8.18.0",
+    "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -31,7 +32,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

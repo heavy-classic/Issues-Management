@@ -10,23 +10,23 @@ interface SidebarProps {
 
 // Color identity per nav item
 const NAV_COLORS: Record<string, { bg: string; color: string }> = {
-  issues:      { bg: "rgba(239,68,68,.18)",   color: "#f87171" },
-  audits:      { bg: "rgba(245,158,11,.18)",  color: "#fbbf24" },
-  risks:       { bg: "rgba(16,185,129,.18)",  color: "#34d399" },
-  lessons:     { bg: "rgba(139,92,246,.18)",  color: "#c4b5fd" },
-  procedures:  { bg: "rgba(6,182,212,.18)",   color: "#22d3ee" },
-  analytics:   { bg: "rgba(59,130,246,.18)",  color: "#60a5fa" },
-  board:       { bg: "rgba(236,72,153,.18)",  color: "#f9a8d4" },
-  reports:     { bg: "rgba(251,146,60,.18)",  color: "#fb923c" },
-  queue:       { bg: "rgba(34,197,94,.18)",   color: "#4ade80" },
-  teams:       { bg: "rgba(20,184,166,.18)",  color: "#2dd4bf" },
-  admin:       { bg: "rgba(156,163,175,.18)", color: "#d1d5db" },
-  users:       { bg: "rgba(99,102,241,.18)",  color: "#a5b4fc" },
-  workflow:    { bg: "rgba(167,139,250,.18)", color: "#c4b5fd" },
-  auditcfg:    { bg: "rgba(251,191,36,.18)",  color: "#fde68a" },
-  checklists:  { bg: "rgba(52,211,153,.18)",  color: "#6ee7b7" },
-  auditlog:    { bg: "rgba(148,163,184,.18)", color: "#cbd5e1" },
-  instructions:{ bg: "rgba(244,114,182,.18)", color: "#f9a8d4" },
+  issues:      { bg: "rgba(239,68,68,.3)",    color: "#fca5a5" },
+  audits:      { bg: "rgba(245,158,11,.3)",   color: "#fcd34d" },
+  risks:       { bg: "rgba(16,185,129,.3)",   color: "#6ee7b7" },
+  lessons:     { bg: "rgba(139,92,246,.3)",   color: "#c4b5fd" },
+  procedures:  { bg: "rgba(6,182,212,.3)",    color: "#67e8f9" },
+  analytics:   { bg: "rgba(59,130,246,.3)",   color: "#93c5fd" },
+  board:       { bg: "rgba(236,72,153,.3)",   color: "#f9a8d4" },
+  reports:     { bg: "rgba(251,146,60,.3)",   color: "#fdba74" },
+  queue:       { bg: "rgba(34,197,94,.3)",    color: "#86efac" },
+  teams:       { bg: "rgba(20,184,166,.3)",   color: "#5eead4" },
+  admin:       { bg: "rgba(148,163,184,.3)",  color: "#e2e8f0" },
+  users:       { bg: "rgba(99,102,241,.3)",   color: "#a5b4fc" },
+  workflow:    { bg: "rgba(167,139,250,.3)",  color: "#ddd6fe" },
+  auditcfg:    { bg: "rgba(251,191,36,.3)",   color: "#fde68a" },
+  checklists:  { bg: "rgba(52,211,153,.3)",   color: "#a7f3d0" },
+  auditlog:    { bg: "rgba(148,163,184,.3)",  color: "#e2e8f0" },
+  instructions:{ bg: "rgba(244,114,182,.3)",  color: "#fbcfe8" },
 };
 
 interface TileProps {
@@ -92,10 +92,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         {/* Primary nav */}
         <div className="sb-v2-group">
-          <NavTile to="/" end colorKey="issues"     icon="⚑"  label="Issues"      onToggle={onToggle} />
+          <NavTile to="/" end colorKey="issues"     icon="🚨" label="Issues"      onToggle={onToggle} />
           <NavTile to="/audits"      colorKey="audits"     icon="📋" label="Audits"      onToggle={onToggle} />
-          <NavTile to="/risks"       colorKey="risks"      icon="◈"  label="Risks"       onToggle={onToggle} />
-          <NavTile to="/lessons"     colorKey="lessons"    icon="✦"  label="Lessons"     onToggle={onToggle} />
+          <NavTile to="/risks"       colorKey="risks"      icon="🛡️" label="Risks"       onToggle={onToggle} />
+          <NavTile to="/lessons"     colorKey="lessons"    icon="💡" label="Lessons"     onToggle={onToggle} />
           <NavTile to="/procedures"  colorKey="procedures" icon="📄" label="Procedures"  onToggle={onToggle} />
         </div>
 
@@ -105,7 +105,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className="sb-v2-group">
           <NavTile to="/queue"     colorKey="queue"     icon="✅" label="My Queue"    onToggle={onToggle} />
           <NavTile to="/analytics" colorKey="analytics" icon="📊" label="Analytics"   onToggle={onToggle} />
-          <NavTile to="/board"     colorKey="board"     icon="⊞"  label="Board"       onToggle={onToggle} />
+          <NavTile to="/board"     colorKey="board"     icon="🗂️" label="Board"       onToggle={onToggle} />
           <NavTile to="/reports"   colorKey="reports"   icon="📑" label="Reports"     onToggle={onToggle} />
           {isAdmin && (
             <NavTile to="/admin/teams" colorKey="teams" icon="👥" label="Teams" onToggle={onToggle} />
@@ -117,11 +117,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <>
             <div className="sb-v2-div" />
             <div className="sb-v2-group">
-              <NavTile to="/admin"              end colorKey="admin"        icon="⚙"  label="System Admin" onToggle={onToggle} />
+              <NavTile to="/admin"              end colorKey="admin"        icon="⚙️" label="System Admin" onToggle={onToggle} />
               <NavTile to="/admin/users"            colorKey="users"        icon="👤" label="Users"        onToggle={onToggle} />
               <NavTile to="/admin/workflow"         colorKey="workflow"     icon="🔄" label="Workflow"     onToggle={onToggle} />
-              <NavTile to="/admin/audit-types"      colorKey="auditcfg"    icon="🏷"  label="Audit Config" onToggle={onToggle} />
-              <NavTile to="/admin/checklists"       colorKey="checklists"  icon="☑"  label="Checklists"   onToggle={onToggle} />
+              <NavTile to="/admin/audit-types"      colorKey="auditcfg"    icon="🏷️" label="Audit Config" onToggle={onToggle} />
+              <NavTile to="/admin/checklists"       colorKey="checklists"  icon="☑️" label="Checklists"   onToggle={onToggle} />
               <NavTile to="/admin/audit"            colorKey="auditlog"    icon="📜" label="Audit Log"    onToggle={onToggle} />
               <NavTile to="/admin/instructions"     colorKey="instructions" icon="📝" label="Instructions" onToggle={onToggle} />
             </div>

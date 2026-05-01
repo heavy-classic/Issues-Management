@@ -4794,19 +4794,20 @@ a:hover {
   text-decoration: none;
   cursor: pointer;
   position: relative;
-  transition: background .14s;
-  opacity: .55;
+  transition: background .14s, opacity .14s;
+  opacity: .7;
 }
-.sb-tile:hover { opacity: .85; background: rgba(255,255,255,.05); }
-.sb-tile.sb-tile-active { opacity: 1; background: rgba(255,255,255,.08); }
+.sb-tile:hover { opacity: 1; background: rgba(255,255,255,.07); }
+.sb-tile.sb-tile-active { opacity: 1; background: rgba(255,255,255,.1); }
 /* Icon tile box */
 .sb-tile-ico {
-  width: 28px; height: 28px;
+  width: 30px; height: 30px;
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   flex-shrink: 0;
   transition: transform .12s;
+  border: 1px solid rgba(255,255,255,.06);
 }
 .sb-tile:hover .sb-tile-ico { transform: scale(1.05); }
 /* Label */
@@ -4814,13 +4815,13 @@ a:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .01em;
-  color: rgba(255,255,255,.6);
+  color: rgba(255,255,255,.8);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sb-tile.sb-tile-active .sb-tile-lbl { color: rgba(255,255,255,.95); }
+.sb-tile.sb-tile-active .sb-tile-lbl { color: #fff; }
 /* Bottom section */
 .sb-v2-bot {
   margin-top: auto;

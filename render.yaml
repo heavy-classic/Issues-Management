@@ -3,7 +3,7 @@ services:
     name: issues-management
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: npm run migrate:latest && npm start
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
