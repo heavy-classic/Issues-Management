@@ -38,6 +38,7 @@ import procedureWorkflowStagesRoutes from "./routes/procedureWorkflowStages";
 import reportSchedulesRoutes from "./routes/reportSchedules";
 import settingsRoutes from "./routes/settings";
 import proceduresRoutes from "./routes/procedures";
+import investigationsRoutes from "./routes/investigations";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -82,6 +83,7 @@ app.use("/api/lesson-dashboard", lessonDashboardRoutes);
 app.use("/api/report-schedules", reportSchedulesRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/procedures", proceduresRoutes);
+app.use("/api", investigationsRoutes);
 
 // Serve built React frontend static files
 const clientDist = path.join(__dirname, "../client/dist");

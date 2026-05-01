@@ -859,3 +859,441 @@ export function exportProcedurePDF(data: ProcedureExportData) {
     : "procedure";
   doc.save(`procedure_${num}.pdf`);
 }
+
+// ─── Investigation PDF helpers ─────────────────────────────────────────────
+
+function sectionHeading(doc: jsPDF, label: string, y: number): number {
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BRAND_COLOR);
+  doc.text(label, 14, y);
+  doc.setTextColor(0, 0, 0);
+  return y + 5;
+}
+
+function textBlock(
+  doc: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  maxW: number,
+  fontSize = 9
+): number {
+  doc.setFontSize(fontSize);
+  doc.setFont("helvetica", "normal");
+  const lines = doc.splitTextToSize(text || "—", maxW);
+  doc.text(lines, x, y);
+  return y + lines.length * (fontSize * 0.55) + 4;
+}
+
+// ─── Barrier Analysis PDF ──────────────────────────────────────────────────
+
+export function exportBarrierAnalysisPDF(investigation: any, issue: any) {
+  const doc = new jsPDF();
+  const w = doc.internal.pageSize.width;
+  const body = investigation.body || {};
+  const barriers: any[] = body.barriers || [];
+
+  let y = addBrandHeader(
+    doc,
+    "Root Cause Investigation — Barrier Analysis",
+    null,
+    investigation.title || "Barrier Analysis",
+    investigation.status || "draft"
+  );
+
+  // Metadata table
+  autoTable(doc, {
+    startY: y,
+    head: [["Field", "Value"]],
+    body: [
+      ["Issue ID", issue.id ? issue.id.slice(0, 8) : "—"],
+      ["Issue Title", issue.title || "—"],
+      ["Priority", issue.priority || "—"],
+      ["Stage", issue.stage_name || "—"],
+      ["Investigation Date", new Date(investigation.created_at || Date.now()).toLocaleDateString()],
+    ],
+    theme: "grid",
+    headStyles: { fillColor: BRAND_COLOR },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9 },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Incident description
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Incident Description", y);
+  doc.setFillColor(248, 247, 255);
+  const descLines = doc.splitTextToSize(body.incident_description || "—", w - 30);
+  const descH = descLines.length * 5 + 8;
+  doc.roundedRect(14, y, w - 28, descH, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(descLines, 18, y + 5);
+  y += descH + 8;
+
+  // Hazard / Target row
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Hazard & Target", y);
+  autoTable(doc, {
+    startY: y,
+    head: [["Hazard", "Target / What Was Protected"]],
+    body: [[body.hazard || "—", body.target || "—"]],
+    theme: "grid",
+    headStyles: { fillColor: BRAND_COLOR },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9 },
+    columnStyles: { 0: { cellWidth: "auto" }, 1: { cellWidth: "auto" } },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Barriers table
+  if (y > 200) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, `Barriers (${barriers.length})`, y);
+
+  const STATUS_FILL: Record<string, [number, number, number]> = {
+    effective: [209, 250, 229],
+    failed: [254, 226, 226],
+    absent: [243, 244, 246],
+  };
+  const STATUS_TEXT: Record<string, [number, number, number]> = {
+    effective: [6, 95, 70],
+    failed: [153, 27, 27],
+    absent: [75, 85, 99],
+  };
+
+  autoTable(doc, {
+    startY: y,
+    head: [["Barrier Name", "Type", "Status", "Notes"]],
+    body: barriers.map((b: any) => [
+      b.name || "—",
+      b.type ? b.type.charAt(0).toUpperCase() + b.type.slice(1) : "—",
+      b.status || "—",
+      b.notes || "—",
+    ]),
+    theme: "striped",
+    headStyles: { fillColor: BRAND_COLOR },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9 },
+    columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 35 }, 2: { cellWidth: 30 } },
+    didDrawCell: (data: any) => {
+      if (data.section === "body" && data.column.index === 2) {
+        const status = (barriers[data.row.index]?.status || "").toLowerCase();
+        const fill = STATUS_FILL[status];
+        const text = STATUS_TEXT[status];
+        if (fill) {
+          doc.setFillColor(...fill);
+          doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, "F");
+          doc.setTextColor(...text);
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.text(
+            (barriers[data.row.index]?.status || "").toUpperCase(),
+            data.cell.x + data.cell.width / 2,
+            data.cell.y + data.cell.height / 2 + 1,
+            { align: "center" }
+          );
+          doc.setTextColor(0, 0, 0);
+        }
+      }
+    },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Recommendations
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Recommendations", y);
+  y = textBlock(doc, body.recommendations || "—", 14, y, w - 28);
+
+  addPageNumbers(doc);
+  doc.save(`investigation_barrier_${(investigation.id || "report").slice(0, 8)}.pdf`);
+}
+
+// ─── Five Why PDF ──────────────────────────────────────────────────────────
+
+export function exportFiveWhyPDF(investigation: any, issue: any) {
+  const doc = new jsPDF();
+  const w = doc.internal.pageSize.width;
+  const body = investigation.body || {};
+  const whys: any[] = body.whys || [];
+
+  let y = addBrandHeader(
+    doc,
+    "Root Cause Investigation — 5 Why Analysis",
+    null,
+    investigation.title || "5 Why Analysis",
+    investigation.status || "draft"
+  );
+
+  // Metadata
+  autoTable(doc, {
+    startY: y,
+    head: [["Field", "Value"]],
+    body: [
+      ["Issue", issue.title || "—"],
+      ["Priority", issue.priority || "—"],
+      ["Date", new Date(investigation.created_at || Date.now()).toLocaleDateString()],
+    ],
+    theme: "grid",
+    headStyles: { fillColor: BRAND_COLOR },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9 },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Problem statement box
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Problem Statement", y);
+  doc.setFillColor(237, 233, 254);
+  const psLines = doc.splitTextToSize(body.problem_statement || "—", w - 34);
+  const psH = psLines.length * 5.5 + 10;
+  doc.roundedRect(14, y, w - 28, psH, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BRAND_COLOR);
+  doc.text(psLines, 18, y + 7);
+  doc.setTextColor(0, 0, 0);
+  y += psH + 10;
+
+  // 5-Why chain table
+  if (y > 200) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "5-Why Chain", y);
+  autoTable(doc, {
+    startY: y,
+    head: [["#", "Why (Question)", "Answer / Because"]],
+    body: whys.map((w: any, i: number) => [
+      `Why ${i + 1}`,
+      w.question || `Why did this happen?`,
+      w.answer || "—",
+    ]),
+    theme: "striped",
+    headStyles: { fillColor: BRAND_COLOR },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9, cellPadding: 4 },
+    columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 72 } },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Root cause box
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Root Cause", y);
+  doc.setFillColor(255, 237, 213);
+  const rcLines = doc.splitTextToSize(body.root_cause || "—", w - 34);
+  const rcH = rcLines.length * 5.5 + 10;
+  doc.roundedRect(14, y, w - 28, rcH, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(154, 52, 18);
+  doc.text(rcLines, 18, y + 7);
+  doc.setTextColor(0, 0, 0);
+  y += rcH + 10;
+
+  // Corrective action
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Corrective Action", y);
+  y = textBlock(doc, body.corrective_action || "—", 14, y, w - 28);
+
+  addPageNumbers(doc);
+  doc.save(`investigation_5why_${(investigation.id || "report").slice(0, 8)}.pdf`);
+}
+
+// ─── Fishbone PDF ──────────────────────────────────────────────────────────
+
+export function exportFishbonePDF(investigation: any, issue: any) {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const w = doc.internal.pageSize.width;   // ~297mm
+  const h = doc.internal.pageSize.height;  // ~210mm
+  const body = investigation.body || {};
+  const categories: any[] = body.categories || [];
+  const problemStatement: string = body.problem_statement || "Effect";
+
+  // Page 1: Fishbone diagram
+  // ── Brand banner (slim) ──
+  doc.setFillColor(...BRAND_COLOR);
+  doc.rect(0, 0, w, 14, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text("ROOT CAUSE INVESTIGATION — FISHBONE (ISHIKAWA) DIAGRAM", 10, 9);
+  doc.setFontSize(7);
+  doc.text(investigation.title || "", w - 10, 9, { align: "right" });
+
+  // ── Diagram area ──
+  const diagTop = 20;
+  const diagBottom = h - 18;
+  const midY = (diagTop + diagBottom) / 2;
+
+  // Spine
+  const spineLeft = 30;
+  const spineRight = w - 60;  // leave room for effect box
+  doc.setDrawColor(...BRAND_COLOR);
+  doc.setLineWidth(1.2);
+  doc.line(spineLeft, midY, spineRight, midY);
+
+  // Arrow head on spine
+  doc.setFillColor(...BRAND_COLOR);
+  doc.triangle(
+    spineRight, midY,
+    spineRight - 5, midY - 3,
+    spineRight - 5, midY + 3,
+    "F"
+  );
+
+  // Effect box
+  const effBoxW = 52;
+  const effBoxH = 22;
+  const effBoxX = spineRight + 2;
+  const effBoxY = midY - effBoxH / 2;
+  doc.setFillColor(...BRAND_COLOR);
+  doc.roundedRect(effBoxX, effBoxY, effBoxW, effBoxH, 3, 3, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  const effLines = doc.splitTextToSize(problemStatement, effBoxW - 6);
+  const effLineH = 4.5;
+  const effTextY = midY - (effLines.length * effLineH) / 2 + effLineH;
+  doc.text(effLines, effBoxX + effBoxW / 2, effTextY, { align: "center" });
+  doc.setTextColor(0, 0, 0);
+
+  // Layout: 3 bones top, 3 bones bottom
+  // Top categories (angling down toward spine): Machine, Method, Material
+  // Bottom categories (angling up toward spine): Man, Measurement, Environment
+  const topCats = categories.filter((c: any) =>
+    ["Machine", "Method", "Material"].includes(c.name)
+  );
+  const bottomCats = categories.filter((c: any) =>
+    ["Man", "Measurement", "Environment"].includes(c.name)
+  );
+
+  const boneCount = 3;
+  const boneSpacing = (spineRight - spineLeft - 20) / boneCount;
+  const boneAngleH = (midY - diagTop) * 0.75;  // how far from spine to bone tip
+
+  function drawBone(
+    cat: any,
+    boneX: number,  // attachment point on spine
+    isTop: boolean
+  ) {
+    const tipY = isTop ? midY - boneAngleH : midY + boneAngleH;
+    const startX = boneX;
+    const startY = midY;
+
+    // Main bone line
+    doc.setDrawColor(...BRAND_COLOR);
+    doc.setLineWidth(0.8);
+    doc.line(startX, startY, boneX - 8, tipY);
+
+    // Category label
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...BRAND_COLOR);
+    const labelY = isTop ? tipY - 4 : tipY + 6;
+    doc.text(cat.name || "", boneX - 8, labelY, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+
+    // Cause ticks along the bone
+    const causes: string[] = cat.causes || [];
+    const maxCauses = Math.min(causes.length, 5);
+    for (let ci = 0; ci < maxCauses; ci++) {
+      const t = (ci + 1) / (maxCauses + 1);
+      const cx = startX + (boneX - 8 - startX) * t;
+      const cy = startY + (tipY - startY) * t;
+
+      // Tick line (perpendicular-ish)
+      const tickLen = 10;
+      const perpSign = isTop ? -1 : 1;
+      doc.setDrawColor(120, 120, 180);
+      doc.setLineWidth(0.5);
+      doc.line(cx, cy, cx - tickLen, cy + perpSign * 5);
+
+      // Cause text
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(55, 65, 81);
+      const causeLines = doc.splitTextToSize(causes[ci] || "", 28);
+      doc.text(causeLines, cx - tickLen - 1, cy + perpSign * 4.5, {
+        align: "right",
+      });
+    }
+
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(0, 0, 0);
+  }
+
+  // Draw top bones
+  topCats.forEach((cat: any, i: number) => {
+    const boneX = spineLeft + 20 + boneSpacing * i + boneSpacing / 2;
+    drawBone(cat, boneX, true);
+  });
+
+  // Draw bottom bones
+  bottomCats.forEach((cat: any, i: number) => {
+    const boneX = spineLeft + 20 + boneSpacing * i + boneSpacing / 2;
+    drawBone(cat, boneX, false);
+  });
+
+  // Diagram caption
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(160, 160, 180);
+  doc.text(`Issue: ${issue.title || ""}  |  Generated: ${new Date().toLocaleDateString()}`, 10, h - 6);
+  doc.setTextColor(0, 0, 0);
+
+  // Page 2: Summary table + root cause
+  doc.addPage();
+  // Portrait for summary
+  let y = 20;
+
+  // Summary heading
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BRAND_COLOR);
+  doc.text("Cause Summary by Category", 14, y);
+  doc.setTextColor(0, 0, 0);
+  y += 10;
+
+  const summaryRows: [string, string][] = [];
+  for (const cat of categories) {
+    const causes: string[] = cat.causes || [];
+    if (causes.length === 0) {
+      summaryRows.push([cat.name, "—"]);
+    } else {
+      causes.forEach((c, i) => {
+        summaryRows.push([i === 0 ? cat.name : "", c]);
+      });
+    }
+  }
+
+  autoTable(doc, {
+    startY: y,
+    head: [["Category", "Causes"]],
+    body: summaryRows,
+    theme: "striped",
+    headStyles: { fillColor: BRAND_COLOR },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9 },
+    columnStyles: { 0: { cellWidth: 45, fontStyle: "bold" } },
+  });
+  y = (doc as any).lastAutoTable.finalY + 12;
+
+  // Problem statement
+  if (y > 220) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Problem Statement", y);
+  y = textBlock(doc, body.problem_statement || "—", 14, y, 180);
+
+  // Root cause
+  if (y > 240) { doc.addPage(); y = 20; }
+  y = sectionHeading(doc, "Root Cause", y);
+  doc.setFillColor(255, 237, 213);
+  const rcLines2 = doc.splitTextToSize(body.root_cause || "—", 176);
+  const rcH2 = rcLines2.length * 5.5 + 10;
+  doc.roundedRect(14, y, 180, rcH2, 3, 3, "F");
+  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(154, 52, 18);
+  doc.text(rcLines2, 18, y + 7);
+  doc.setTextColor(0, 0, 0);
+
+  addPageNumbers(doc);
+  doc.save(`investigation_fishbone_${(investigation.id || "report").slice(0, 8)}.pdf`);
+}

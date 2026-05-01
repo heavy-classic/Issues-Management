@@ -13,6 +13,7 @@ import FileUploadModal from "../components/FileUploadModal";
 import DropZoneOverlay from "../components/DropZoneOverlay";
 import { exportIssuePDF } from "../utils/exportUtils";
 import LessonFormModal from "../components/LessonFormModal";
+import InvestigationPanel from "../components/InvestigationPanel";
 
 interface StageAssignment {
   id: string;
@@ -721,6 +722,14 @@ export default function IssueDetailPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* ── Investigations tile ── */}
+              <div className="tile">
+                <InvestigationPanel
+                  issueId={issue.id}
+                  isReadOnly={isReadOnly}
+                />
               </div>
 
               {/* ── Attachments tile ── */}
