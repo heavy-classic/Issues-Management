@@ -10,7 +10,21 @@ interface Stage {
   requires_signature: boolean;
 }
 
-export default function AdminWorkflowPage() {
+type TabKey = "issues" | "risks" | "audits" | "lessons" | "procedures";
+
+const TABS: { key: TabKey; label: string; endpoint: string }[] = [
+  { key: "issues",     label: "Issues",     endpoint: "/workflow-stages" },
+  { key: "risks",      label: "Risks",      endpoint: "/risk-workflow-stages" },
+  { key: "audits",     label: "Audits",     endpoint: "/audit-workflow-stages" },
+  { key: "lessons",    label: "Lessons",    endpoint: "/lesson-workflow-stages" },
+  { key: "procedures", label: "Procedures", endpoint: "/procedure-workflow-stages" },
+];
+
+interface StageManagerProps {
+  endpoint: string;
+}
+
+function StageManager({ endpoint }: StageManagerProps) {
   const [stages, setStages] = useState<Stage[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -24,11 +38,16 @@ export default function AdminWorkflowPage() {
   const [error, setError] = useState("");
 
   const fetchStages = useCallback(async () => {
-    const res = await api.get("/workflow-stages");
+    const res = await api.get(endpoint);
     setStages(res.data.stages);
-  }, []);
+  }, [endpoint]);
 
   useEffect(() => {
+    setStages([]);
+    setShowCreate(false);
+    setEditingId(null);
+    setError("");
+    setForm({ name: "", description: "", color: "#6b7280", position: 0, requires_signature: false });
     fetchStages();
   }, [fetchStages]);
 
@@ -36,7 +55,7 @@ export default function AdminWorkflowPage() {
     e.preventDefault();
     setError("");
     try {
-      await api.post("/workflow-stages", {
+      await api.post(endpoint, {
         ...form,
         position: stages.length,
       });
@@ -51,7 +70,7 @@ export default function AdminWorkflowPage() {
   async function handleUpdate(stageId: string) {
     setError("");
     try {
-      await api.patch(`/workflow-stages/${stageId}`, {
+      await api.patch(`${endpoint}/${stageId}`, {
         name: form.name,
         description: form.description,
         color: form.color,
@@ -67,7 +86,7 @@ export default function AdminWorkflowPage() {
   async function handleDelete(stageId: string) {
     if (!confirm("Delete this workflow stage?")) return;
     try {
-      await api.delete(`/workflow-stages/${stageId}`);
+      await api.delete(`${endpoint}/${stageId}`);
       fetchStages();
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to delete stage");
@@ -80,7 +99,7 @@ export default function AdminWorkflowPage() {
     if (swapIndex < 0 || swapIndex >= newOrder.length) return;
     [newOrder[index], newOrder[swapIndex]] = [newOrder[swapIndex], newOrder[index]];
     try {
-      await api.put("/workflow-stages/reorder", {
+      await api.put(`${endpoint}/reorder`, {
         stage_ids: newOrder.map((s) => s.id),
       });
       fetchStages();
@@ -103,7 +122,6 @@ export default function AdminWorkflowPage() {
   return (
     <div>
       <div className="dashboard-header">
-        <h1>Workflow Stages</h1>
         <button onClick={() => setShowCreate(!showCreate)} className="btn btn-primary">
           {showCreate ? "Cancel" : "Add Stage"}
         </button>
@@ -223,6 +241,34 @@ export default function AdminWorkflowPage() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+export default function AdminWorkflowPage() {
+  const [activeTab, setActiveTab] = useState<TabKey>("issues");
+
+  const activeTabConfig = TABS.find((t) => t.key === activeTab)!;
+
+  return (
+    <div>
+      <div className="dashboard-header">
+        <h1>Workflow Stages</h1>
+      </div>
+
+      <div className="instr-tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={`instr-tab${activeTab === tab.key ? " instr-tab-active" : ""}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <StageManager key={activeTab} endpoint={activeTabConfig.endpoint} />
     </div>
   );
 }
