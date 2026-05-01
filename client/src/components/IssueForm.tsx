@@ -1,4 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
+import { useAuth } from "../context/AuthContext";
+import api from "../api/client";
 
 interface User {
   id: string;
@@ -13,21 +15,69 @@ interface IssueFormProps {
     description: string;
     priority: string;
     assignee_id: string | null;
+    source: string | null;
+    on_behalf_of_id: string | null;
+    department: string | null;
+    date_identified: string;
   }) => Promise<void>;
   onCancel: () => void;
 }
 
-export default function IssueForm({
-  users,
-  onSubmit,
-  onCancel,
-}: IssueFormProps) {
+const SOURCES = [
+  "Internal Audit",
+  "External Audit",
+  "Observation",
+  "Inspection",
+  "Self-Identified",
+];
+
+const DEPARTMENTS = [
+  "Manufacturing Engineering",
+  "Production / Operations",
+  "Quality Assurance",
+  "Maintenance & Reliability",
+  "Supply Chain & Logistics",
+  "Safety, Health & Environment",
+  "Human Resources",
+  "Finance & Accounting",
+  "Information Technology",
+  "Research & Development",
+  "Facilities",
+  "Sales & Customer Service",
+];
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
   const [assigneeId, setAssigneeId] = useState("");
+  const [source, setSource] = useState("");
+  const [onBehalfOfId, setOnBehalfOfId] = useState("");
+  const [department, setDepartment] = useState("");
+  const [dateIdentified, setDateIdentified] = useState(todayISO());
+  const [instructions, setInstructions] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Default "on behalf of" to the logged-in user
+  useEffect(() => {
+    if (user && users.length > 0) {
+      const me = users.find((u) => u.email === user.email);
+      if (me) setOnBehalfOfId(me.id);
+    }
+  }, [user, users]);
+
+  // Load instructions from settings
+  useEffect(() => {
+    api.get("/settings/issue_instructions")
+      .then((res) => setInstructions(res.data.value))
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -39,6 +89,10 @@ export default function IssueForm({
         description,
         priority,
         assignee_id: assigneeId || null,
+        source: source || null,
+        on_behalf_of_id: onBehalfOfId || null,
+        department: department || null,
+        date_identified: dateIdentified,
       });
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to create issue");
@@ -49,30 +103,69 @@ export default function IssueForm({
 
   return (
     <form onSubmit={handleSubmit} className="issue-form">
-      <h3>New Issue</h3>
+      {/* Instructions banner */}
+      {instructions && (
+        <div className="if-instructions">
+          <div className="if-inst-icon">ℹ</div>
+          <div className="if-inst-body">
+            {instructions.split("\n").map((line, i) =>
+              line.trim() === "" ? (
+                <div key={i} style={{ height: 6 }} />
+              ) : (
+                <p key={i} style={{ margin: 0, lineHeight: 1.6 }}>{line}</p>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
       {error && <p className="error">{error}</p>}
 
+      {/* Row 1: Title */}
       <div className="form-group">
-        <label>Title</label>
+        <label>Title <span className="if-req">*</span></label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
           maxLength={255}
+          placeholder="Brief summary of the issue"
         />
       </div>
 
-      <div className="form-group">
-        <label>Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-        />
-      </div>
-
+      {/* Row 2: Source + Date Identified */}
       <div className="form-row">
+        <div className="form-group">
+          <label>Source <span className="if-req">*</span></label>
+          <select value={source} onChange={(e) => setSource(e.target.value)} required>
+            <option value="">— Select source —</option>
+            {SOURCES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Date Identified</label>
+          <input
+            type="date"
+            value={dateIdentified}
+            onChange={(e) => setDateIdentified(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Row 3: Department + Priority */}
+      <div className="form-row">
+        <div className="form-group">
+          <label>Department</label>
+          <select value={department} onChange={(e) => setDepartment(e.target.value)}>
+            <option value="">— Select department —</option>
+            {DEPARTMENTS.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
         <div className="form-group">
           <label>Priority</label>
           <select value={priority} onChange={(e) => setPriority(e.target.value)}>
@@ -82,13 +175,24 @@ export default function IssueForm({
             <option value="critical">Critical</option>
           </select>
         </div>
+      </div>
 
+      {/* Row 4: Submit on behalf of + Assignee */}
+      <div className="form-row">
+        <div className="form-group">
+          <label>Submit on Behalf of</label>
+          <select value={onBehalfOfId} onChange={(e) => setOnBehalfOfId(e.target.value)}>
+            <option value="">— Select person —</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name || u.email}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="form-group">
           <label>Assignee</label>
-          <select
-            value={assigneeId}
-            onChange={(e) => setAssigneeId(e.target.value)}
-          >
+          <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
             <option value="">Unassigned</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
@@ -99,9 +203,20 @@ export default function IssueForm({
         </div>
       </div>
 
+      {/* Description */}
+      <div className="form-group">
+        <label>Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={5}
+          placeholder="Describe the issue in detail — what happened, where, when, and the impact…"
+        />
+      </div>
+
       <div className="form-actions">
-        <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? "Creating..." : "Create Issue"}
+        <button type="submit" className="btn-submit" disabled={submitting}>
+          {submitting ? "Submitting…" : "Submit Issue →"}
         </button>
         <button type="button" onClick={onCancel} className="btn btn-secondary">
           Cancel

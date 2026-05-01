@@ -15,11 +15,17 @@ const router = Router();
 
 router.use(authenticate);
 
+const SOURCES = ["Internal Audit", "External Audit", "Observation", "Inspection", "Self-Identified"] as const;
+
 const createIssueSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   description: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "critical"]).optional(),
   assignee_id: z.string().uuid("Invalid assignee ID").nullable().optional(),
+  source: z.enum(SOURCES).nullable().optional(),
+  on_behalf_of_id: z.string().uuid("Invalid user ID").nullable().optional(),
+  department: z.string().max(100).nullable().optional(),
+  date_identified: z.string().nullable().optional(),
 });
 
 const updateIssueSchema = z.object({

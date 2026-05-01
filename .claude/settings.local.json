@@ -26,7 +26,22 @@
       "Bash(timeout 5 curl:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4OTlkNGQzYS1hZTJkLTQ3MjItYTdkOS04ODMxNWQ2YjE1NmEiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzcwNjYyODI4LCJleHAiOjE3NzA2NjM3Mjh9.3IODnJecLvbvcTIddNrZ-5HW4cgrUspdLiZGpuFXny0\")",
       "Bash(python:*)",
-      "Bash(AUTH=\"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4OTlkNGQzYS1hZTJkLTQ3MjItYTdkOS04ODMxNWQ2YjE1NmEiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzcwNjYyODI4LCJleHAiOjE3NzA2NjM3Mjh9.3IODnJecLvbvcTIddNrZ-5HW4cgrUspdLiZGpuFXny0\")"
+      "Bash(AUTH=\"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4OTlkNGQzYS1hZTJkLTQ3MjItYTdkOS04ODMxNWQ2YjE1NmEiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzcwNjYyODI4LCJleHAiOjE3NzA2NjM3Mjh9.3IODnJecLvbvcTIddNrZ-5HW4cgrUspdLiZGpuFXny0\")",
+      "Bash(npx vercel logs:*)",
+      "Bash(node -e:*)",
+      "Bash(vercel:*)",
+      "WebSearch",
+      "WebFetch(domain:appel.nasa.gov)",
+      "WebFetch(domain:milestonetask.com)",
+      "WebFetch(domain:www.brightwork.com)",
+      "WebFetch(domain:mudassiriqbal.net)",
+      "WebFetch(domain:pmstudycircle.com)",
+      "WebFetch(domain:deeprojectmanager.com)",
+      "Bash(npx vercel:*)",
+      "Bash(timeout 8 npx tsx:*)",
+      "Bash(npx tsx:*)",
+      "Bash(gh api:*)",
+      "Bash(npx @vercel/ncc build:*)"
     ]
   }
 }

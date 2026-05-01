@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sidebar Mockups</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f8f7ff;
+    padding: 32px;
+    color: #1e1b4b;
+  }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #1e1b4b; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 32px; }
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: #9ca3af; margin: 32px 0 16px;
+  }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 0; }
+
+  /* ── shared sidebar shell ── */
+  .sb {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(79,70,229,.13);
+    display: flex;
+    flex-direction: column;
+    height: 560px;
+    flex-shrink: 0;
+  }
+  .sb-label { font-size: 10px; color: #6b7280; text-align: center; margin-top: 8px; font-weight: 600; letter-spacing: .04em; }
+
+  /* ═══════════════════════════════════════════
+     ICON VARIANTS
+  ═══════════════════════════════════════════ */
+
+  /* ── #1: Pill icons (current style, redesigned) ── */
+  .sb1 { background: #1e1b4b; width: 68px; }
+  .sb1 .logo { height: 52px; display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800;color:#fff;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.08); }
+  .sb1 .nav { padding: 10px 8px; display:flex;flex-direction:column;gap:2px; }
+  .sb1 .item { width:52px;height:44px;border-radius:10px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:background .15s; }
+  .sb1 .item:hover { background:rgba(255,255,255,.08); }
+  .sb1 .item.active { background:rgba(99,102,241,.35); }
+  .sb1 .ico { font-size:18px;line-height:1; }
+  .sb1 .lbl { font-size:8px;color:rgba(255,255,255,.55);letter-spacing:.04em;text-transform:uppercase;font-weight:600; }
+  .sb1 .item.active .lbl { color:rgba(255,255,255,.9); }
+  .sb1 .div { height:1px;background:rgba(255,255,255,.08);margin:6px 10px; }
+  .sb1 .bot { margin-top:auto;padding:10px 8px; }
+  .sb1 .av { width:32px;height:32px;border-radius:50%;background:#6366f1;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto; }
+  /* Nav icons for sb1 */
+  .i-issues::before   { content:"⚑"; }
+  .i-audits::before   { content:"📋"; }
+  .i-risks::before    { content:"◈"; }
+  .i-lessons::before  { content:"✦"; }
+  .i-analytics::before{ content:"📊"; }
+  .i-board::before    { content:"⊞"; }
+  .i-reports::before  { content:"📑"; }
+  .i-admin::before    { content:"⚙"; }
+  .i-users::before    { content:"👤"; }
+
+  /* ── #2: Filled square icon tiles ── */
+  .sb2 { background: #fff; width: 72px; border: 1px solid #e5e7eb; }
+  .sb2 .logo { height:52px;display:flex;align-items:center;justify-content:center;
+    background:#4f46e5;color:#fff;font-size:14px;font-weight:800;letter-spacing:.05em; }
+  .sb2 .nav { padding:8px 6px;display:flex;flex-direction:column;gap:4px; }
+  .sb2 .item { width:60px;height:54px;border-radius:10px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:5px;cursor:pointer; }
+  .sb2 .item.active { background:#ede9fe; }
+  .sb2 .ico-box { width:34px;height:34px;border-radius:8px;background:#f3f4f6;
+    display:flex;align-items:center;justify-content:center;font-size:16px; }
+  .sb2 .item.active .ico-box { background:#4f46e5; filter:none; }
+  .sb2 .lbl { font-size:8px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.04em; }
+  .sb2 .item.active .lbl { color:#4f46e5;font-weight:700; }
+  .sb2 .div { height:1px;background:#f3f4f6;margin:4px 8px; }
+  .sb2 .bot { margin-top:auto;padding:8px 6px; }
+  .sb2 .av { width:32px;height:32px;border-radius:50%;background:#4f46e5;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto; }
+
+  /* ── #3: Minimal line-icon, no labels, high contrast ── */
+  .sb3 { background: #f9fafb; border: 1px solid #e5e7eb; width: 60px; }
+  .sb3 .logo { height:52px;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800;color:#4f46e5;letter-spacing:.05em; }
+  .sb3 .nav { padding:6px;display:flex;flex-direction:column;gap:2px; }
+  .sb3 .item { width:48px;height:40px;border-radius:8px;display:flex;align-items:center;
+    justify-content:center;cursor:pointer;font-size:20px;color:#9ca3af;position:relative; }
+  .sb3 .item:hover { color:#4f46e5;background:#ede9fe; }
+  .sb3 .item.active { color:#4f46e5; }
+  .sb3 .item.active::before {
+    content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:24px;border-radius:0 2px 2px 0;background:#4f46e5; }
+  .sb3 .div { height:1px;background:#e5e7eb;margin:4px 8px; }
+  .sb3 .bot { margin-top:auto;padding:8px 6px; }
+  .sb3 .av { width:28px;height:28px;border-radius:50%;background:#4f46e5;color:#fff;
+    font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto; }
+
+  /* ── #4: Color-per-section icons ── */
+  .sb4 { background: #1a1a2e; width: 72px; }
+  .sb4 .logo { height:52px;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:900;color:#818cf8;letter-spacing:.05em; }
+  .sb4 .nav { padding:8px 6px;display:flex;flex-direction:column;gap:3px; }
+  .sb4 .item { width:60px;height:52px;border-radius:12px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;cursor:pointer;opacity:.6; }
+  .sb4 .item:hover,.sb4 .item.active { opacity:1; }
+  .sb4 .ico-ring { width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px; }
+  .sb4 .lbl { font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase; }
+  .c-issues { background:rgba(239,68,68,.2);color:#fca5a5; }
+  .c-audits { background:rgba(245,158,11,.2);color:#fcd34d; }
+  .c-risks  { background:rgba(16,185,129,.2);color:#6ee7b7; }
+  .c-lessons{ background:rgba(139,92,246,.2);color:#c4b5fd; }
+  .c-analytics{ background:rgba(59,130,246,.2);color:#93c5fd; }
+  .c-board  { background:rgba(236,72,153,.2);color:#f9a8d4; }
+  .c-admin  { background:rgba(156,163,175,.2);color:#d1d5db; }
+  .sb4 .lbl-issues{color:#fca5a5;}.sb4 .lbl-audits{color:#fcd34d;}
+  .sb4 .lbl-risks{color:#6ee7b7;}.sb4 .lbl-lessons{color:#c4b5fd;}
+  .sb4 .lbl-analytics{color:#93c5fd;}.sb4 .lbl-board{color:#f9a8d4;}
+  .sb4 .lbl-admin{color:#d1d5db;}
+  .sb4 .div { height:1px;background:rgba(255,255,255,.06);margin:4px 8px; }
+  .sb4 .bot { margin-top:auto;padding:8px 6px; }
+  .sb4 .av { width:32px;height:32px;border-radius:50%;background:#6366f1;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto; }
+
+  /* ── #5: Wide icon + label (always visible, 96px) ── */
+  .sb5 { background:#fff;border:1px solid #e5e7eb;width:96px; }
+  .sb5 .logo { height:52px;display:flex;align-items:center;justify-content:center;gap:6px;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:13px;font-weight:800; }
+  .sb5 .nav { padding:6px;display:flex;flex-direction:column;gap:1px; }
+  .sb5 .item { width:84px;height:46px;border-radius:8px;display:flex;align-items:center;
+    gap:8px;padding:0 10px;cursor:pointer;color:#6b7280;font-size:12px;font-weight:600; }
+  .sb5 .item:hover { background:#f5f3ff;color:#4f46e5; }
+  .sb5 .item.active { background:#ede9fe;color:#4f46e5; }
+  .sb5 .ico { font-size:16px;flex-shrink:0; }
+  .sb5 .name { font-size:10px;line-height:1.2;font-weight:600; }
+  .sb5 .div { height:1px;background:#f0eeff;margin:4px 8px; }
+  .sb5 .bot { margin-top:auto;padding:8px; }
+  .sb5 .av { width:32px;height:32px;border-radius:50%;background:#4f46e5;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto; }
+  .sb5 .sec { font-size:8px;color:#d1d5db;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:8px 10px 2px; }
+
+  /* ═══════════════════════════════════════════
+     TEXT VARIANTS
+  ═══════════════════════════════════════════ */
+
+  /* ── #6: Full text, minimal flat ── */
+  .sb6 { background:#fff;border:1px solid #e5e7eb;width:200px; }
+  .sb6 .logo { height:52px;display:flex;align-items:center;padding:0 20px;gap:10px;
+    border-bottom:1px solid #f0eeff; }
+  .sb6 .logo-dot { width:28px;height:28px;border-radius:8px;background:#4f46e5;color:#fff;
+    font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center; }
+  .sb6 .logo-name { font-size:13px;font-weight:700;color:#1e1b4b; }
+  .sb6 .nav { padding:10px 8px;display:flex;flex-direction:column;gap:2px; }
+  .sb6 .item { height:36px;border-radius:8px;display:flex;align-items:center;
+    padding:0 12px;cursor:pointer;font-size:13px;color:#6b7280;font-weight:500; }
+  .sb6 .item:hover { background:#f5f3ff;color:#4f46e5; }
+  .sb6 .item.active { background:#ede9fe;color:#4f46e5;font-weight:600; }
+  .sb6 .sec { font-size:10px;color:#d1d5db;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;padding:10px 12px 2px; }
+  .sb6 .div { height:1px;background:#f0eeff;margin:6px 8px; }
+  .sb6 .bot { margin-top:auto;padding:10px 8px; }
+  .sb6 .av-row { display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer; }
+  .sb6 .av-row:hover { background:#f5f3ff; }
+  .sb6 .av { width:28px;height:28px;border-radius:50%;background:#4f46e5;color:#fff;
+    font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .sb6 .av-name { font-size:12px;color:#374151;font-weight:500; }
+  .sb6 .av-role { font-size:10px;color:#9ca3af; }
+
+  /* ── #7: Left accent bar text ── */
+  .sb7 { background:#fafafa;border-right:1px solid #e5e7eb;width:196px; }
+  .sb7 .logo { height:52px;display:flex;align-items:center;padding:0 16px;gap:8px;
+    background:#4f46e5; }
+  .sb7 .logo-text { font-size:14px;font-weight:800;color:#fff;letter-spacing:.04em; }
+  .sb7 .logo-sub  { font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.1em;text-transform:uppercase; }
+  .sb7 .nav { padding:12px 0;display:flex;flex-direction:column; }
+  .sb7 .item { height:40px;display:flex;align-items:center;padding:0 16px;cursor:pointer;
+    font-size:13px;color:#6b7280;font-weight:500;border-left:3px solid transparent; }
+  .sb7 .item:hover { color:#4f46e5;background:#f5f3ff;border-left-color:#c4b5fd; }
+  .sb7 .item.active { color:#4f46e5;background:#f0eeff;border-left-color:#4f46e5;font-weight:700; }
+  .sb7 .sec { font-size:10px;color:#d1d5db;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:12px 16px 4px; }
+  .sb7 .bot { margin-top:auto;border-top:1px solid #f0eeff;padding:12px 16px;
+    display:flex;align-items:center;gap:10px; }
+  .sb7 .av { width:30px;height:30px;border-radius:50%;background:#4f46e5;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .sb7 .av-info .name { font-size:12px;color:#374151;font-weight:600; }
+  .sb7 .av-info .role { font-size:10px;color:#9ca3af; }
+
+  /* ── #8: Section cards, grouped ── */
+  .sb8 { background:#1e1b4b;width:200px; }
+  .sb8 .logo { height:52px;display:flex;align-items:center;padding:0 16px;
+    border-bottom:1px solid rgba(255,255,255,.08); }
+  .sb8 .logo-mark { font-size:22px;font-weight:900;color:#818cf8;margin-right:8px; }
+  .sb8 .logo-name { font-size:13px;font-weight:700;color:#e0e7ff;letter-spacing:.02em; }
+  .sb8 .nav { padding:10px 10px;display:flex;flex-direction:column;gap:2px; }
+  .sb8 .item { height:38px;border-radius:8px;display:flex;align-items:center;
+    padding:0 12px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.5);font-weight:500; }
+  .sb8 .item:hover { color:rgba(255,255,255,.9);background:rgba(255,255,255,.06); }
+  .sb8 .item.active { color:#e0e7ff;background:rgba(99,102,241,.3);font-weight:600; }
+  .sb8 .grp-box { background:rgba(255,255,255,.04);border-radius:10px;padding:6px 6px;margin:4px 0; }
+  .sb8 .grp-ttl { font-size:9px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.1em;
+    text-transform:uppercase;padding:4px 8px 6px; }
+  .sb8 .bot { margin-top:auto;border-top:1px solid rgba(255,255,255,.06);
+    padding:12px 16px;display:flex;align-items:center;gap:10px; }
+  .sb8 .av { width:30px;height:30px;border-radius:50%;background:#6366f1;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .sb8 .av-info .name { font-size:12px;color:#e0e7ff;font-weight:600; }
+  .sb8 .av-info .role { font-size:10px;color:rgba(255,255,255,.35); }
+
+  /* ── #9: Short-code text (ISS, AUD, RSK…) wide style ── */
+  .sb9 { background:#0f172a;width:80px; }
+  .sb9 .logo { height:52px;display:flex;align-items:center;justify-content:center;
+    border-bottom:1px solid rgba(255,255,255,.06); }
+  .sb9 .logo-ring { width:36px;height:36px;border-radius:10px;background:#6366f1;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff; }
+  .sb9 .nav { padding:10px 6px;display:flex;flex-direction:column;gap:3px; }
+  .sb9 .item { height:50px;border-radius:8px;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;cursor:pointer;color:rgba(255,255,255,.35);gap:2px; }
+  .sb9 .item:hover { background:rgba(255,255,255,.06);color:rgba(255,255,255,.8); }
+  .sb9 .item.active { background:rgba(99,102,241,.25);color:#a5b4fc; }
+  .sb9 .code { font-size:13px;font-weight:800;letter-spacing:.06em; }
+  .sb9 .name { font-size:8px;font-weight:500;letter-spacing:.04em; }
+  .sb9 .div { height:1px;background:rgba(255,255,255,.06);margin:4px 8px; }
+  .sb9 .bot { margin-top:auto;padding:8px 6px; }
+  .sb9 .av { width:32px;height:32px;border-radius:50%;background:#6366f1;color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto; }
+
+  /* ── #10: Text pills (button-style) ── */
+  .sb10 { background:#fff;border:1px solid #e5e7eb;width:188px; }
+  .sb10 .logo { height:52px;display:flex;align-items:center;padding:0 16px;gap:10px;
+    border-bottom:2px solid #f0eeff; }
+  .sb10 .logo-sq { width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+    font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center; }
+  .sb10 .logo-text { font-size:14px;font-weight:800;color:#1e1b4b; }
+  .sb10 .nav { padding:10px 10px;display:flex;flex-direction:column;gap:3px; }
+  .sb10 .item { height:34px;border-radius:20px;display:flex;align-items:center;
+    padding:0 14px;cursor:pointer;font-size:12px;color:#6b7280;font-weight:600;
+    border:1.5px solid transparent;transition:all .12s; }
+  .sb10 .item:hover { border-color:#e0e7ff;background:#f5f3ff;color:#4f46e5; }
+  .sb10 .item.active { border-color:#4f46e5;background:#4f46e5;color:#fff; }
+  .sb10 .sec { font-size:9px;color:#d1d5db;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:8px 14px 3px; }
+  .sb10 .div { height:1px;background:#f0eeff;margin:4px 8px; }
+  .sb10 .bot { margin-top:auto;padding:10px;border-top:1px solid #f0eeff; }
+  .sb10 .av-pill { display:flex;align-items:center;gap:8px;padding:6px 10px;
+    border-radius:20px;border:1.5px solid #e5e7eb;cursor:pointer; }
+  .sb10 .av-pill:hover { border-color:#4f46e5;background:#f5f3ff; }
+  .sb10 .av { width:24px;height:24px;border-radius:50%;background:#4f46e5;color:#fff;
+    font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .sb10 .av-name { font-size:11px;color:#374151;font-weight:600; }
+
+  .legend {
+    font-size:12px;font-weight:700;color:#4f46e5;text-align:center;margin-top:8px;
+    letter-spacing:.02em;
+  }
+  .note {
+    font-size:10px;color:#9ca3af;text-align:center;margin-top:3px;
+  }
+  .wrap { display:flex;flex-direction:column;align-items:center; }
+</style>
+</head>
+<body>
+
+<h1>Sidebar Navigation — 10 Mockups</h1>
+<p class="subtitle">5 icon-based · 5 text-based · Click to compare</p>
+
+<div class="section-title">── Icon variants ──────────────────────────────────────────</div>
+
+<div class="row">
+
+  <!-- ① Pill icons + micro-labels (dark) -->
+  <div class="wrap">
+    <div class="sb sb1">
+      <div class="logo">IT</div>
+      <div class="nav">
+        <div class="item active"><span class="ico i-issues"></span><span class="lbl">Issues</span></div>
+        <div class="item"><span class="ico i-audits"></span><span class="lbl">Audits</span></div>
+        <div class="item"><span class="ico i-risks"></span><span class="lbl">Risks</span></div>
+        <div class="item"><span class="ico i-lessons"></span><span class="lbl">Lessons</span></div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><span class="ico i-analytics"></span><span class="lbl">Analytics</span></div>
+        <div class="item"><span class="ico i-board"></span><span class="lbl">Board</span></div>
+        <div class="item"><span class="ico i-reports"></span><span class="lbl">Reports</span></div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><span class="ico i-admin"></span><span class="lbl">Admin</span></div>
+        <div class="item"><span class="ico i-users"></span><span class="lbl">Users</span></div>
+      </div>
+      <div class="bot"><div class="av">MA</div></div>
+    </div>
+    <div class="legend">① Dark pill</div>
+    <div class="note">Icons + micro-labels</div>
+  </div>
+
+  <!-- ② Filled square icon tiles (light) -->
+  <div class="wrap">
+    <div class="sb sb2">
+      <div class="logo">IssueTrack</div>
+      <div class="nav">
+        <div class="item active">
+          <div class="ico-box">⚑</div>
+          <span class="lbl">Issues</span>
+        </div>
+        <div class="item">
+          <div class="ico-box">📋</div>
+          <span class="lbl">Audits</span>
+        </div>
+        <div class="item">
+          <div class="ico-box">◈</div>
+          <span class="lbl">Risks</span>
+        </div>
+        <div class="item">
+          <div class="ico-box">✦</div>
+          <span class="lbl">Lessons</span>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><div class="ico-box">📊</div><span class="lbl">Analytics</span></div>
+        <div class="item"><div class="ico-box">⊞</div><span class="lbl">Board</span></div>
+        <div class="item"><div class="ico-box">📑</div><span class="lbl">Reports</span></div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><div class="ico-box">⚙</div><span class="lbl">Admin</span></div>
+      </div>
+      <div class="bot"><div class="av">MA</div></div>
+    </div>
+    <div class="legend">② Tile icons</div>
+    <div class="note">Square tiles + labels</div>
+  </div>
+
+  <!-- ③ Minimal line-style, left-border active -->
+  <div class="wrap">
+    <div class="sb sb3">
+      <div class="logo">IT</div>
+      <div class="nav">
+        <div class="item active">⚑</div>
+        <div class="item">📋</div>
+        <div class="item">◈</div>
+        <div class="item">✦</div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item">📊</div>
+        <div class="item">⊞</div>
+        <div class="item">📑</div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item">⚙</div>
+        <div class="item">👤</div>
+      </div>
+      <div class="bot"><div class="av">MA</div></div>
+    </div>
+    <div class="legend">③ Minimal line</div>
+    <div class="note">Icon only, accent bar active</div>
+  </div>
+
+  <!-- ④ Color-per-section (dark) -->
+  <div class="wrap">
+    <div class="sb sb4">
+      <div class="logo">IT</div>
+      <div class="nav">
+        <div class="item active">
+          <div class="ico-ring c-issues">⚑</div>
+          <span class="lbl lbl-issues">Issues</span>
+        </div>
+        <div class="item">
+          <div class="ico-ring c-audits">📋</div>
+          <span class="lbl lbl-audits">Audits</span>
+        </div>
+        <div class="item">
+          <div class="ico-ring c-risks">◈</div>
+          <span class="lbl lbl-risks">Risks</span>
+        </div>
+        <div class="item">
+          <div class="ico-ring c-lessons">✦</div>
+          <span class="lbl lbl-lessons">Lessons</span>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><div class="ico-ring c-analytics">📊</div><span class="lbl lbl-analytics">Analytics</span></div>
+        <div class="item"><div class="ico-ring c-board">⊞</div><span class="lbl lbl-board">Board</span></div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><div class="ico-ring c-admin">⚙</div><span class="lbl lbl-admin">Admin</span></div>
+      </div>
+      <div class="bot"><div class="av">MA</div></div>
+    </div>
+    <div class="legend">④ Color-coded</div>
+    <div class="note">Per-section color identity</div>
+  </div>
+
+  <!-- ⑤ Wide icon + always-visible label (96px) -->
+  <div class="wrap">
+    <div class="sb sb5">
+      <div class="logo">🔷 IssueTrack</div>
+      <div class="nav">
+        <div class="sec">Core</div>
+        <div class="item active"><span class="ico">⚑</span><span class="name">Issues</span></div>
+        <div class="item"><span class="ico">📋</span><span class="name">Audits</span></div>
+        <div class="item"><span class="ico">◈</span><span class="name">Risks</span></div>
+        <div class="item"><span class="ico">✦</span><span class="name">Lessons</span></div>
+        <div class="sec">Tools</div>
+        <div class="item"><span class="ico">📊</span><span class="name">Analytics</span></div>
+        <div class="item"><span class="ico">⊞</span><span class="name">Board</span></div>
+        <div class="item"><span class="ico">📑</span><span class="name">Reports</span></div>
+        <div class="sec">Admin</div>
+        <div class="item"><span class="ico">⚙</span><span class="name">System Admin</span></div>
+        <div class="item"><span class="ico">👤</span><span class="name">Users</span></div>
+      </div>
+      <div class="bot"><div class="av">MA</div></div>
+    </div>
+    <div class="legend">⑤ Wide icon+text</div>
+    <div class="note">96px, always labeled</div>
+  </div>
+
+</div>
+
+<div class="section-title" style="margin-top:36px;">── Text variants ──────────────────────────────────────────</div>
+
+<div class="row">
+
+  <!-- ⑥ Full text, minimal (light) -->
+  <div class="wrap">
+    <div class="sb sb6">
+      <div class="logo">
+        <div class="logo-dot">IT</div>
+        <div>
+          <div class="logo-name">IssueTrack</div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="sec">Modules</div>
+        <div class="item active">Issues</div>
+        <div class="item">Audits</div>
+        <div class="item">Risks</div>
+        <div class="item">Lessons Learned</div>
+        <div class="sec">Tools</div>
+        <div class="item">Analytics</div>
+        <div class="item">Kanban Board</div>
+        <div class="item">Reports</div>
+        <div class="sec">Admin</div>
+        <div class="item">System Admin</div>
+        <div class="item">User Management</div>
+        <div class="item">Workflow</div>
+      </div>
+      <div class="bot">
+        <div class="av-row">
+          <div class="av">MA</div>
+          <div>
+            <div class="av-name">Matt Admin</div>
+            <div class="av-role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">⑥ Minimal text</div>
+    <div class="note">Clean full-width labels</div>
+  </div>
+
+  <!-- ⑦ Left accent bar (light) -->
+  <div class="wrap">
+    <div class="sb sb7">
+      <div class="logo">
+        <div>
+          <div class="logo-text">IssueTrack</div>
+          <div class="logo-sub">Management Platform</div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="sec">Core Modules</div>
+        <div class="item active">Issues</div>
+        <div class="item">Audits</div>
+        <div class="item">Risks</div>
+        <div class="item">Lessons Learned</div>
+        <div class="sec">Workspace</div>
+        <div class="item">Analytics</div>
+        <div class="item">Kanban Board</div>
+        <div class="item">Reports</div>
+        <div class="sec">Administration</div>
+        <div class="item">System Admin</div>
+        <div class="item">User Management</div>
+        <div class="item">Workflow Stages</div>
+      </div>
+      <div class="bot">
+        <div class="av">MA</div>
+        <div class="av-info">
+          <div class="name">Matt Admin</div>
+          <div class="role">Administrator</div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">⑦ Left-bar accent</div>
+    <div class="note">Colored active indicator</div>
+  </div>
+
+  <!-- ⑧ Dark grouped cards -->
+  <div class="wrap">
+    <div class="sb sb8">
+      <div class="logo">
+        <span class="logo-mark">◈</span>
+        <span class="logo-name">IssueTrack</span>
+      </div>
+      <div class="nav">
+        <div class="grp-box">
+          <div class="grp-ttl">Core Modules</div>
+          <div class="item active">Issues</div>
+          <div class="item">Audits</div>
+          <div class="item">Risks</div>
+          <div class="item">Lessons Learned</div>
+        </div>
+        <div class="grp-box">
+          <div class="grp-ttl">Workspace</div>
+          <div class="item">Analytics</div>
+          <div class="item">Kanban Board</div>
+          <div class="item">Reports</div>
+        </div>
+        <div class="grp-box">
+          <div class="grp-ttl">Administration</div>
+          <div class="item">System Admin</div>
+          <div class="item">User Management</div>
+        </div>
+      </div>
+      <div class="bot">
+        <div class="av">MA</div>
+        <div class="av-info">
+          <div class="name">Matt Admin</div>
+          <div class="role">Administrator</div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">⑧ Dark groups</div>
+    <div class="note">Grouped card sections</div>
+  </div>
+
+  <!-- ⑨ Short-code (ISS / AUD / RSK…) -->
+  <div class="wrap">
+    <div class="sb sb9">
+      <div class="logo"><div class="logo-ring">IT</div></div>
+      <div class="nav">
+        <div class="item active"><span class="code">ISS</span><span class="name">Issues</span></div>
+        <div class="item"><span class="code">AUD</span><span class="name">Audits</span></div>
+        <div class="item"><span class="code">RSK</span><span class="name">Risks</span></div>
+        <div class="item"><span class="code">LES</span><span class="name">Lessons</span></div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><span class="code">ANL</span><span class="name">Analytics</span></div>
+        <div class="item"><span class="code">KBN</span><span class="name">Board</span></div>
+        <div class="item"><span class="code">RPT</span><span class="name">Reports</span></div>
+      </div>
+      <div class="div"></div>
+      <div class="nav">
+        <div class="item"><span class="code">ADM</span><span class="name">Admin</span></div>
+        <div class="item"><span class="code">USR</span><span class="name">Users</span></div>
+      </div>
+      <div class="bot"><div class="av">MA</div></div>
+    </div>
+    <div class="legend">⑨ Short-codes</div>
+    <div class="note">3-letter abbreviations</div>
+  </div>
+
+  <!-- ⑩ Text pill buttons -->
+  <div class="wrap">
+    <div class="sb sb10">
+      <div class="logo">
+        <div class="logo-sq">IT</div>
+        <span class="logo-text">IssueTrack</span>
+      </div>
+      <div class="nav">
+        <div class="sec">Modules</div>
+        <div class="item active">Issues</div>
+        <div class="item">Audits</div>
+        <div class="item">Risks</div>
+        <div class="item">Lessons Learned</div>
+        <div class="sec">Tools</div>
+        <div class="item">Analytics</div>
+        <div class="item">Kanban Board</div>
+        <div class="item">Reports</div>
+        <div class="sec">Admin</div>
+        <div class="item">System Admin</div>
+        <div class="item">Users</div>
+      </div>
+      <div class="bot">
+        <div class="av-pill">
+          <div class="av">MA</div>
+          <span class="av-name">Matt Admin</span>
+        </div>
+      </div>
+    </div>
+    <div class="legend">⑩ Pill buttons</div>
+    <div class="note">Rounded pill style</div>
+  </div>
+
+</div>
+
+<div style="margin-top:32px;padding:16px 20px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;max-width:680px;">
+  <div style="font-size:12px;font-weight:700;color:#4f46e5;margin-bottom:8px;">Quick reference</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px;color:#374151;">
+    <div>① Dark pill — icon + micro-label (68px)</div>
+    <div>⑥ Minimal text — clean flat (200px)</div>
+    <div>② Tile icons — square tiles + label (72px)</div>
+    <div>⑦ Left-bar accent — colored indicator (196px)</div>
+    <div>③ Minimal line — icon only, bar active (60px)</div>
+    <div>⑧ Dark groups — card sections (200px)</div>
+    <div>④ Color-coded — per-section accent (72px)</div>
+    <div>⑨ Short-codes — 3-letter abbrev (80px)</div>
+    <div>⑤ Wide icon+text — always labeled (96px)</div>
+    <div>⑩ Pill buttons — rounded pill style (188px)</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -12,7 +12,7 @@
   --color-dark: #1e1b4b;
   --color-dark-lighter: #252260;
   --color-dark-border: #312e81;
-  --sidebar-width: 60px;
+  --sidebar-width: 76px;
   --topbar-height: 52px;
 
   /* Themeable colors */
@@ -4706,3 +4706,169 @@ a:hover {
 [data-theme="dark"] .ap-row + .ap-row .ap-td { border-top-color: var(--color-border); }
 [data-theme="dark"] .ap-td    { color: var(--color-text); }
 [data-theme="dark"] .ap-name  { color: var(--color-text); }
+
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR v2 — Color-coded tiles (②+④ combined)
+   ═══════════════════════════════════════════════════════════ */
+.sb-v2 {
+  background: #12112a;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+  overflow: hidden;
+  transition: width .22s ease;
+}
+/* Logo */
+.sb-v2-logo {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+}
+.sb-v2-logo-mark {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 13px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: .04em;
+}
+/* Dividers */
+.sb-v2-div {
+  height: 1px;
+  background: rgba(255,255,255,.06);
+  margin: 4px 10px;
+  flex-shrink: 0;
+}
+/* Group */
+.sb-v2-group {
+  padding: 4px 6px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+/* Nav tile */
+.sb-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 64px;
+  height: 58px;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: background .14s;
+  opacity: .55;
+}
+.sb-tile:hover { opacity: .85; background: rgba(255,255,255,.05); }
+.sb-tile.sb-tile-active { opacity: 1; background: rgba(255,255,255,.07); }
+/* Icon tile box */
+.sb-tile-ico {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: transform .12s;
+}
+.sb-tile:hover .sb-tile-ico { transform: scale(1.06); }
+/* Label */
+.sb-tile-lbl {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  line-height: 1;
+}
+.sb-tile.sb-tile-active .sb-tile-lbl { color: rgba(255,255,255,.9); }
+/* Bottom section */
+.sb-v2-bot {
+  margin-top: auto;
+  padding: 8px 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+/* Dark mode toggle */
+.sb-v2-theme {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  border: none;
+  color: rgba(255,255,255,.6);
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background .14s, color .14s;
+}
+.sb-v2-theme:hover { background: rgba(255,255,255,.12); color: #fff; }
+/* Avatar */
+.sb-v2-av {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: opacity .14s;
+}
+.sb-v2-av:hover { opacity: .85; }
+
+/* Mobile open state */
+@media (max-width: 768px) {
+  .sb-v2.sidebar-open {
+    width: 220px;
+    box-shadow: 4px 0 20px rgba(0,0,0,.4);
+  }
+  .sb-v2.sidebar-open .sb-tile { flex-direction: row; width: 200px; height: 44px; gap: 10px; padding: 0 12px; justify-content: flex-start; }
+  .sb-v2.sidebar-open .sb-tile-lbl { font-size: 12px; letter-spacing: .02em; text-transform: none; font-weight: 600; }
+  .sb-v2.sidebar-open .sb-tile-ico { width: 30px; height: 30px; border-radius: 8px; font-size: 15px; flex-shrink: 0; }
+  .sb-v2.sidebar-open .sb-v2-group { padding: 4px 10px; }
+}
+
+/* Light mode — keep dark sidebar but soften slightly */
+[data-theme="light"] .sb-v2 { background: #1e1b4b; }
+
+/* ── IssueForm instructions banner ────────────────────────── */
+.if-instructions {
+  display: flex;
+  gap: 12px;
+  background: linear-gradient(135deg, #ede9fe, #dbeafe);
+  border: 1px solid #c4b5fd;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.if-inst-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  color: #5b21b6;
+  padding-top: 1px;
+}
+.if-inst-body {
+  font-size: 12.5px;
+  color: #3730a3;
+  line-height: 1.6;
+  flex: 1;
+}
+.if-req { color: #ef4444; font-size: 11px; }
+
+[data-theme="dark"] .if-instructions {
+  background: rgba(79,70,229,.12);
+  border-color: rgba(99,102,241,.3);
+}
+[data-theme="dark"] .if-inst-body { color: #a5b4fc; }
+[data-theme="dark"] .if-inst-icon { color: #818cf8; }

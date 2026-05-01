@@ -8,6 +8,10 @@ interface CreateIssueParams {
   description?: string;
   priority?: "low" | "medium" | "high" | "critical";
   assignee_id?: string | null;
+  source?: string | null;
+  on_behalf_of_id?: string | null;
+  department?: string | null;
+  date_identified?: string | null;
 }
 
 interface UpdateIssueParams {
@@ -202,6 +206,10 @@ export async function createIssue(
       priority: params.priority || "medium",
       reporter_id: reporterId,
       assignee_id: params.assignee_id || null,
+      source: params.source || null,
+      on_behalf_of_id: params.on_behalf_of_id || null,
+      department: params.department || null,
+      date_identified: params.date_identified || new Date().toISOString().slice(0, 10),
     })
     .returning("*");
 
