@@ -116,8 +116,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {isAdmin && (
           <>
             <div className="sb-v2-div" />
+            <div className="sb-v2-section-label">Administration</div>
             <div className="sb-v2-group">
-              <NavTile to="/admin"              end colorKey="admin"        icon="⚙️" label="System Admin" onToggle={onToggle} />
               <NavTile to="/admin/users"            colorKey="users"        icon="👤" label="Users"        onToggle={onToggle} />
               <NavTile to="/admin/workflow"         colorKey="workflow"     icon="🔄" label="Workflow"     onToggle={onToggle} />
               <NavTile to="/admin/audit-types"      colorKey="auditcfg"    icon="🏷️" label="Audit Config" onToggle={onToggle} />
@@ -150,14 +150,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 )}
                 {isAdmin && (
                   <>
-                    <NavLink to="/admin" className="sb-popover-item" onClick={() => { setMenuOpen(false); onToggle(); }}>
-                      ⚙ System Admin
-                    </NavLink>
                     <NavLink to="/admin/users" className="sb-popover-item" onClick={() => { setMenuOpen(false); onToggle(); }}>
                       👤 User Management
                     </NavLink>
+                    <NavLink to="/admin/workflow" className="sb-popover-item" onClick={() => { setMenuOpen(false); onToggle(); }}>
+                      🔄 Workflow
+                    </NavLink>
                     <NavLink to="/admin/instructions" className="sb-popover-item" onClick={() => { setMenuOpen(false); onToggle(); }}>
-                      📝 Issue Instructions
+                      📝 Instructions
                     </NavLink>
                   </>
                 )}

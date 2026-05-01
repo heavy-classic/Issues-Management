@@ -4865,6 +4865,16 @@ a:hover {
   margin: 4px 10px;
   flex-shrink: 0;
 }
+/* Section label (e.g. "Administration" above admin tiles) */
+.sb-v2-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  padding: 10px 14px 2px;
+  flex-shrink: 0;
+}
 /* Group */
 .sb-v2-group {
   padding: 4px 8px;
