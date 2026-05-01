@@ -88,6 +88,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Logo */}
         <div className="sb-v2-logo">
           <div className="sb-v2-logo-mark">IT</div>
+          <span className="sb-v2-logo-text">INVOKE</span>
         </div>
 
         {/* Primary nav */}

@@ -30,7 +30,7 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-brand">
-        <div className="auth-brand-name">INV<span className="brand-o"></span>KE</div>
+        <div className="auth-brand-name">INVOKE</div>
         <div className="auth-brand-sub">PUBLIC SECTOR</div>
       </div>
       <h1>Login</h1>
