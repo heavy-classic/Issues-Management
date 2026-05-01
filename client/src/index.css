@@ -4148,6 +4148,18 @@ a:hover {
 }
 .bento-attach-zone:hover { border-color: #4f46e5; color: #4f46e5; }
 
+/* Read-only empty attachment state */
+.attach-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
+.attach-empty span:first-child { font-size: 18px; }
+[data-theme="dark"] .attach-empty { color: var(--color-text-faint); }
+
 /* AI Panel */
 .ai-panel {
   width: 280px;

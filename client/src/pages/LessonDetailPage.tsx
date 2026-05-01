@@ -358,10 +358,9 @@ export default function LessonDetailPage() {
                   onUpdate={handleRefresh}
                 />
               ) : (
-                <div className="bento-attach-zone" onClick={() => setShowUpload(true)}>
-                  <div style={{ fontSize: 28 }}>📎</div>
-                  <div>No attachments</div>
-                  <div style={{ fontSize: 11, color: "#c7d2fe" }}>Click to upload</div>
+                <div className="attach-empty">
+                  <span>📎</span>
+                  <span>No attachments — use the Attach button above to upload files</span>
                 </div>
               )}
             </div>

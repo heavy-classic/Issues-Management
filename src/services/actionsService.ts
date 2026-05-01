@@ -34,9 +34,9 @@ export async function listActions(filters: ListActionsFilters) {
     .select(
       "actions.*",
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "creator.email as creator_email",
-      "creator.name as creator_name"
+      db.raw("COALESCE(creator.full_name, creator.name) as creator_name")
     )
     .leftJoin("users as assignee", "actions.assigned_to", "assignee.id")
     .leftJoin("users as creator", "actions.created_by", "creator.id")
@@ -64,9 +64,9 @@ export async function getAction(actionId: string) {
     .select(
       "actions.*",
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "creator.email as creator_email",
-      "creator.name as creator_name"
+      db.raw("COALESCE(creator.full_name, creator.name) as creator_name")
     )
     .leftJoin("users as assignee", "actions.assigned_to", "assignee.id")
     .leftJoin("users as creator", "actions.created_by", "creator.id")
@@ -81,7 +81,7 @@ export async function getAction(actionId: string) {
     .select(
       "attachments.*",
       "users.email as uploader_email",
-      "users.name as uploader_name"
+      db.raw("COALESCE(users.full_name, users.name) as uploader_name")
     )
     .leftJoin("users", "attachments.uploaded_by", "users.id")
     .where({
@@ -99,9 +99,9 @@ export async function getActionsForIssue(issueId: string) {
     .select(
       "actions.*",
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "creator.email as creator_email",
-      "creator.name as creator_name",
+      db.raw("COALESCE(creator.full_name, creator.name) as creator_name"),
       db.raw(
         "(SELECT COUNT(*) FROM attachments WHERE parent_type = 'action' AND parent_id = actions.id AND is_deleted = false)::int as attachment_count"
       )

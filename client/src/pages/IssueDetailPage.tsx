@@ -734,16 +734,9 @@ export default function IssueDetailPage() {
                     onUpdate={fetchIssue}
                   />
                 ) : (
-                  <div
-                    className="bento-attach-zone"
-                    onClick={() => {
-                      setDroppedFiles([]);
-                      setShowDropUpload(true);
-                    }}
-                  >
-                    <div style={{ fontSize: 28 }}>📎</div>
-                    <div>Drop files here</div>
-                    <div style={{ fontSize: 11, color: "#c7d2fe" }}>or click to upload</div>
+                  <div className="attach-empty">
+                    <span>📎</span>
+                    <span>No attachments — use the Attach button above to upload files</span>
                   </div>
                 )}
               </div>

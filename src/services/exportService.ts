@@ -6,9 +6,9 @@ export async function getIssueExportData(issueId: string) {
     .select(
       "issues.*",
       "reporter.email as reporter_email",
-      "reporter.name as reporter_name",
+      db.raw("COALESCE(reporter.full_name, reporter.name) as reporter_name"),
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "workflow_stages.name as stage_name",
       "workflow_stages.color as stage_color"
     )
@@ -29,8 +29,8 @@ export async function getIssueExportData(issueId: string) {
   const actions = await db("actions")
     .select(
       "actions.*",
-      "assignee.name as assignee_name",
-      "creator.name as creator_name"
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
+      db.raw("COALESCE(creator.full_name, creator.name) as creator_name")
     )
     .leftJoin("users as assignee", "actions.assigned_to", "assignee.id")
     .leftJoin("users as creator", "actions.created_by", "creator.id")
@@ -38,7 +38,7 @@ export async function getIssueExportData(issueId: string) {
     .orderBy("actions.created_at", "asc");
 
   const comments = await db("comments")
-    .select("comments.*", "users.name as author_name")
+    .select("comments.*", db.raw("COALESCE(users.full_name, users.name) as author_name"))
     .leftJoin("users", "comments.author_id", "users.id")
     .where("comments.issue_id", issueId)
     .orderBy("comments.created_at", "asc");
@@ -51,7 +51,7 @@ export async function getIssueExportData(issueId: string) {
     .select(
       "issue_stage_assignments.*",
       "workflow_stages.name as stage_name",
-      "users.name as assignee_name"
+      db.raw("COALESCE(users.full_name, users.name) as assignee_name")
     )
     .leftJoin(
       "workflow_stages",
@@ -108,9 +108,9 @@ export async function getIssuesExportData(filters: IssuesExportFilters) {
       "issues.priority",
       "issues.created_at",
       "issues.updated_at",
-      "reporter.name as reporter_name",
+      db.raw("COALESCE(reporter.full_name, reporter.name) as reporter_name"),
       "reporter.email as reporter_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "assignee.email as assignee_email",
       "workflow_stages.name as stage_name",
       db.raw(
@@ -158,8 +158,8 @@ export async function getActionsExportData(filters: ActionsExportFilters) {
       "actions.completed_at",
       "actions.created_at",
       "issues.title as issue_title",
-      "assignee.name as assignee_name",
-      "creator.name as creator_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
+      db.raw("COALESCE(creator.full_name, creator.name) as creator_name"),
       db.raw(
         "(SELECT COUNT(*) FROM action_attachments WHERE action_id = actions.id)::int as attachment_count"
       )

@@ -282,10 +282,9 @@ export default function AuditDetailPage() {
                   onUpdate={fetchAudit}
                 />
               ) : (
-                <div className="bento-attach-zone">
-                  <div style={{ fontSize: 28 }}>📎</div>
-                  <div>No evidence attached</div>
-                  <div style={{ fontSize: 11, color: "#c7d2fe" }}>Upload via Edit</div>
+                <div className="attach-empty">
+                  <span>📎</span>
+                  <span>No attachments — use the Attach button above to upload files</span>
                 </div>
               )}
             </div>

@@ -108,9 +108,9 @@ export async function getIssue(issueId: string) {
     .select(
       "issues.*",
       "reporter.email as reporter_email",
-      "reporter.name as reporter_name",
+      db.raw("COALESCE(reporter.full_name, reporter.name) as reporter_name"),
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "workflow_stages.name as stage_name",
       "workflow_stages.color as stage_color"
     )
@@ -146,7 +146,7 @@ export async function getIssue(issueId: string) {
     .select(
       "comments.*",
       "users.email as author_email",
-      "users.name as author_name"
+      db.raw("COALESCE(users.full_name, users.name) as author_name")
     )
     .leftJoin("users", "comments.author_id", "users.id")
     .where("comments.issue_id", issueId)
@@ -161,7 +161,7 @@ export async function getIssue(issueId: string) {
       "workflow_stages.position as stage_position",
       "workflow_stages.requires_signature",
       "users.email as assignee_email",
-      "users.name as assignee_name"
+      db.raw("COALESCE(users.full_name, users.name) as assignee_name")
     )
     .leftJoin(
       "workflow_stages",
@@ -182,9 +182,9 @@ export async function getIssue(issueId: string) {
     .select(
       "actions.*",
       "assignee.email as assignee_email",
-      "assignee.name as assignee_name",
+      db.raw("COALESCE(assignee.full_name, assignee.name) as assignee_name"),
       "creator.email as creator_email",
-      "creator.name as creator_name",
+      db.raw("COALESCE(creator.full_name, creator.name) as creator_name"),
       db.raw(
         "(SELECT COUNT(*) FROM attachments WHERE parent_type = 'action' AND parent_id = actions.id AND is_deleted = false)::int as attachment_count"
       )
@@ -198,7 +198,7 @@ export async function getIssue(issueId: string) {
   const attachments = await db("attachments")
     .select(
       "attachments.*",
-      "users.name as uploader_name",
+      db.raw("COALESCE(users.full_name, users.name) as uploader_name"),
       "users.email as uploader_email"
     )
     .leftJoin("users", "attachments.uploaded_by", "users.id")
