@@ -111,14 +111,11 @@ export async function getIssue(issueId: string) {
       "reporter.name as reporter_name",
       "assignee.email as assignee_email",
       "assignee.name as assignee_name",
-      "on_behalf_user.email as on_behalf_of_email",
-      "on_behalf_user.name as on_behalf_of_name",
       "workflow_stages.name as stage_name",
       "workflow_stages.color as stage_color"
     )
     .leftJoin("users as reporter", "issues.reporter_id", "reporter.id")
     .leftJoin("users as assignee", "issues.assignee_id", "assignee.id")
-    .leftJoin("users as on_behalf_user", "issues.on_behalf_of_id", "on_behalf_user.id")
     .leftJoin(
       "workflow_stages",
       "issues.current_stage_id",
@@ -129,6 +126,20 @@ export async function getIssue(issueId: string) {
 
   if (!issue) {
     throw new AppError(404, "Issue not found");
+  }
+
+  // Resolve on_behalf_of user name/email (column added by migration 20260501000001)
+  issue.on_behalf_of_name = null;
+  issue.on_behalf_of_email = null;
+  if (issue.on_behalf_of_id) {
+    const onBehalfUser = await db("users")
+      .where({ id: issue.on_behalf_of_id })
+      .select("name", "email")
+      .first();
+    if (onBehalfUser) {
+      issue.on_behalf_of_name = onBehalfUser.name;
+      issue.on_behalf_of_email = onBehalfUser.email;
+    }
   }
 
   const comments = await db("comments")
