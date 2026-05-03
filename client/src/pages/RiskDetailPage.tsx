@@ -341,24 +341,13 @@ export default function RiskDetailPage() {
               />
             </div>
 
-            {/* ── Linked records tile ── */}
-            <div className="tile t-attach">
-              <div className="tile-label">Linked Records</div>
-              <div style={{ fontSize: 12, color: "#6d6d9e", marginBottom: 8 }}>
-                <strong style={{ color: "#1e1b4b" }}>{linkedIssues.length}</strong> linked issue{linkedIssues.length !== 1 ? "s" : ""}
-              </div>
-              <div style={{ fontSize: 12, color: "#6d6d9e" }}>
-                <strong style={{ color: "#1e1b4b" }}>{linkedAudits.length}</strong> linked audit{linkedAudits.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-
             {/* ── Linked Issues tile ── */}
-            <div className="tile" style={{ gridColumn: "span 4" }}>
+            <div className="tile t-actions">
               <RiskLinkedIssuesPanel riskId={id as string} issues={linkedIssues} onRefresh={handleRefresh} />
             </div>
 
             {/* ── Linked Audits tile ── */}
-            <div className="tile" style={{ gridColumn: "span 6" }}>
+            <div className="tile t-comments">
               <RiskLinkedAuditsPanel riskId={id as string} audits={linkedAudits} onRefresh={handleRefresh} />
             </div>
 

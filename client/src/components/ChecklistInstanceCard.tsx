@@ -7,13 +7,22 @@ interface Props {
   onUpdate: () => void;
 }
 
+const STATUS_BG: Record<string, string> = {
+  not_started: "#f3f4f6", in_progress: "#dbeafe", complete: "#d1fae5", under_review: "#fef3c7",
+};
+const STATUS_COLOR: Record<string, string> = {
+  not_started: "#6b7280", in_progress: "#1d4ed8", complete: "#065f46", under_review: "#d97706",
+};
 const STATUS_LABELS: Record<string, string> = {
-  not_started: "Not Started",
-  in_progress: "In Progress",
-  complete: "Complete",
-  under_review: "Under Review",
+  not_started: "Not Started", in_progress: "In Progress", complete: "Complete", under_review: "Under Review",
 };
 
+function fmtDate(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+// Rendered as a <tr> inside an ap-table in AuditDetailPage
 export default function ChecklistInstanceCard({ instance, onUpdate }: Props) {
   const [showExecution, setShowExecution] = useState(false);
 
@@ -29,40 +38,31 @@ export default function ChecklistInstanceCard({ instance, onUpdate }: Props) {
 
   return (
     <>
-      <div className="action-card" style={{ cursor: "pointer" }} onClick={() => setShowExecution(true)}>
-        <div className="action-card-header">
-          <h4 className="action-card-title">{instance.checklist_name}</h4>
-          <button className="btn-icon btn-danger-icon" onClick={(e) => { e.stopPropagation(); handleRemove(); }} title="Remove">&times;</button>
-        </div>
-        <div className="action-card-badges">
-          <span className={`badge badge-action-${instance.status === "complete" ? "completed" : instance.status === "in_progress" ? "assigned" : "initiate"}`}>
+      <tr className="ap-row" style={{ cursor: "pointer" }} onClick={() => setShowExecution(true)}>
+        <td className="ap-td ap-name">{instance.checklist_name}</td>
+        <td className="ap-td">
+          <span className="ap-status" style={{ background: STATUS_BG[instance.status] || "#f3f4f6", color: STATUS_COLOR[instance.status] || "#6b7280" }}>
             {STATUS_LABELS[instance.status] || instance.status}
           </span>
-          {instance.assigned_to_name && (
-            <span className="badge">{instance.assigned_to_name}</span>
-          )}
-        </div>
-        <div style={{ margin: "0.75rem 0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
-            <span>{responded}/{total} criteria</span>
-            <span>{progress}%</span>
+        </td>
+        <td className="ap-td ap-assignee">{instance.assigned_to_name || <span style={{ color: "#c7d2fe" }}>—</span>}</td>
+        <td className="ap-td">
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ flex: 1, background: "#e0e7ff", borderRadius: 4, height: 6, minWidth: 60, overflow: "hidden" }}>
+              <div style={{
+                width: `${progress}%`, height: "100%", borderRadius: 4,
+                background: progress === 100 ? "#10b981" : "#4f46e5",
+                transition: "width 0.3s",
+              }} />
+            </div>
+            <span style={{ fontSize: 11, color: "#6b7280", whiteSpace: "nowrap" }}>{responded}/{total}</span>
           </div>
-          <div style={{ background: "var(--color-border, #e5e7eb)", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
-            <div style={{
-              width: `${progress}%`,
-              height: "100%",
-              background: progress === 100 ? "#10b981" : "var(--color-primary, #667eea)",
-              borderRadius: "4px",
-              transition: "width 0.3s",
-            }} />
-          </div>
-        </div>
-        {instance.due_date && (
-          <div className="action-card-meta">
-            <span>Due: {new Date(instance.due_date).toLocaleDateString()}</span>
-          </div>
-        )}
-      </div>
+        </td>
+        <td className="ap-td" style={{ fontSize: 12, color: "#6b7280" }}>{fmtDate(instance.due_date)}</td>
+        <td className="ap-td ap-actions-cell" onClick={(e) => e.stopPropagation()}>
+          <button className="ap-btn ap-btn-del" onClick={handleRemove}>Remove</button>
+        </td>
+      </tr>
 
       {showExecution && (
         <ChecklistExecutionModal

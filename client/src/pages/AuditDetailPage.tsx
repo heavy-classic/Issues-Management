@@ -271,15 +271,27 @@ export default function AuditDetailPage() {
                 </span>
                 <AssignChecklistButton auditId={id!} checklists={checklists} users={users} onAssigned={fetchAudit} />
               </div>
-              {audit.instances?.length > 0 ? (
-                <div style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginTop: 8 }}>
-                  {audit.instances.map((inst: any) => (
-                    <ChecklistInstanceCard key={inst.id} instance={inst} onUpdate={fetchAudit} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted" style={{ marginTop: 8 }}>No checklists assigned.</p>
-              )}
+              <table className="ap-table">
+                <thead>
+                  <tr>
+                    <th className="ap-th">Checklist</th>
+                    <th className="ap-th">Status</th>
+                    <th className="ap-th">Assigned To</th>
+                    <th className="ap-th">Progress</th>
+                    <th className="ap-th">Due</th>
+                    <th className="ap-th" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {!audit.instances?.length ? (
+                    <tr><td colSpan={6} className="ap-empty">No checklists assigned.</td></tr>
+                  ) : (
+                    audit.instances.map((inst: any) => (
+                      <ChecklistInstanceCard key={inst.id} instance={inst} onUpdate={fetchAudit} />
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
 
             {/* ── Evidence tile ── */}

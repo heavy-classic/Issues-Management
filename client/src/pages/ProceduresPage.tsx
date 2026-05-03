@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 
@@ -11,187 +11,250 @@ interface Procedure {
   revision_number: number;
   author_name: string | null;
   author_email: string | null;
+  owner_name: string | null;
+  owner_email: string | null;
   updated_at: string;
   safety_classification: string | null;
 }
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  draft:      { bg: "#f3f4f6",  color: "#6b7280" },
-  review:     { bg: "#fef3c7",  color: "#d97706" },
-  approved:   { bg: "#d1fae5",  color: "#065f46" },
-  superseded: { bg: "#e5e7eb",  color: "#9ca3af" },
-  cancelled:  { bg: "#fee2e2",  color: "#dc2626" },
+const STATUS_TABS = [
+  { key: "", label: "All" },
+  { key: "draft", label: "Draft" },
+  { key: "review", label: "Review" },
+  { key: "approved", label: "Approved" },
+  { key: "superseded", label: "Superseded" },
+];
+
+const STATUS_PILL: Record<string, { bg: string; color: string; dot: string }> = {
+  draft:      { bg: "#f3f4f6",  color: "#6b7280", dot: "#9ca3af" },
+  review:     { bg: "#fef3c7",  color: "#d97706", dot: "#f59e0b" },
+  approved:   { bg: "#d1fae5",  color: "#065f46", dot: "#10b981" },
+  superseded: { bg: "#e5e7eb",  color: "#9ca3af", dot: "#d1d5db" },
+  cancelled:  { bg: "#fee2e2",  color: "#dc2626", dot: "#ef4444" },
 };
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
 
 export default function ProceduresPage() {
   const navigate = useNavigate();
   const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const LIMIT = 20;
+  const [sortBy, setSortBy] = useState("updated_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    setLoading(true);
-    const params: Record<string, string | number> = { page, limit: LIMIT };
-    if (search) params.search = search;
-    if (statusFilter !== "all") params.status = statusFilter;
-    if (typeFilter !== "all") params.procedure_type = typeFilter;
+  const fetchProcedures = useCallback(async () => {
+    const params = new URLSearchParams();
+    if (activeTab) params.set("status", activeTab);
+    if (typeFilter) params.set("procedure_type", typeFilter);
+    if (search) params.set("search", search);
+    params.set("page", String(page));
+    params.set("limit", "100");
+    params.set("sort_by", sortBy);
+    params.set("sort_dir", sortDir);
+    const res = await api.get(`/procedures?${params}`);
+    const data = res.data.procedures ?? res.data;
+    setProcedures(data);
+    setTotal(res.data.total ?? data.length);
+    setLoading(false);
+  }, [activeTab, typeFilter, search, page, sortBy, sortDir]);
 
-    api.get("/procedures", { params })
-      .then((res) => {
-        setProcedures(res.data.procedures || res.data);
-        setTotal(res.data.total ?? (res.data.procedures || res.data).length);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [search, statusFilter, typeFilter, page]);
+  const fetchCounts = useCallback(async () => {
+    try {
+      const statuses = ["draft", "review", "approved", "superseded"];
+      const [allRes, ...statusRes] = await Promise.all([
+        api.get("/procedures?limit=1"),
+        ...statuses.map((s) => api.get(`/procedures?status=${s}&limit=1`)),
+      ]);
+      const c: Record<string, number> = { "": allRes.data.total ?? 0 };
+      statuses.forEach((s, i) => { c[s] = statusRes[i].data.total ?? 0; });
+      setCounts(c);
+    } catch { /* ignore */ }
+  }, []);
 
-  const totalPages = Math.ceil(total / LIMIT);
+  useEffect(() => { fetchProcedures(); }, [fetchProcedures]);
+  useEffect(() => { fetchCounts(); }, [fetchCounts]);
+  useEffect(() => { setPage(1); }, [activeTab, typeFilter, search]);
+
+  function handleSort(field: string) {
+    if (sortBy === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortBy(field); setSortDir("asc"); }
+    setPage(1);
+  }
+
+  function SortTh({ field, label }: { field: string; label: string }) {
+    const active = sortBy === field;
+    return (
+      <th className={`il-th-sort${active ? " il-th-sorted" : ""}`} onClick={() => handleSort(field)}>
+        {label}
+        <span className="il-sort-arrow">{active ? (sortDir === "asc" ? " ↑" : " ↓") : " ↕"}</span>
+      </th>
+    );
+  }
 
   return (
-    <div style={{ padding: "24px 28px", maxWidth: 1100 }}>
+    <div className="issues-list-page">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--color-dark)", margin: 0 }}>
-            📄 Procedures
-          </h1>
-          <p style={{ fontSize: 13, color: "var(--color-text-muted)", marginTop: 4, margin: 0 }}>
-            Administrative and operational procedures following DOE-STD-1029
-          </p>
+      <div className="il-header">
+        <div className="il-title-row">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div className="il-page-title">Procedures</div>
+            <div className="il-record-count">{total} records</div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button className="btn-submit" style={{ fontSize: 12, padding: "7px 16px" }} onClick={() => navigate("/procedures/new")}>
+              + New Procedure
+            </button>
+          </div>
         </div>
-        <button
-          className="btn-submit"
-          style={{ fontSize: 13, padding: "8px 18px" }}
-          onClick={() => navigate("/procedures/new")}
-        >
-          + New Procedure
-        </button>
-      </div>
 
-      {/* Filters */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-        <input
-          type="text"
-          className="form-input"
-          placeholder="Search by number or title…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{ flex: 1, minWidth: 200, maxWidth: 340, fontSize: 13 }}
-        />
-        <select
-          className="form-input"
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          style={{ fontSize: 13, minWidth: 130 }}
-        >
-          <option value="all">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="review">Under Review</option>
-          <option value="approved">Approved</option>
-          <option value="superseded">Superseded</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <select
-          className="form-input"
-          value={typeFilter}
-          onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-          style={{ fontSize: 13, minWidth: 180 }}
-        >
-          <option value="all">All types</option>
-          <option value="Operating Procedure">Operating</option>
-          <option value="Maintenance Procedure">Maintenance</option>
-          <option value="Safety Procedure">Safety</option>
-          <option value="Quality Procedure">Quality</option>
-          <option value="Administrative Procedure">Administrative</option>
-          <option value="Calibration Procedure">Calibration</option>
-        </select>
+        {/* Toolbar */}
+        <div className="il-toolbar">
+          <div className="il-search-wrap">
+            <span className="il-search-ico">🔍</span>
+            <input
+              className="il-search-input"
+              type="text"
+              placeholder="Search procedures…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {/* Type filter pills */}
+          {["Safety", "Operations", "Maintenance", "Quality", "Administrative"].map((t) => {
+            const full = `${t} Procedure`;
+            const active = typeFilter === full || (t === "Operations" && typeFilter === "Operating Procedure");
+            const val = t === "Operations" ? "Operating Procedure" : full;
+            return (
+              <button
+                key={t}
+                className={`il-filter-btn${active ? " il-filter-active" : ""}`}
+                onClick={() => setTypeFilter(active ? "" : val)}
+              >
+                {active && <div className="il-filter-dot" />}
+                {t}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Status tabs */}
+        <div className="il-tabs">
+          {STATUS_TABS.map((tab) => (
+            <div
+              key={tab.key}
+              className={`il-tab${activeTab === tab.key ? " il-tab-active" : ""}`}
+              onClick={() => { setActiveTab(tab.key); setPage(1); }}
+            >
+              {tab.label}
+              <span className={`il-tab-count${activeTab === tab.key ? " il-tab-count-active" : ""}`}>
+                {counts[tab.key] ?? "…"}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Number</th>
-              <th style={{ minWidth: 280 }}>Title</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Rev</th>
-              <th>Author</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--color-text-muted)" }}>Loading…</td></tr>
-            ) : procedures.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--color-text-muted)" }}>No procedures found</td></tr>
-            ) : procedures.map((p) => {
-              const sc = STATUS_COLORS[p.status] || STATUS_COLORS.draft;
-              return (
-                <tr
-                  key={p.id}
-                  className="table-row-hover"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => navigate(`/procedures/${p.id}`)}
-                >
-                  <td>
-                    <span style={{
-                      fontFamily: "monospace", fontSize: 12,
-                      background: "var(--color-bg-subtle)", border: "1px solid var(--color-border)",
-                      borderRadius: 5, padding: "2px 7px", whiteSpace: "nowrap"
-                    }}>
-                      {p.procedure_number}
-                    </span>
-                  </td>
-                  <td style={{ fontWeight: 500, color: "var(--color-text)" }}>{p.title}</td>
-                  <td style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-                    {p.procedure_type?.replace(" Procedure", "") ?? "—"}
-                  </td>
-                  <td>
-                    <span style={{
-                      background: sc.bg, color: sc.color,
-                      borderRadius: 5, padding: "2px 8px",
-                      fontSize: 11, fontWeight: 700, textTransform: "capitalize"
-                    }}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: "center", fontSize: 12 }}>
-                    Rev {p.revision_number ?? 0}
-                  </td>
-                  <td style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-                    {p.author_name || p.author_email || "—"}
-                  </td>
-                  <td style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                    {p.updated_at ? new Date(p.updated_at).toLocaleDateString() : "—"}
+      <div className="il-table-wrap">
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "#c7d2fe" }}>Loading…</div>
+        ) : (
+          <table className="il-table">
+            <thead>
+              <tr>
+                <SortTh field="procedure_number" label="Number" />
+                <SortTh field="title" label="Title" />
+                <th className="il-th">Type</th>
+                <th className="il-th">Status</th>
+                <th className="il-th">Rev</th>
+                <th className="il-th">Author</th>
+                <SortTh field="updated_at" label="Updated" />
+                <th className="il-th" />
+              </tr>
+            </thead>
+            <tbody>
+              {procedures.length === 0 ? (
+                <tr className="il-empty-row">
+                  <td colSpan={8}>
+                    {search ? `No procedures matching "${search}"` : "No procedures found."}
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                procedures.map((p) => {
+                  const pill = STATUS_PILL[p.status] || STATUS_PILL.draft;
+                  const authorName = p.author_name || p.author_email || p.owner_name || p.owner_email || "—";
+                  return (
+                    <tr key={p.id} className="il-row" onClick={() => navigate(`/procedures/${p.id}`)}>
+                      {/* Number */}
+                      <td className="il-td">
+                        <span style={{ fontFamily: "monospace", fontSize: 12, color: "#4f46e5", fontWeight: 600, letterSpacing: "0.03em" }}>
+                          {p.procedure_number}
+                        </span>
+                      </td>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <button className="btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={{ fontSize: 12 }}>
-            ← Prev
-          </button>
-          <span style={{ fontSize: 12, color: "var(--color-text-muted)", alignSelf: "center" }}>
-            Page {page} of {totalPages}
-          </span>
-          <button className="btn-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={{ fontSize: 12 }}>
-            Next →
-          </button>
-        </div>
-      )}
+                      {/* Title */}
+                      <td className="il-td">
+                        <div className="il-title-cell">{p.title}</div>
+                      </td>
+
+                      {/* Type */}
+                      <td className="il-td">
+                        <span style={{ fontSize: 12, color: "#6b7280" }}>
+                          {p.procedure_type?.replace(" Procedure", "") || "—"}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="il-td">
+                        <span className="il-status-pill" style={{ background: pill.bg, color: pill.color }}>
+                          <span className="il-s-dot" style={{ background: pill.dot }} />
+                          {p.status}
+                        </span>
+                      </td>
+
+                      {/* Revision */}
+                      <td className="il-td">
+                        <span style={{ fontSize: 12, color: "#6b7280" }}>Rev {p.revision_number ?? 0}</span>
+                      </td>
+
+                      {/* Author */}
+                      <td className="il-td">
+                        <span style={{ fontSize: 12, color: "#6b7280" }}>{authorName}</span>
+                      </td>
+
+                      {/* Updated */}
+                      <td className="il-td">
+                        <span className="il-date">{fmtDate(p.updated_at)}</span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="il-td" onClick={(e) => e.stopPropagation()}>
+                        <div className="il-row-actions">
+                          <button
+                            className="il-ra-btn"
+                            title="Open"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/procedures/${p.id}`); }}
+                          >
+                            ↗
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
