@@ -251,6 +251,43 @@ export default function IssueDetailPage() {
     }
   }
 
+  async function handleAdvanceWorkflow() {
+    if (!issue) return;
+    const sortedStages = [...issue.stageAssignments].sort(
+      (a, b) => a.stage_position - b.stage_position
+    );
+    const currentIdx = sortedStages.findIndex(
+      (sa) => sa.stage_id === issue.current_stage_id
+    );
+    const nextStage = sortedStages[currentIdx + 1];
+    if (!nextStage) return; // already on last stage
+    try {
+      await api.post(`/workflow/issues/${issue.id}/transition`, {
+        target_stage_id: nextStage.stage_id,
+      });
+      fetchIssue();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to advance workflow");
+    }
+  }
+
+  function handleSubmitClick() {
+    if (!issue) return;
+    const currentStage = issue.stageAssignments.find(
+      (sa) => sa.stage_id === issue.current_stage_id
+    );
+    const alreadySigned = issue.signatures.some(
+      (s) =>
+        s.workflow_stage_id === issue.current_stage_id &&
+        s.user_id === user?.userId
+    );
+    if (currentStage?.requires_signature && !alreadySigned) {
+      setSigningStage(currentStage);
+    } else {
+      handleAdvanceWorkflow();
+    }
+  }
+
   async function handleDeleteInvestigation(invId: string) {
     if (!confirm("Delete this analysis? This cannot be undone.")) return;
     try {
@@ -549,21 +586,30 @@ export default function IssueDetailPage() {
                         Delete
                       </button>
                     )}
-                    {issue.stageAssignments.length > 0 && (
-                      <button
-                        className="btn-submit"
-                        onClick={() => {
-                          const currentStage = issue.stageAssignments.find(
-                            (sa) => sa.stage_id === issue.current_stage_id
-                          );
-                          if (currentStage?.requires_signature) {
-                            setSigningStage(currentStage);
-                          }
-                        }}
-                      >
-                        Submit →
-                      </button>
-                    )}
+                    {(() => {
+                      const sorted = [...issue.stageAssignments].sort(
+                        (a, b) => a.stage_position - b.stage_position
+                      );
+                      const isLastStage =
+                        sorted.length > 0 &&
+                        sorted[sorted.length - 1].stage_id === issue.current_stage_id;
+                      if (isLastStage || issue.stageAssignments.length === 0) return null;
+                      const currentStage = issue.stageAssignments.find(
+                        (sa) => sa.stage_id === issue.current_stage_id
+                      );
+                      const needsSig =
+                        currentStage?.requires_signature &&
+                        !issue.signatures.some(
+                          (s) =>
+                            s.workflow_stage_id === issue.current_stage_id &&
+                            s.user_id === user?.userId
+                        );
+                      return (
+                        <button className="btn-submit" onClick={handleSubmitClick}>
+                          {needsSig ? "Sign & Submit →" : "Submit →"}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
                 {/* Meta strip */}
@@ -1102,9 +1148,9 @@ export default function IssueDetailPage() {
           issueId={issue.id}
           stageId={signingStage.stage_id}
           stageName={signingStage.stage_name}
-          onComplete={() => {
+          onComplete={async () => {
             setSigningStage(null);
-            fetchIssue();
+            await handleAdvanceWorkflow();
           }}
           onCancel={() => setSigningStage(null)}
         />
