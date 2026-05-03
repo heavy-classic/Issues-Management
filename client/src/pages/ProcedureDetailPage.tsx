@@ -181,7 +181,7 @@ export default function ProcedureDetailPage() {
   useEffect(() => {
     if (!id || id === "new") return;
     api.get(`/procedures/${id}`)
-      .then((res) => { setProcedure(res.data); setEditData(res.data); setLoading(false); })
+      .then((res) => { setProcedure(res.data.procedure); setEditData(res.data.procedure); setLoading(false); })
       .catch(() => setLoading(false));
   }, [id]);
 
@@ -202,8 +202,8 @@ export default function ProcedureDetailPage() {
     setSaving(true);
     try {
       const res = await api.patch(`/procedures/${id}`, editData);
-      setProcedure(res.data);
-      setEditData(res.data);
+      setProcedure(res.data.procedure);
+      setEditData(res.data.procedure);
       setSaveMsg("Saved!");
       setTimeout(() => setSaveMsg(""), 2500);
     } catch {
