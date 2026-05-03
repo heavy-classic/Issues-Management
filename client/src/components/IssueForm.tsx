@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, type FormEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
+import { useDropzone } from "react-dropzone";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 
@@ -20,7 +21,7 @@ interface IssueFormProps {
     on_behalf_of_id: string | null;
     department: string | null;
     date_identified: string;
-  }) => Promise<void>;
+  }) => Promise<{ id: string } | void>;
   onCancel: () => void;
 }
 
@@ -64,6 +65,17 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
   const [instructions, setInstructions] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const onDrop = useCallback((accepted: File[]) => {
+    setPendingFiles((prev) => [...prev, ...accepted]);
+  }, []);
+  const { getRootProps, getInputProps, isDragActive, open: openFilePicker } = useDropzone({
+    onDrop,
+    multiple: true,
+    maxSize: 25 * 1024 * 1024,
+    noClick: true,
+  });
 
   // Default "on behalf of" to the logged-in user
   useEffect(() => {
@@ -85,7 +97,7 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
     setError("");
     setSubmitting(true);
     try {
-      await onSubmit({
+      const result = await onSubmit({
         title,
         description: rteRef.current ? rteRef.current.innerHTML : "",
         priority,
@@ -95,6 +107,14 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
         department: department || null,
         date_identified: dateIdentified,
       });
+      // Upload any queued attachments after the issue is created
+      if (result?.id && pendingFiles.length > 0) {
+        const fd = new FormData();
+        pendingFiles.forEach((f) => fd.append("files", f));
+        await api.post(`/issues/${result.id}/attachments`, fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to create issue");
     } finally {
@@ -224,6 +244,43 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
             suppressContentEditableWarning
           />
         </div>
+      </div>
+
+      {/* Attachments — queued before submission */}
+      <div className="form-group">
+        <label>Attachments</label>
+        <div
+          {...getRootProps()}
+          className={`if-dropzone${isDragActive ? " if-dropzone-active" : ""}`}
+        >
+          <input {...getInputProps()} />
+          <span className="if-drop-icon">📎</span>
+          {isDragActive ? (
+            <span>Drop files here…</span>
+          ) : (
+            <>
+              <span>Drag files here or{" "}
+                <button type="button" className="if-drop-browse" onClick={openFilePicker}>browse</button>
+              </span>
+              <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>PDF, images, Office docs · max 25 MB each</span>
+            </>
+          )}
+        </div>
+        {pendingFiles.length > 0 && (
+          <ul className="if-file-list">
+            {pendingFiles.map((f, i) => (
+              <li key={i} className="if-file-item">
+                <span className="if-file-name">📄 {f.name}</span>
+                <span className="if-file-size">{(f.size / 1024).toFixed(0)} KB</span>
+                <button
+                  type="button"
+                  className="if-file-remove"
+                  onClick={() => setPendingFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                >×</button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="form-actions">

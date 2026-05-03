@@ -211,7 +211,17 @@ export default function IssueDetailPage() {
     fetchInvestigations();
   }, [fetchInvestigations]);
 
-  // Set breadcrumbs to show issue_number (or title) instead of raw UUID
+  // Set breadcrumbs immediately on mount so UUID never appears in TopBar
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Home", path: "/" },
+      { label: "Issues", path: "/" },
+      { label: "…" },
+    ]);
+    return () => setBreadcrumbs([]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update breadcrumbs once issue data loads
   useEffect(() => {
     if (!issue) return;
     const label = issue.issue_number || issue.title.slice(0, 40);
@@ -220,7 +230,6 @@ export default function IssueDetailPage() {
       { label: "Issues", path: "/" },
       { label: label },
     ]);
-    return () => setBreadcrumbs([]);
   }, [issue, setBreadcrumbs]);
 
   async function handleCreateAnalysis() {

@@ -127,10 +127,11 @@ export default function DashboardPage() {
   }
 
   async function handleCreate(data: { title: string; description: string; priority: string; assignee_id: string | null; source: string | null; on_behalf_of_id: string | null; department: string | null; date_identified: string }) {
-    await api.post("/issues", data);
+    const res = await api.post("/issues", data);
     setShowCreate(false);
     fetchIssues();
     fetchCounts();
+    return res.data.issue as { id: string };
   }
 
   // Client-side text search
