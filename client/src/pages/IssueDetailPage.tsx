@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import api from "../api/client";
 import CommentThread from "../components/CommentThread";
 import SignatureDialog from "../components/SignatureDialog";
@@ -13,7 +14,6 @@ import FileUploadModal from "../components/FileUploadModal";
 import DropZoneOverlay from "../components/DropZoneOverlay";
 import { exportIssuePDF } from "../utils/exportUtils";
 import LessonFormModal from "../components/LessonFormModal";
-import InvestigationPanel from "../components/InvestigationPanel";
 
 interface StageAssignment {
   id: string;
@@ -63,6 +63,7 @@ interface IssueAttachment {
 
 interface Issue {
   id: string;
+  issue_number: string | null;
   title: string;
   description: string;
   status: string;
@@ -109,6 +110,16 @@ interface ActionItem {
   created_at: string;
 }
 
+interface Investigation {
+  id: string;
+  issue_id: string;
+  type: "barrier_analysis" | "five_why" | "fishbone";
+  title: string;
+  status: "draft" | "complete";
+  creator_name: string | null;
+  created_at: string;
+}
+
 interface User {
   id: string;
   email: string;
@@ -137,6 +148,7 @@ export default function IssueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { setBreadcrumbs } = useBreadcrumbs();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState(false);
@@ -165,6 +177,11 @@ export default function IssueDetailPage() {
     signerName: string;
   } | null>(null);
   const [showLessonForm, setShowLessonForm] = useState(false);
+  const [investigations, setInvestigations] = useState<Investigation[]>([]);
+  const [showNewAnalysisModal, setShowNewAnalysisModal] = useState(false);
+  const [newAnalysisType, setNewAnalysisType] = useState<Investigation["type"]>("barrier_analysis");
+  const [newAnalysisTitle, setNewAnalysisTitle] = useState("");
+  const [creatingAnalysis, setCreatingAnalysis] = useState(false);
   const rteRef = useRef<HTMLDivElement>(null);
 
   const fetchIssue = useCallback(async () => {
@@ -176,10 +193,64 @@ export default function IssueDetailPage() {
     }
   }, [id]);
 
+  const fetchInvestigations = useCallback(async () => {
+    try {
+      const res = await api.get(`/issues/${id}/investigations`);
+      setInvestigations(res.data.investigations || []);
+    } catch {
+      // silently ignore
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchIssue();
     api.get("/users").then((res) => setUsers(res.data.users));
   }, [fetchIssue]);
+
+  useEffect(() => {
+    fetchInvestigations();
+  }, [fetchInvestigations]);
+
+  // Set breadcrumbs to show issue_number (or title) instead of raw UUID
+  useEffect(() => {
+    if (!issue) return;
+    const label = issue.issue_number || issue.title.slice(0, 40);
+    setBreadcrumbs([
+      { label: "Home", path: "/" },
+      { label: "Issues", path: "/" },
+      { label: label },
+    ]);
+    return () => setBreadcrumbs([]);
+  }, [issue, setBreadcrumbs]);
+
+  async function handleCreateAnalysis() {
+    if (!newAnalysisTitle.trim()) return;
+    setCreatingAnalysis(true);
+    try {
+      const res = await api.post(`/issues/${id}/investigations`, {
+        type: newAnalysisType,
+        title: newAnalysisTitle.trim(),
+      });
+      setShowNewAnalysisModal(false);
+      setNewAnalysisTitle("");
+      setNewAnalysisType("barrier_analysis");
+      navigate(`/investigations/${res.data.investigation.id}`);
+    } catch {
+      alert("Failed to create analysis");
+    } finally {
+      setCreatingAnalysis(false);
+    }
+  }
+
+  async function handleDeleteInvestigation(invId: string) {
+    if (!confirm("Delete this analysis? This cannot be undone.")) return;
+    try {
+      await api.delete(`/investigations/${invId}`);
+      fetchInvestigations();
+    } catch {
+      alert("Failed to delete analysis");
+    }
+  }
 
   function startEditing() {
     if (!issue) return;
@@ -430,6 +501,11 @@ export default function IssueDetailPage() {
                     <div className="rec-type">
                       <div className="rec-type-dot" />
                       Issue Record
+                      {issue.issue_number && (
+                        <span style={{ marginLeft: 8, fontFamily: "monospace", fontSize: 12, color: "#a5b4fc", fontWeight: 600, letterSpacing: "0.04em" }}>
+                          {issue.issue_number}
+                        </span>
+                      )}
                     </div>
                     <div className="rec-title">{issue.title}</div>
                   </div>
@@ -452,6 +528,9 @@ export default function IssueDetailPage() {
                     </button>
                     <button className="btn btn-secondary" onClick={() => setShowLessonForm(true)}>
                       📚 Lesson
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => { setDroppedFiles([]); setShowDropUpload(true); }}>
+                      📎 Attach
                     </button>
                     <button className="btn btn-secondary" onClick={startEditing}>
                       ✏ Edit
@@ -716,13 +795,96 @@ export default function IssueDetailPage() {
                 </table>
               </div>
 
-              {/* ── Investigations tile ── */}
-              <div className="tile">
-                <InvestigationPanel
-                  issueId={issue.id}
-                  isReadOnly={false}
-                />
-              </div>
+              {/* ── Analysis tile ── only visible once Investigation stage is reached */}
+              {(() => {
+                const invStageIdx = issue.stageAssignments.findIndex(
+                  (sa) => sa.stage_name === "Investigation"
+                );
+                const isInvestigationReached =
+                  invStageIdx >= 0 && currentStageIdx >= invStageIdx;
+                const hasAnyInvestigations = investigations.length > 0;
+                const showAnalysis = isInvestigationReached || hasAnyInvestigations;
+                const isInvestigationStage =
+                  issue.stageAssignments[currentStageIdx]?.stage_name === "Investigation";
+
+                if (!showAnalysis) return null;
+
+                const TYPE_LABELS: Record<string, string> = {
+                  barrier_analysis: "Barrier Analysis",
+                  five_why: "5-Why Analysis",
+                  fishbone: "Fishbone",
+                };
+
+                return (
+                  <div className="tile t-actions">
+                    <div className="tile-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>
+                        Analysis{" "}
+                        <span style={{ background: "#ede9fe", color: "#4f46e5", fontSize: 10, padding: "1px 7px", borderRadius: 8, marginLeft: 4, fontWeight: 600 }}>
+                          {investigations.length}
+                        </span>
+                      </span>
+                      {isInvestigationStage && (
+                        <button className="ap-add-btn" onClick={() => setShowNewAnalysisModal(true)}>
+                          + Create Analysis
+                        </button>
+                      )}
+                    </div>
+                    <table className="ap-table">
+                      <thead>
+                        <tr>
+                          <th className="ap-th">Title</th>
+                          <th className="ap-th">Type</th>
+                          <th className="ap-th">Status</th>
+                          <th className="ap-th">Created By</th>
+                          <th className="ap-th">Date</th>
+                          <th className="ap-th">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {investigations.length > 0 ? (
+                          investigations.map((inv) => (
+                            <tr
+                              key={inv.id}
+                              className="ap-row"
+                              style={{ cursor: "pointer" }}
+                              onClick={() => navigate(`/investigations/${inv.id}`)}
+                            >
+                              <td className="ap-td ap-name">{inv.title}</td>
+                              <td className="ap-td">
+                                <span style={{ fontSize: 12, color: "#a5b4fc" }}>
+                                  {TYPE_LABELS[inv.type] || inv.type}
+                                </span>
+                              </td>
+                              <td className="ap-td">
+                                <span className={`ap-status ap-status-${inv.status === "complete" ? "completed" : "open"}`}>
+                                  {inv.status}
+                                </span>
+                              </td>
+                              <td className="ap-td ap-assignee">{inv.creator_name || <span style={{ color: "#c7d2fe" }}>—</span>}</td>
+                              <td className="ap-td">{fmtDate(inv.created_at)}</td>
+                              <td className="ap-td ap-actions-cell">
+                                <button
+                                  className="ap-btn ap-btn-edit"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/investigations/${inv.id}`); }}
+                                >Open</button>
+                                <button
+                                  className="ap-btn ap-btn-del"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteInvestigation(inv.id); }}
+                                >Delete</button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="ap-empty">No analyses yet — use "Create Analysis" to start an investigation.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
 
               {/* ── Attachments tile ── */}
               <div className="tile t-attach">
@@ -971,6 +1133,56 @@ export default function IssueDetailPage() {
           }}
           onClose={() => setShowLessonForm(false)}
         />
+      )}
+
+      {/* ── Create Analysis Modal ── */}
+      {showNewAnalysisModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box" style={{ maxWidth: 480 }}>
+            <div className="modal-hdr">
+              <span>Create Analysis</span>
+              <button className="modal-close" onClick={() => setShowNewAnalysisModal(false)}>×</button>
+            </div>
+            <div style={{ padding: "1.25rem 1.5rem" }}>
+              <div className="form-group" style={{ marginBottom: "1rem" }}>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13, color: "#a5b4fc" }}>Analysis Type</label>
+                <select
+                  value={newAnalysisType}
+                  onChange={(e) => setNewAnalysisType(e.target.value as Investigation["type"])}
+                  style={{ width: "100%" }}
+                >
+                  <option value="barrier_analysis">Barrier Analysis</option>
+                  <option value="five_why">5-Why Analysis</option>
+                  <option value="fishbone">Fishbone (Ishikawa)</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13, color: "#a5b4fc" }}>Title</label>
+                <input
+                  type="text"
+                  placeholder="Brief description of what's being analyzed…"
+                  value={newAnalysisTitle}
+                  onChange={(e) => setNewAnalysisTitle(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateAnalysis(); }}
+                  autoFocus
+                  style={{ width: "100%" }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button className="btn btn-secondary" onClick={() => setShowNewAnalysisModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn-submit"
+                  onClick={handleCreateAnalysis}
+                  disabled={creatingAnalysis || !newAnalysisTitle.trim()}
+                >
+                  {creatingAnalysis ? "Creating…" : "Create & Open →"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </DropZoneOverlay>
   );

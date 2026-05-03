@@ -217,6 +217,16 @@ export async function createIssue(
   params: CreateIssueParams,
   auditCtx?: AuditContext
 ) {
+  const year = new Date().getFullYear();
+  const lastRow = await db.raw(
+    `SELECT COALESCE(MAX(CAST(SPLIT_PART(issue_number, '-', 3) AS INTEGER)), 0) as max_num
+     FROM issues
+     WHERE issue_number LIKE ?`,
+    [`ISSUE-${year}-%`]
+  );
+  const nextNum = (Number(lastRow.rows[0]?.max_num) || 0) + 1;
+  const issueNumber = `ISSUE-${year}-${String(nextNum).padStart(5, "0")}`;
+
   const [issue] = await db("issues")
     .insert({
       title: params.title,
@@ -228,6 +238,7 @@ export async function createIssue(
       on_behalf_of_id: params.on_behalf_of_id || null,
       department: params.department || null,
       date_identified: params.date_identified || new Date().toISOString().slice(0, 10),
+      issue_number: issueNumber,
     })
     .returning("*");
 

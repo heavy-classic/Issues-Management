@@ -32,6 +32,7 @@ import AdminInstructionsPage from "./pages/AdminInstructionsPage";
 import WorkQueuePage from "./pages/WorkQueuePage";
 import ProceduresPage from "./pages/ProceduresPage";
 import ProcedureDetailPage from "./pages/ProcedureDetailPage";
+import InvestigationDetailPage from "./pages/InvestigationDetailPage";
 import type { ReactNode } from "react";
 
 function LayoutRoute({ children }: { children: ReactNode }) {
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/queue" element={<LayoutRoute><WorkQueuePage /></LayoutRoute>} />
           <Route path="/procedures" element={<LayoutRoute><ProceduresPage /></LayoutRoute>} />
           <Route path="/procedures/:id" element={<LayoutRoute><ProcedureDetailPage /></LayoutRoute>} />
+          <Route path="/investigations/:id" element={<LayoutRoute><InvestigationDetailPage /></LayoutRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

@@ -107,9 +107,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <NavTile to="/analytics" colorKey="analytics" icon="📊" label="Analytics"   onToggle={onToggle} />
           <NavTile to="/board"     colorKey="board"     icon="🗂️" label="Board"       onToggle={onToggle} />
           <NavTile to="/reports"   colorKey="reports"   icon="📑" label="Reports"     onToggle={onToggle} />
-          {isAdmin && (
-            <NavTile to="/admin/teams" colorKey="teams" icon="👥" label="Teams" onToggle={onToggle} />
-          )}
         </div>
 
         {/* Admin */}
@@ -118,6 +115,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <div className="sb-v2-div" />
             <div className="sb-v2-section-label">Administration</div>
             <div className="sb-v2-group">
+              <NavTile to="/admin/teams"            colorKey="teams"        icon="👥" label="Teams"        onToggle={onToggle} />
               <NavTile to="/admin/users"            colorKey="users"        icon="👤" label="Users"        onToggle={onToggle} />
               <NavTile to="/admin/workflow"         colorKey="workflow"     icon="🔄" label="Workflow"     onToggle={onToggle} />
               <NavTile to="/admin/audit-types"      colorKey="auditcfg"    icon="🏷️" label="Audit Config" onToggle={onToggle} />
