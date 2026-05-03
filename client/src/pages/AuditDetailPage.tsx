@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import AuditFormModal from "../components/AuditFormModal";
-import AuditPhaseProgress from "../components/AuditPhaseProgress";
 import ChecklistInstanceCard from "../components/ChecklistInstanceCard";
 import FindingsPanel from "../components/FindingsPanel";
 import AuditTeamPanel from "../components/AuditTeamPanel";
@@ -11,13 +10,16 @@ import AttachmentList from "../components/AttachmentList";
 import { exportAuditPDF } from "../utils/auditExportUtils";
 import HistoryPanel from "../components/HistoryPanel";
 
+interface WorkflowStage {
+  id: string;
+  name: string;
+  color: string;
+  position: number;
+  requires_signature: boolean;
+}
+
 interface AuditType { id: string; name: string; }
 interface User { id: string; full_name: string | null; email: string; }
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: "#9ca3af", scheduled: "#3b82f6", planning: "#8b5cf6",
-  in_progress: "#f59e0b", under_review: "#06b6d4", closed: "#10b981", cancelled: "#ef4444",
-};
 
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -28,6 +30,7 @@ export default function AuditDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [audit, setAudit] = useState<any>(null);
+  const [stages, setStages] = useState<WorkflowStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -46,6 +49,7 @@ export default function AuditDetailPage() {
     api.get("/audit-types?is_active=true").then((r) => setAuditTypes(r.data.auditTypes));
     api.get("/users").then((r) => setUsers(r.data.users));
     api.get("/checklists?status=active").then((r) => setChecklists(r.data.checklists));
+    api.get("/workflow/audit-stages").then((r) => setStages(r.data.stages));
   }, [fetchAudit]);
 
   async function handleUpdate(data: any) {
@@ -54,21 +58,23 @@ export default function AuditDetailPage() {
     fetchAudit();
   }
 
-  async function handleAdvancePhase() {
-    if (!confirm("Advance to the next workflow phase?")) return;
-    await api.post(`/audits/${id}/advance-phase`);
-    fetchAudit();
+  async function handleAdvanceWorkflow() {
+    if (!audit) return;
+    const currentIdx = stages.findIndex((s) => s.id === audit.current_stage_id);
+    const nextStage = stages[currentIdx + 1];
+    if (!nextStage) return;
+    try {
+      await api.post(`/workflow/audits/${id}/transition`, { target_stage_id: nextStage.id });
+      fetchAudit();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to advance workflow");
+    }
   }
 
   async function handleDelete() {
     if (!confirm("Delete this audit? This cannot be undone.")) return;
     await api.delete(`/audits/${id}`);
     navigate("/audits");
-  }
-
-  async function handleStatusChange(status: string) {
-    await api.patch(`/audits/${id}`, { status });
-    fetchAudit();
   }
 
   async function handleExportPDF() {
@@ -83,11 +89,9 @@ export default function AuditDetailPage() {
   if (loading) return <p className="loading">Loading…</p>;
   if (!audit) return <p>Audit not found.</p>;
 
-  const phases = typeof audit.workflow_phases === "string"
-    ? JSON.parse(audit.workflow_phases)
-    : audit.workflow_phases || [];
-
   const openFindings = (audit.findings || []).filter((f: any) => f.status !== "closed");
+  const currentStageIdx = stages.findIndex((s) => s.id === audit.current_stage_id);
+  const isLastStage = stages.length > 0 && currentStageIdx === stages.length - 1;
 
   return (
     <>
@@ -104,6 +108,11 @@ export default function AuditDetailPage() {
                     <div className="rec-type-dot" style={{ background: audit.type_color || "#4f46e5" }} />
                     {audit.type_icon && <span>{audit.type_icon}</span>}
                     Audit Record
+                    {audit.audit_number && (
+                      <span style={{ marginLeft: 8, fontFamily: "monospace", fontSize: 12, color: "#a5b4fc", fontWeight: 600, letterSpacing: "0.04em" }}>
+                        {audit.audit_number}
+                      </span>
+                    )}
                   </div>
                   <div className="rec-title">{audit.title}</div>
                 </div>
@@ -111,37 +120,21 @@ export default function AuditDetailPage() {
                   <button className="btn btn-secondary" onClick={() => setEditing(true)}>✏ Edit</button>
                   <button className="btn btn-secondary" onClick={() => setShowHistory((v) => !v)}>🕐 History</button>
                   <button className="btn btn-secondary" onClick={handleExportPDF}>⬇ Export PDF</button>
-                  {audit.status !== "closed" && audit.status !== "cancelled" && (
-                    <>
-                      <select
-                        value={audit.status}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e0e7ff", fontSize: 12, background: "#fff", color: "#1e1b4b" }}
-                      >
-                        {["draft", "scheduled", "planning", "in_progress", "under_review", "closed", "cancelled"].map((s) => (
-                          <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-                        ))}
-                      </select>
-                      <button className="btn-submit" onClick={handleAdvancePhase}>
-                        Advance Phase →
-                      </button>
-                    </>
-                  )}
                   <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
+                  {!isLastStage && stages.length > 0 && audit.status !== "cancelled" && (
+                    <button className="btn-submit" onClick={handleAdvanceWorkflow}>
+                      Submit →
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Meta strip */}
               <div className="meta-strip">
                 <div className="ms-item">
-                  <div className="ms-status-dot" style={{ background: STATUS_COLORS[audit.status] || "#4f46e5" }} />
+                  <div className="ms-status-dot" style={{ background: stages[currentStageIdx]?.color || "#4f46e5" }} />
                   <strong>{audit.status.replace(/_/g, " ")}</strong>
                 </div>
-                {audit.audit_number && (
-                  <div className="ms-item" style={{ fontFamily: "monospace", fontSize: 11, color: "#7c5cbf" }}>
-                    {audit.audit_number}
-                  </div>
-                )}
                 {audit.type_name && <div className="ms-item">🏷 {audit.type_name}</div>}
                 {audit.risk_level && <div className="ms-item">⚠ {audit.risk_level} risk</div>}
                 <div className="ms-item">📅 {fmtDate(audit.scheduled_start)}</div>
@@ -152,17 +145,35 @@ export default function AuditDetailPage() {
               </div>
             </div>
 
-            {/* ── Workflow / Phases tile ── */}
-            {phases.length > 0 && (
+            {/* ── Workflow tile ── */}
+            {stages.length > 0 && (
               <div className="tile t-workflow">
                 <div className="tile-label acc">
-                  Workflow Phases — {audit.current_phase || "Not started"}
+                  Workflow
+                  {currentStageIdx >= 0 && (
+                    <> — Stage {currentStageIdx + 1} of {stages.length}</>
+                  )}
                 </div>
-                <AuditPhaseProgress
-                  phases={phases}
-                  currentPhase={audit.current_phase}
-                  status={audit.status}
-                />
+                <div className="bento-wf-row">
+                  {stages.map((stage, idx) => {
+                    const isCurrent = stage.id === audit.current_stage_id;
+                    const isComplete = currentStageIdx >= 0 && idx < currentStageIdx;
+                    const cls = isComplete ? "wf-done" : isCurrent ? "wf-cur" : "";
+                    return (
+                      <React.Fragment key={stage.id}>
+                        <div className={`bento-wf-step ${cls}`}>
+                          <div className="bento-wf-icon">
+                            {isComplete ? "✓" : idx + 1}
+                          </div>
+                          <div className="bento-wf-name">{stage.name}</div>
+                          <div className="bento-wf-sub">
+                            {isComplete ? "Completed" : isCurrent ? "In progress" : "Not started"}
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -386,12 +397,12 @@ export default function AuditDetailPage() {
                   <div className="ai-arr">›</div>
                 </div>
               )}
-              {audit.status === "in_progress" && phases.length > 0 && (
+              {!isLastStage && stages.length > 0 && (
                 <div className="ai-sug">
                   <div className="ai-sug-n">{(audit.lead_email ? 0 : 1) + (openFindings.length > 0 ? 1 : 0) + 1}</div>
                   <div className="ai-sug-t">
-                    <strong>Advance to next phase</strong>
-                    Current: {audit.current_phase || "—"}. Move forward when ready.
+                    <strong>Advance to next stage</strong>
+                    Current: {stages[currentStageIdx]?.name || "—"}. Submit when ready.
                   </div>
                   <div className="ai-arr">›</div>
                 </div>

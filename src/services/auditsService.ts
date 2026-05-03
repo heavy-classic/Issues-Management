@@ -221,6 +221,9 @@ export async function createAudit(
     ? JSON.parse(auditType.workflow_phases)
     : auditType.workflow_phases;
 
+  // Set initial stage to "Draft" (first stage, position 0)
+  const firstStage = await db("audit_workflow_stages").orderBy("position", "asc").first();
+
   const [audit] = await db("audits")
     .insert({
       audit_number: auditNumber,
@@ -228,6 +231,7 @@ export async function createAudit(
       description: params.description || "",
       audit_type_id: params.audit_type_id,
       status: "draft",
+      current_stage_id: firstStage?.id || null,
       current_phase: phases?.[0] || null,
       priority: params.priority || "medium",
       risk_level: params.risk_level || null,

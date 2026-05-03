@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import RiskFormModal from "../components/RiskFormModal";
@@ -9,22 +9,13 @@ import RiskMitigationsPanel from "../components/RiskMitigationsPanel";
 import RiskLinkedIssuesPanel from "../components/RiskLinkedIssuesPanel";
 import RiskLinkedAuditsPanel from "../components/RiskLinkedAuditsPanel";
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: "#9ca3af",
-  identified: "#3b82f6",
-  under_assessment: "#8b5cf6",
-  assessed: "#06b6d4",
-  in_treatment: "#f59e0b",
-  monitoring: "#10b981",
-  under_review: "#f97316",
-  accepted: "#059669",
-  closed: "#6b7280",
-};
-
-const ALL_STATUSES = [
-  "draft", "identified", "under_assessment", "assessed",
-  "in_treatment", "monitoring", "under_review", "accepted", "closed",
-];
+interface WorkflowStage {
+  id: string;
+  name: string;
+  color: string;
+  position: number;
+  requires_signature: boolean;
+}
 
 const LEVEL_COLORS: Record<string, string> = {
   critical: "#ef4444", high: "#f97316", medium: "#f59e0b", low: "#10b981",
@@ -42,6 +33,7 @@ export default function RiskDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [risk, setRisk] = useState<any>(null);
+  const [stages, setStages] = useState<WorkflowStage[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -77,9 +69,11 @@ export default function RiskDetailPage() {
     Promise.all([
       api.get("/risk-categories"),
       api.get("/users"),
-    ]).then(([catRes, userRes]) => {
+      api.get("/workflow/risk-stages"),
+    ]).then(([catRes, userRes, stagesRes]) => {
       setCategories(catRes.data.categories);
       setUsers(userRes.data.users);
+      setStages(stagesRes.data.stages);
     });
   }, [fetchRisk, fetchRelated]);
 
@@ -89,11 +83,17 @@ export default function RiskDetailPage() {
     fetchRisk();
   }
 
-  async function handleStatusChange(newStatus: string) {
-    const data: any = { status: newStatus };
-    if (newStatus === "closed") data.closed_date = new Date().toISOString().split("T")[0];
-    await api.put(`/risks/${id}`, data);
-    fetchRisk();
+  async function handleAdvanceWorkflow() {
+    if (!risk) return;
+    const currentIdx = stages.findIndex((s) => s.id === risk.current_stage_id);
+    const nextStage = stages[currentIdx + 1];
+    if (!nextStage) return;
+    try {
+      await api.post(`/workflow/risks/${id}/transition`, { target_stage_id: nextStage.id });
+      fetchRisk();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to advance workflow");
+    }
   }
 
   async function handleDelete() {
@@ -113,6 +113,10 @@ export default function RiskDetailPage() {
   const residualLevel = risk.residual_level || risk.inherent_level;
   const openMitigations = mitigations.filter((m: any) => m.status !== "completed");
 
+  // Workflow display helpers
+  const currentStageIdx = stages.findIndex((s) => s.id === risk.current_stage_id);
+  const isLastStage = stages.length > 0 && currentStageIdx === stages.length - 1;
+
   return (
     <>
       <div className="bento-layout-wrap">
@@ -126,8 +130,13 @@ export default function RiskDetailPage() {
                   <div className="rec-type">
                     <div className="rec-type-dot" style={{ background: LEVEL_COLORS[residualLevel] || "#4f46e5" }} />
                     Risk Record
+                    {risk.risk_number && (
+                      <span style={{ marginLeft: 8, fontFamily: "monospace", fontSize: 12, color: "#a5b4fc", fontWeight: 600, letterSpacing: "0.04em" }}>
+                        {risk.risk_number}
+                      </span>
+                    )}
                   </div>
-                  <div className="rec-title">{risk.risk_number ? `${risk.risk_number}: ` : ""}{risk.title}</div>
+                  <div className="rec-title">{risk.title}</div>
                 </div>
                 <div className="bento-header-actions">
                   <button className="btn btn-secondary" onClick={() => setShowEdit(true)}>✏ Edit</button>
@@ -139,22 +148,18 @@ export default function RiskDetailPage() {
                     } catch(e) { console.error(e); }
                   }}>⬇ Export PDF</button>
                   <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
-                  <select
-                    value={risk.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e0e7ff", fontSize: 12, background: "#fff", color: "#1e1b4b" }}
-                  >
-                    {ALL_STATUSES.map((s) => (
-                      <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-                    ))}
-                  </select>
+                  {!isLastStage && stages.length > 0 && (
+                    <button className="btn-submit" onClick={handleAdvanceWorkflow}>
+                      Submit →
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Meta strip */}
               <div className="meta-strip">
                 <div className="ms-item">
-                  <div className="ms-status-dot" style={{ background: STATUS_COLORS[risk.status] || "#4f46e5" }} />
+                  <div className="ms-status-dot" style={{ background: stages[currentStageIdx]?.color || "#4f46e5" }} />
                   <strong>{risk.status.replace(/_/g, " ")}</strong>
                 </div>
                 {residualLevel && (
@@ -175,8 +180,40 @@ export default function RiskDetailPage() {
               </div>
             </div>
 
+            {/* ── Workflow tile ── */}
+            {stages.length > 0 && (
+              <div className="tile t-workflow">
+                <div className="tile-label acc">
+                  Workflow
+                  {currentStageIdx >= 0 && (
+                    <> — Stage {currentStageIdx + 1} of {stages.length}</>
+                  )}
+                </div>
+                <div className="bento-wf-row">
+                  {stages.map((stage, idx) => {
+                    const isCurrent = stage.id === risk.current_stage_id;
+                    const isComplete = currentStageIdx >= 0 && idx < currentStageIdx;
+                    const cls = isComplete ? "wf-done" : isCurrent ? "wf-cur" : "";
+                    return (
+                      <React.Fragment key={stage.id}>
+                        <div className={`bento-wf-step ${cls}`}>
+                          <div className="bento-wf-icon">
+                            {isComplete ? "✓" : idx + 1}
+                          </div>
+                          <div className="bento-wf-name">{stage.name}</div>
+                          <div className="bento-wf-sub">
+                            {isComplete ? "Completed" : isCurrent ? "In progress" : "Not started"}
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* ── Risk Scores tile ── */}
-            <div className="tile t-workflow">
+            <div className="tile t-desc">
               <div className="tile-label acc">Risk Scores</div>
               <RiskScoreDisplay
                 inherent={{
@@ -205,7 +242,7 @@ export default function RiskDetailPage() {
 
             {/* ── Description tile ── */}
             {(risk.description || risk.treatment_plan) && (
-              <div className="tile t-desc">
+              <div className="tile t-team">
                 {risk.description && (
                   <>
                     <div className="tile-label">Description</div>
@@ -231,7 +268,7 @@ export default function RiskDetailPage() {
             )}
 
             {/* ── Details tile ── */}
-            <div className={`tile ${risk.description || risk.treatment_plan ? "t-team" : "t-workflow"}`}>
+            <div className="tile t-team">
               <div className="tile-label">Details</div>
               <div className="bento-team-row">
                 <div className="bento-team-k">Owner</div>
@@ -304,7 +341,7 @@ export default function RiskDetailPage() {
               />
             </div>
 
-            {/* ── Evidence placeholder tile ── */}
+            {/* ── Linked records tile ── */}
             <div className="tile t-attach">
               <div className="tile-label">Linked Records</div>
               <div style={{ fontSize: 12, color: "#6d6d9e", marginBottom: 8 }}>

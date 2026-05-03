@@ -153,6 +153,9 @@ export async function createRisk(data: CreateRiskParams, ctx: AuditContext) {
   const residual = calcScoreAndLevel(data.residual_likelihood ?? null, data.residual_impact ?? null);
   const target = calcScoreAndLevel(data.target_likelihood ?? null, data.target_impact ?? null);
 
+  // Set initial stage to "Identified" (first stage, position 0)
+  const firstStage = await db("risk_workflow_stages").orderBy("position", "asc").first();
+
   const [risk] = await db("risks")
     .insert({
       risk_number: riskNumber,
@@ -160,7 +163,8 @@ export async function createRisk(data: CreateRiskParams, ctx: AuditContext) {
       description: data.description || null,
       category_id: data.category_id || null,
       source: data.source || null,
-      status: "draft",
+      status: "identified",
+      current_stage_id: firstStage?.id || null,
       inherent_likelihood: data.inherent_likelihood || null,
       inherent_impact: data.inherent_impact || null,
       inherent_score: inherent.score,
