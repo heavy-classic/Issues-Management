@@ -224,7 +224,9 @@ export default function ProcedureDetailPage() {
     if (!procedure || !id) return;
     setSaving(true);
     try {
-      const res = await api.patch(`/procedures/${id}`, editData);
+      await api.patch(`/procedures/${id}`, editData);
+      // Re-fetch the full procedure so sections and joined fields are included
+      const res = await api.get(`/procedures/${id}`);
       setProcedure(res.data.procedure);
       setEditData(res.data.procedure);
       setSaveMsg("Saved!");
