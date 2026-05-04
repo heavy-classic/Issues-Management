@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import RiskFormModal from "../components/RiskFormModal";
 import SortableHeader from "../components/SortableHeader";
@@ -64,6 +64,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function RisksPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [risks, setRisks] = useState<Risk[]>([]);
   const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -71,6 +72,10 @@ export default function RisksPage() {
   const [kpis, setKpis] = useState<KPIs | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+
+  // Heat-map cell drill-down from URL params
+  const heatMapLikelihood = searchParams.get("residual_likelihood") ? Number(searchParams.get("residual_likelihood")) : undefined;
+  const heatMapImpact = searchParams.get("residual_impact") ? Number(searchParams.get("residual_impact")) : undefined;
 
   // Filters
   const [filterStatus, setFilterStatus] = useState("");
@@ -91,6 +96,8 @@ export default function RisksPage() {
     if (filterLevel) params.level = filterLevel;
     if (filterOwner) params.owner_id = filterOwner;
     if (search) params.search = search;
+    if (heatMapLikelihood) params.residual_likelihood = String(heatMapLikelihood);
+    if (heatMapImpact) params.residual_impact = String(heatMapImpact);
     params.page = String(page);
     params.limit = "50";
     params.sort_by = sortBy;
@@ -100,7 +107,7 @@ export default function RisksPage() {
     setRisks(res.data.risks);
     setTotal(res.data.total);
     setLoading(false);
-  }, [filterStatus, filterCategory, filterLevel, filterOwner, search, page, sortBy, sortDir]);
+  }, [filterStatus, filterCategory, filterLevel, filterOwner, search, heatMapLikelihood, heatMapImpact, page, sortBy, sortDir]);
 
   useEffect(() => {
     fetchRisks();
@@ -147,6 +154,24 @@ export default function RisksPage() {
         <h1>Risk Register</h1>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ New Risk</button>
       </div>
+
+      {heatMapLikelihood && heatMapImpact && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          background: "#ede9fe", border: "1px solid #c4b5fd",
+          borderRadius: 8, padding: "8px 14px", marginBottom: 12,
+          fontSize: 13, color: "#4f46e5", fontWeight: 500,
+        }}>
+          <span>🎯 Filtered: Heat map cell — Likelihood {heatMapLikelihood}, Impact {heatMapImpact} (Score {heatMapLikelihood * heatMapImpact})</span>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setSearchParams({})}
+            style={{ marginLeft: "auto" }}
+          >
+            ✕ Clear filter
+          </button>
+        </div>
+      )}
 
       {/* KPI Cards */}
       {kpis && (

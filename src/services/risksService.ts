@@ -22,6 +22,8 @@ interface ListRisksFilters {
   status?: string;
   category_id?: string;
   level?: string;
+  residual_likelihood?: number;
+  residual_impact?: number;
   owner_id?: string;
   treatment_strategy?: string;
   search?: string;
@@ -66,6 +68,8 @@ export async function listRisks(filters: ListRisksFilters) {
   if (filters.status) baseQuery.where("risks.status", filters.status);
   if (filters.category_id) baseQuery.where("risks.category_id", filters.category_id);
   if (filters.level) baseQuery.where("risks.residual_level", filters.level);
+  if (filters.residual_likelihood) baseQuery.where("risks.residual_likelihood", filters.residual_likelihood);
+  if (filters.residual_impact) baseQuery.where("risks.residual_impact", filters.residual_impact);
   if (filters.owner_id) baseQuery.where("risks.owner_id", filters.owner_id);
   if (filters.treatment_strategy) baseQuery.where("risks.treatment_strategy", filters.treatment_strategy);
   if (filters.search) {

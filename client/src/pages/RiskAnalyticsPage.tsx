@@ -54,7 +54,7 @@ export default function RiskAnalyticsPage({ embedded }: { embedded?: boolean }) 
   }, []);
 
   function handleHeatMapClick(likelihood: number, impact: number) {
-    navigate(`/risks?level=${likelihood <= 1 && impact <= 4 ? "low" : ""}`);
+    navigate(`/risks?residual_likelihood=${likelihood}&residual_impact=${impact}`);
   }
 
   if (loading) return <p>Loading...</p>;
@@ -94,9 +94,11 @@ export default function RiskAnalyticsPage({ embedded }: { embedded?: boolean }) 
       )}
 
       {/* Heat Map */}
-      <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
-        <h2 style={{ marginTop: 0 }}>Risk Heat Map (Residual)</h2>
-        <RiskHeatMap data={heatMapData} onCellClick={handleHeatMapClick} />
+      <div style={{ marginBottom: "1.5rem" }}>
+        <div className="card" style={{ padding: "1.5rem", display: "inline-block" }}>
+          <h2 style={{ marginTop: 0, marginBottom: "1rem" }}>Risk Heat Map (Residual)</h2>
+          <RiskHeatMap data={heatMapData} onCellClick={handleHeatMapClick} />
+        </div>
       </div>
 
       {/* Charts Row */}

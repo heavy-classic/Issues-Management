@@ -56,6 +56,8 @@ router.get("/", async (req: any, res, next) => {
       status: req.query.status as string,
       category_id: req.query.category_id as string,
       level: req.query.level as string,
+      residual_likelihood: req.query.residual_likelihood ? Number(req.query.residual_likelihood) : undefined,
+      residual_impact: req.query.residual_impact ? Number(req.query.residual_impact) : undefined,
       owner_id: req.query.owner_id as string,
       treatment_strategy: req.query.treatment_strategy as string,
       search: req.query.search as string,
