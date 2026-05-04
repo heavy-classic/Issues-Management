@@ -64,7 +64,12 @@ const createProcedureSchema = z.object({
   source_requirements: z.string().nullable().optional(),
 });
 
-const updateProcedureSchema = createProcedureSchema.partial();
+const updateProcedureSchema = createProcedureSchema.partial().extend({
+  // Allow any string for procedure_type on updates (enum only enforced on create)
+  procedure_type: z.string().max(255).nullable().optional(),
+  // Allow any string for status on updates too (e.g. legacy values)
+  status: z.string().max(100).nullable().optional(),
+});
 
 const createSectionSchema = z.object({
   title: z.string().min(1).max(255),

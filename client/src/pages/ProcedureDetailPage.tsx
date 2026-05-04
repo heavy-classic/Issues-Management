@@ -190,7 +190,30 @@ export default function ProcedureDetailPage() {
     setExporting(true);
     try {
       const { exportProcedurePDF } = await import("../utils/exportUtils");
-      exportProcedurePDF(procedure as any);
+      exportProcedurePDF({
+        procedure: {
+          title: procedure.title,
+          procedure_number: procedure.procedure_number,
+          status: procedure.status,
+          revision: procedure.revision_number,
+          owner_name: procedure.author_name ?? undefined,
+          department: procedure.building_unit ?? undefined,
+          effective_date: procedure.approval_date ?? undefined,
+          review_date: procedure.revision_date ?? undefined,
+          purpose: procedure.purpose ?? undefined,
+          scope: procedure.scope ?? undefined,
+          references: procedure.source_requirements ?? undefined,
+          definitions: procedure.applicability ?? undefined,
+        },
+        sections: (procedure.sections ?? []).map((sec) => ({
+          title: sec.title,
+          section_number: sec.sequence_number,
+          steps: sec.steps.map((st) => ({
+            step_number: st.sequence_number,
+            content: st.step_text,
+          })),
+        })),
+      });
     } catch (e) {
       console.error(e);
     }
@@ -225,7 +248,7 @@ export default function ProcedureDetailPage() {
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
         {/* Back + Header */}
-        <button className="btn-secondary" style={{ fontSize: 12, marginBottom: 14 }} onClick={() => navigate("/procedures")}>
+        <button className="btn btn-secondary" style={{ fontSize: 12, marginBottom: 14 }} onClick={() => navigate("/procedures")}>
           ← Back to Procedures
         </button>
 
@@ -265,12 +288,12 @@ export default function ProcedureDetailPage() {
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             <button
-              className="btn-secondary"
+              className="btn btn-secondary"
               style={{ fontSize: 12 }}
               onClick={handleExport}
               disabled={exporting}
             >
-              {exporting ? "Exporting…" : "⬇ Export PDF"}
+              {exporting ? "Exporting…" : "📤 Export PDF"}
             </button>
           </div>
         </div>
