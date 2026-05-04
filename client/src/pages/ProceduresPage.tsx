@@ -92,9 +92,14 @@ export default function ProceduresPage() {
   function SortTh({ field, label }: { field: string; label: string }) {
     const active = sortBy === field;
     return (
-      <th className={`il-th-sort${active ? " il-th-sorted" : ""}`} onClick={() => handleSort(field)}>
+      <th
+        className={`il-th-sort${active ? " il-th-sorted" : ""}`}
+        scope="col"
+        aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+        onClick={() => handleSort(field)}
+      >
         {label}
-        <span className="il-sort-arrow">{active ? (sortDir === "asc" ? " ↑" : " ↓") : " ↕"}</span>
+        <span className="il-sort-arrow" aria-hidden="true">{active ? (sortDir === "asc" ? " ↑" : " ↓") : " ↕"}</span>
       </th>
     );
   }
@@ -172,10 +177,10 @@ export default function ProceduresPage() {
               <tr>
                 <SortTh field="procedure_number" label="Number" />
                 <SortTh field="title" label="Title" />
-                <th className="il-th">Type</th>
-                <th className="il-th">Status</th>
-                <th className="il-th">Rev</th>
-                <th className="il-th">Author</th>
+                <th className="il-th" scope="col">Type</th>
+                <th className="il-th" scope="col">Status</th>
+                <th className="il-th" scope="col">Rev</th>
+                <th className="il-th" scope="col">Author</th>
                 <SortTh field="updated_at" label="Updated" />
                 <th className="il-th" />
               </tr>

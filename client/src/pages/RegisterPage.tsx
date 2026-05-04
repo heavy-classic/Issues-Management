@@ -35,7 +35,7 @@ export default function RegisterPage() {
         <div className="auth-brand-sub">PUBLIC SECTOR</div>
       </div>
       <h1>Register</h1>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Name (optional)</label>

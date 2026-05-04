@@ -149,10 +149,12 @@ export default function DashboardPage() {
     return (
       <th
         className={`il-th-sort${active ? " il-th-sorted" : ""}`}
+        scope="col"
+        aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
         onClick={() => handleSort(field)}
       >
         {label}
-        <span className="il-sort-arrow">{active ? (sortDir === "asc" ? " ↑" : " ↓") : " ↕"}</span>
+        <span className="il-sort-arrow" aria-hidden="true">{active ? (sortDir === "asc" ? " ↑" : " ↓") : " ↕"}</span>
       </th>
     );
   }
@@ -250,9 +252,9 @@ export default function DashboardPage() {
             <thead>
               <tr>
                 <SortTh field="title" label="Title" />
-                <th className="il-th">Stage</th>
+                <th className="il-th" scope="col">Stage</th>
                 <SortTh field="priority" label="Priority" />
-                <th className="il-th">Assignee</th>
+                <th className="il-th" scope="col">Assignee</th>
                 <SortTh field="created_at" label="Created" />
                 <th className="il-th" />
               </tr>

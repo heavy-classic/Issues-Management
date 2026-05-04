@@ -135,10 +135,10 @@ export default function AdminRiskCategoriesPage() {
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Color</label>
+                <label htmlFor="arc-color">Color</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 40, height: 32, padding: 0, border: "none" }} />
-                  <input type="text" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 100 }} maxLength={7} />
+                  <input id="arc-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 40, height: 32, padding: 0, border: "none" }} aria-label="Category color (color picker)" />
+                  <input id="arc-color-hex" type="text" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: 100 }} maxLength={7} aria-label="Category color (hex value)" />
                 </div>
               </div>
               <div className="form-group">

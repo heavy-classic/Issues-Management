@@ -69,7 +69,7 @@ export default function CommentThread({
     <div className="comment-thread">
       <h3>Comments <span className="section-count-badge">{comments.length}</span></h3>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       {comments.length === 0 && (
         <p className="text-muted">No comments yet.</p>

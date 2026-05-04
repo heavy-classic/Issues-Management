@@ -45,17 +45,19 @@ function NavTile({ to, colorKey, icon, label, onToggle, end }: TileProps) {
       to={to}
       end={end}
       onClick={onToggle}
+      aria-label={label}
       className={({ isActive }) => `sb-tile${isActive ? " sb-tile-active" : ""}`}
       style={({ isActive }) => isActive ? { "--tile-bg": c.bg, "--tile-color": c.color } as any : {}}
     >
       <div
         className="sb-tile-ico"
         style={{ background: c.bg }}
+        aria-hidden="true"
       >
         <span style={{ color: c.color }}>{icon}</span>
       </div>
-      <span className="sb-tile-lbl">{label}</span>
-      <span className="sb-tip">{label}</span>
+      <span className="sb-tile-lbl" aria-hidden="true">{label}</span>
+      <span className="sb-tip" aria-hidden="true">{label}</span>
     </NavLink>
   );
 }
@@ -80,10 +82,27 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <>
-      {!collapsed && <div className="sidebar-overlay" onClick={onToggle} />}
-      {menuOpen && <div className="sb-menu-overlay" onClick={() => setMenuOpen(false)} />}
+      {!collapsed && (
+        <button
+          className="sidebar-overlay"
+          onClick={onToggle}
+          aria-label="Close navigation menu"
+          tabIndex={0}
+        />
+      )}
+      {menuOpen && (
+        <button
+          className="sb-menu-overlay"
+          onClick={() => setMenuOpen(false)}
+          aria-label="Close account menu"
+          tabIndex={0}
+        />
+      )}
 
-      <aside className={`sidebar sb-v2${!collapsed ? " sidebar-open" : ""}`}>
+      <aside
+        className={`sidebar sb-v2${!collapsed ? " sidebar-open" : ""}`}
+        aria-label="Main navigation"
+      >
 
         {/* Logo */}
         <div className="sb-v2-logo">
@@ -132,9 +151,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <button
             className="sb-v2-theme"
             onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            <span>{theme === "dark" ? "☀" : "🌙"}</span>
+            <span aria-hidden="true">{theme === "dark" ? "☀" : "🌙"}</span>
             <span className="sb-v2-theme-lbl">{theme === "dark" ? "Light mode" : "Dark mode"}</span>
           </button>
 
@@ -163,14 +183,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <button className="sb-popover-signout" onClick={handleLogout}>Sign out</button>
               </div>
             )}
-            <div
+            <button
               className="sb-v2-av"
               onClick={() => setMenuOpen((v) => !v)}
-              title={user?.fullName || user?.name || user?.email || "Account"}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={`Account menu for ${user?.fullName || user?.name || user?.email || "user"}`}
             >
-              <div className="sb-v2-av-circle">{getInitials()}</div>
+              <div className="sb-v2-av-circle" aria-hidden="true">{getInitials()}</div>
               <div className="sb-v2-av-name">{user?.fullName || user?.name || user?.email}</div>
-            </div>
+            </button>
           </div>
         </div>
 

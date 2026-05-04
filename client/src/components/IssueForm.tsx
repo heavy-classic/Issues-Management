@@ -140,7 +140,7 @@ export default function IssueForm({ users, onSubmit, onCancel }: IssueFormProps)
         </div>
       )}
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       {/* Row 1: Title */}
       <div className="form-group">

@@ -100,10 +100,10 @@ export default function AuditMeetingsPanel({ auditId, meetings, onUpdate }: Prop
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Type</th>
-            <th className="ap-th">Title</th>
-            <th className="ap-th">Date</th>
-            <th className="ap-th">Notes</th>
+            <th className="ap-th" scope="col">Type</th>
+            <th className="ap-th" scope="col">Title</th>
+            <th className="ap-th" scope="col">Date</th>
+            <th className="ap-th" scope="col">Notes</th>
             <th className="ap-th" />
           </tr>
         </thead>

@@ -109,7 +109,7 @@ export default function AdminLessonWorkflowPage() {
         </button>
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       {showCreate && (
         <form onSubmit={handleCreate} className="admin-form">
@@ -124,10 +124,12 @@ export default function AdminLessonWorkflowPage() {
               />
             </div>
             <div className="form-group">
-              <label>Color</label>
+              <label htmlFor="alw-stage-color">Color</label>
               <input
+                id="alw-stage-color"
                 type="color"
                 value={form.color}
+                aria-label="Stage color"
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
               />
             </div>
@@ -170,10 +172,12 @@ export default function AdminLessonWorkflowPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Color</label>
+                    <label htmlFor="alw-edit-color">Color</label>
                     <input
+                      id="alw-edit-color"
                       type="color"
                       value={form.color}
+                      aria-label="Stage color"
                       onChange={(e) => setForm({ ...form, color: e.target.value })}
                     />
                   </div>

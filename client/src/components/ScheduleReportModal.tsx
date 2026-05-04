@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface User {
   id: string;
@@ -70,6 +71,7 @@ export default function ScheduleReportModal({ reportId, onClose, onSaved }: Prop
   const [newEmail, setNewEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const dialogRef = useModalA11y(onClose);
 
   useEffect(() => {
     api.get("/users").then((res) => setUsers(res.data.users));
@@ -128,13 +130,21 @@ export default function ScheduleReportModal({ reportId, onClose, onSaved }: Prop
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="schedule-report-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          <h2>Schedule Report</h2>
-          <button className="btn-icon" onClick={onClose}>&times;</button>
+          <h2 id="schedule-report-title">Schedule Report</h2>
+          <button className="btn-icon" onClick={onClose} aria-label="Close">&times;</button>
         </div>
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">

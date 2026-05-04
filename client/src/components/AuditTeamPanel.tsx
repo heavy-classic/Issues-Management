@@ -72,8 +72,8 @@ export default function AuditTeamPanel({ auditId, team, users, onUpdate }: Props
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Member</th>
-            <th className="ap-th">Role</th>
+            <th className="ap-th" scope="col">Member</th>
+            <th className="ap-th" scope="col">Role</th>
             <th className="ap-th" />
           </tr>
         </thead>

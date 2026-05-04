@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface Props {
   issueId: string;
@@ -23,6 +24,7 @@ export default function SignatureDialog({
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const dialogRef = useModalA11y(onCancel);
 
   useEffect(() => {
     api.get("/signatures/meanings").then((res) => {
@@ -56,24 +58,33 @@ export default function SignatureDialog({
   }
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content sig-dialog" onClick={(e) => e.stopPropagation()}>
-        <h2>Electronic Signature</h2>
+    <div className="modal-overlay" role="presentation" onClick={onCancel}>
+      <div
+        className="modal-content sig-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sig-dialog-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="sig-dialog-title">Electronic Signature</h2>
         <p className="text-muted">
           Signing stage: <strong>{stageName}</strong>
         </p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Signature Meaning</label>
-            <select value={meaning} onChange={(e) => setMeaning(e.target.value)}>
+            <label htmlFor="sig-meaning">Signature Meaning</label>
+            <select id="sig-meaning" value={meaning} onChange={(e) => setMeaning(e.target.value)}>
               {meanings.map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
           </div>
           <div className="form-group">
-            <label>Password (re-authentication)</label>
+            <label htmlFor="sig-password">Password (re-authentication)</label>
             <input
+              id="sig-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -82,8 +93,9 @@ export default function SignatureDialog({
             />
           </div>
           <div className="form-group">
-            <label>Comments / Reason (optional)</label>
+            <label htmlFor="sig-reason">Comments / Reason (optional)</label>
             <textarea
+              id="sig-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
@@ -100,7 +112,7 @@ export default function SignatureDialog({
               equivalent to a handwritten signature. This action cannot be undone.
             </label>
           </div>
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error" role="alert">{error}</p>}
           <div className="form-actions">
             <button
               type="submit"

@@ -799,12 +799,12 @@ export default function IssueDetailPage() {
                 <table className="ap-table">
                   <thead>
                     <tr>
-                      <th className="ap-th">Name</th>
-                      <th className="ap-th">Status</th>
-                      <th className="ap-th">Priority</th>
-                      <th className="ap-th">Assignee</th>
-                      <th className="ap-th">Due Date</th>
-                      <th className="ap-th">Actions</th>
+                      <th className="ap-th" scope="col">Name</th>
+                      <th className="ap-th" scope="col">Status</th>
+                      <th className="ap-th" scope="col">Priority</th>
+                      <th className="ap-th" scope="col">Assignee</th>
+                      <th className="ap-th" scope="col">Due Date</th>
+                      <th className="ap-th" scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -888,12 +888,12 @@ export default function IssueDetailPage() {
                     <table className="ap-table">
                       <thead>
                         <tr>
-                          <th className="ap-th">Title</th>
-                          <th className="ap-th">Type</th>
-                          <th className="ap-th">Status</th>
-                          <th className="ap-th">Created By</th>
-                          <th className="ap-th">Date</th>
-                          <th className="ap-th">Actions</th>
+                          <th className="ap-th" scope="col">Title</th>
+                          <th className="ap-th" scope="col">Type</th>
+                          <th className="ap-th" scope="col">Status</th>
+                          <th className="ap-th" scope="col">Created By</th>
+                          <th className="ap-th" scope="col">Date</th>
+                          <th className="ap-th" scope="col">Actions</th>
                         </tr>
                       </thead>
                       <tbody>

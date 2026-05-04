@@ -98,13 +98,13 @@ export default function RiskAssessmentPanel({ riskId, assessments, onRefresh }: 
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Date</th>
-            <th className="ap-th">Type</th>
-            <th className="ap-th">L × I</th>
-            <th className="ap-th">Score</th>
-            <th className="ap-th">Level</th>
-            <th className="ap-th">Assessor</th>
-            <th className="ap-th">Rationale</th>
+            <th className="ap-th" scope="col">Date</th>
+            <th className="ap-th" scope="col">Type</th>
+            <th className="ap-th" scope="col">L × I</th>
+            <th className="ap-th" scope="col">Score</th>
+            <th className="ap-th" scope="col">Level</th>
+            <th className="ap-th" scope="col">Assessor</th>
+            <th className="ap-th" scope="col">Rationale</th>
           </tr>
         </thead>
         <tbody>

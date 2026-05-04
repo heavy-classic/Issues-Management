@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface Props {
   instanceId: string;
@@ -44,23 +45,34 @@ export default function ChecklistExecutionModal({ instanceId, onClose }: Props) 
     onClose();
   }
 
-  if (loading) return <div className="modal-overlay"><div className="modal-content modal-lg"><p>Loading...</p></div></div>;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const dialogRef = useModalA11y(onClose);
+
+  if (loading) return <div className="modal-overlay" role="presentation"><div className="modal-content modal-lg" role="dialog" aria-modal="true" aria-label="Loading checklist"><p>Loading...</p></div></div>;
   if (!instance) return null;
 
   const groups = instance.groups || [];
   const currentGroup = groups[currentGroupIdx];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-lg checklist-execution-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="modal-content modal-lg checklist-execution-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="checklist-exec-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <div>
-            <h2>{instance.checklist_name}</h2>
+            <h2 id="checklist-exec-title">{instance.checklist_name}</h2>
             <div className="text-muted" style={{ fontSize: "0.85rem" }}>
               {instance.audit_number} — {instance.audit_title}
             </div>
           </div>
-          <button className="btn-icon" onClick={onClose}>&times;</button>
+          <button className="btn-icon" onClick={onClose} aria-label="Close">&times;</button>
         </div>
 
         {instance.checklist_instructions && (

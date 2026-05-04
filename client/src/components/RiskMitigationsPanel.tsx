@@ -115,11 +115,11 @@ export default function RiskMitigationsPanel({ riskId, mitigations, users, onRef
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Title</th>
-            <th className="ap-th">Type</th>
-            <th className="ap-th">Status</th>
-            <th className="ap-th">Owner</th>
-            <th className="ap-th">Due</th>
+            <th className="ap-th" scope="col">Title</th>
+            <th className="ap-th" scope="col">Type</th>
+            <th className="ap-th" scope="col">Status</th>
+            <th className="ap-th" scope="col">Owner</th>
+            <th className="ap-th" scope="col">Due</th>
             <th className="ap-th" />
           </tr>
         </thead>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 import {
   exportBarrierAnalysisPDF,
   exportFiveWhyPDF,
@@ -579,6 +580,7 @@ function NewInvModal({ onClose, onCreate }: NewInvModalProps) {
   const [type, setType] = useState<InvType>("barrier_analysis");
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
+  const dialogRef = useModalA11y(onClose);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -592,15 +594,20 @@ function NewInvModal({ onClose, onCreate }: NewInvModalProps) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
       <div
         className="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-inv-title"
+        ref={dialogRef}
+        tabIndex={-1}
         style={{ maxWidth: 480 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2>New Investigation</h2>
-          <button className="btn btn-sm btn-secondary" onClick={onClose}>
+          <h2 id="new-inv-title">New Investigation</h2>
+          <button className="btn btn-sm btn-secondary" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>

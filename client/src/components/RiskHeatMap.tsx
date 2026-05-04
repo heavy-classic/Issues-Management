@@ -56,10 +56,21 @@ export default function RiskHeatMap({ data, onCellClick }: Props) {
               {[1, 2, 3, 4, 5].map((i) => {
                 const score = l * i;
                 const count = data[`${l}-${i}`] || 0;
+                const riskLabel = score <= 4 ? "Low" : score <= 9 ? "Medium" : score <= 16 ? "High" : "Extreme";
+                const cellLabel = `${riskLabel} risk — Likelihood: ${LIKELIHOOD_LABELS[l]}, Impact: ${IMPACT_LABELS[i]}, Score: ${score}${count > 0 ? `, ${count} risk${count !== 1 ? "s" : ""}` : ", no risks"}`;
                 return (
                   <div
                     key={i}
+                    role={onCellClick ? "button" : undefined}
+                    tabIndex={onCellClick ? 0 : undefined}
+                    aria-label={cellLabel}
                     onClick={() => onCellClick?.(l, i)}
+                    onKeyDown={(e) => {
+                      if (onCellClick && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        onCellClick(l, i);
+                      }
+                    }}
                     style={{
                       flex: 1,
                       aspectRatio: "1",
@@ -78,9 +89,8 @@ export default function RiskHeatMap({ data, onCellClick }: Props) {
                       border: `1px solid ${getCellColor(score)}40`,
                       transition: "transform 0.1s",
                     }}
-                    title={`L:${l} x I:${i} = ${score} (${count} risks)`}
                   >
-                    {count > 0 ? count : score}
+                    <span aria-hidden="true">{count > 0 ? count : score}</span>
                   </div>
                 );
               })}
@@ -131,7 +141,7 @@ export default function RiskHeatMap({ data, onCellClick }: Props) {
           { label: "Extreme (17-25)", color: "#ef4444" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-            <div style={{ width: 12, height: 12, borderRadius: 3, background: item.color }} />
+            <div aria-hidden="true" style={{ width: 12, height: 12, borderRadius: 3, background: item.color }} />
             <span>{item.label}</span>
           </div>
         ))}

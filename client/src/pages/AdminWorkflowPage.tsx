@@ -127,7 +127,7 @@ function StageManager({ endpoint }: StageManagerProps) {
         </button>
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       {showCreate && (
         <form onSubmit={handleCreate} className="admin-form">
@@ -142,10 +142,12 @@ function StageManager({ endpoint }: StageManagerProps) {
               />
             </div>
             <div className="form-group">
-              <label>Color</label>
+              <label htmlFor="aw-stage-color">Color</label>
               <input
+                id="aw-stage-color"
                 type="color"
                 value={form.color}
+                aria-label="Stage color"
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
               />
             </div>
@@ -188,10 +190,12 @@ function StageManager({ endpoint }: StageManagerProps) {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Color</label>
+                    <label htmlFor="aw-edit-color">Color</label>
                     <input
+                      id="aw-edit-color"
                       type="color"
                       value={form.color}
+                      aria-label="Stage color"
                       onChange={(e) => setForm({ ...form, color: e.target.value })}
                     />
                   </div>

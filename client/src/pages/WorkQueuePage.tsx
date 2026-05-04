@@ -161,7 +161,7 @@ function QueueThead({ cols }: { cols: string[] }) {
     <thead>
       <tr style={{ background: "#f9fafb" }}>
         {cols.map((h) => (
-          <th key={h} style={{
+          <th key={h} scope="col" style={{
             padding: "8px 16px", textAlign: "left",
             fontSize: 10, fontWeight: 700, color: "#6b7280",
             textTransform: "uppercase", letterSpacing: "0.06em",

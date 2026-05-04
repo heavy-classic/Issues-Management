@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface Props {
   parentId: string;
@@ -28,6 +29,7 @@ export default function FileUploadModal({
   const [files, setFiles] = useState<FileWithProgress[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const dialogRef = useModalA11y(onCancel);
 
   useEffect(() => {
     if (initialFiles && initialFiles.length > 0) {
@@ -145,13 +147,18 @@ export default function FileUploadModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
+    <div className="modal-overlay" role="presentation" onClick={onCancel}>
       <div
         className="modal-content modal-upload"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="file-upload-title"
+        ref={dialogRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3>Upload Files</h3>
-        {error && <p className="error">{error}</p>}
+        <h3 id="file-upload-title">Upload Files</h3>
+        {error && <p className="error" role="alert">{error}</p>}
 
         <div
           {...getRootProps()}

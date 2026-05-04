@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ export default function ActionFormModal({
   onCancel,
 }: Props) {
   const isEdit = !!action?.id;
+  const dialogRef = useModalA11y(onCancel);
   const [title, setTitle] = useState(action?.title || "");
   const [description, setDescription] = useState(action?.description || "");
   const [priority, setPriority] = useState(action?.priority || "medium");
@@ -72,14 +74,23 @@ export default function ActionFormModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h3>{isEdit ? "Edit Action" : "New Action"}</h3>
-        {error && <p className="error">{error}</p>}
+    <div className="modal-overlay" role="presentation" onClick={onCancel}>
+      <div
+        className="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="action-form-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="action-form-title">{isEdit ? "Edit Action" : "New Action"}</h3>
+        {error && <p className="error" role="alert">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Title</label>
+            <label htmlFor="af-title">Title</label>
             <input
+              id="af-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -87,8 +98,9 @@ export default function ActionFormModal({
             />
           </div>
           <div className="form-group">
-            <label>Description</label>
+            <label htmlFor="af-description">Description</label>
             <textarea
+              id="af-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -96,8 +108,9 @@ export default function ActionFormModal({
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Priority</label>
+              <label htmlFor="af-priority">Priority</label>
               <select
+                id="af-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
               >
@@ -108,8 +121,9 @@ export default function ActionFormModal({
               </select>
             </div>
             <div className="form-group">
-              <label>Assignee</label>
+              <label htmlFor="af-assignee">Assignee</label>
               <select
+                id="af-assignee"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
               >
@@ -122,8 +136,9 @@ export default function ActionFormModal({
               </select>
             </div>
             <div className="form-group">
-              <label>Due Date</label>
+              <label htmlFor="af-due-date">Due Date</label>
               <input
+                id="af-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}

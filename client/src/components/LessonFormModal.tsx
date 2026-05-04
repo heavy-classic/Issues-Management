@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface User {
   id: string;
@@ -107,14 +108,24 @@ export default function LessonFormModal({ users, initial, fromIssueId, onSubmit,
     }
   }
 
+  const dialogRef = useModalA11y(onClose);
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="modal-content modal-lg"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lesson-form-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          <h2>{initial?.id ? "Edit Lesson Learned" : "New Lesson Learned"}</h2>
-          <button className="btn-icon" onClick={onClose}>&times;</button>
+          <h2 id="lesson-form-title">{initial?.id ? "Edit Lesson Learned" : "New Lesson Learned"}</h2>
+          <button className="btn-icon" onClick={onClose} aria-label="Close">&times;</button>
         </div>
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group" style={{ flex: 2 }}>

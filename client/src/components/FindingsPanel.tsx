@@ -46,12 +46,12 @@ export default function FindingsPanel({ auditId, findings, users, onUpdate }: Pr
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Title</th>
-            <th className="ap-th">Severity</th>
-            <th className="ap-th">Priority</th>
-            <th className="ap-th">Status</th>
-            <th className="ap-th">Assignee</th>
-            <th className="ap-th">Created</th>
+            <th className="ap-th" scope="col">Title</th>
+            <th className="ap-th" scope="col">Severity</th>
+            <th className="ap-th" scope="col">Priority</th>
+            <th className="ap-th" scope="col">Status</th>
+            <th className="ap-th" scope="col">Assignee</th>
+            <th className="ap-th" scope="col">Created</th>
             <th className="ap-th" />
           </tr>
         </thead>

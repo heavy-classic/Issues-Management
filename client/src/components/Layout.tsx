@@ -14,11 +14,14 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   return (
     <BreadcrumbProvider>
+      {/* Skip navigation — visible on keyboard focus only */}
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
+
       <div className="app-layout">
         <Sidebar collapsed={!mobileSidebarOpen} onToggle={toggleSidebar} />
         <div className="app-main">
           <TopBar onMenuToggle={toggleSidebar} />
-          <main className="app-content">{children}</main>
+          <main id="main-content" className="app-content">{children}</main>
         </div>
       </div>
     </BreadcrumbProvider>

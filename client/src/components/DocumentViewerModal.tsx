@@ -62,8 +62,14 @@ export default function DocumentViewerModal({ attachment, onClose }: Props) {
   }, [onClose]);
 
   return (
-    <div className="modal-overlay viewer-overlay" onClick={onClose}>
-      <div className="viewer-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay viewer-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="viewer-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Viewing file: ${attachment.original_name}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="viewer-header">
           <span className="viewer-filename">{attachment.original_name}</span>
           <div className="viewer-header-actions">
@@ -78,6 +84,7 @@ export default function DocumentViewerModal({ attachment, onClose }: Props) {
             <button
               className="btn-icon viewer-close-btn"
               onClick={onClose}
+              aria-label="Close document viewer"
               title="Close (Esc)"
             >
               {"\u00D7"}

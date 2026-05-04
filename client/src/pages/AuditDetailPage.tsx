@@ -274,11 +274,11 @@ export default function AuditDetailPage() {
               <table className="ap-table">
                 <thead>
                   <tr>
-                    <th className="ap-th">Checklist</th>
-                    <th className="ap-th">Status</th>
-                    <th className="ap-th">Assigned To</th>
-                    <th className="ap-th">Progress</th>
-                    <th className="ap-th">Due</th>
+                    <th className="ap-th" scope="col">Checklist</th>
+                    <th className="ap-th" scope="col">Status</th>
+                    <th className="ap-th" scope="col">Assigned To</th>
+                    <th className="ap-th" scope="col">Progress</th>
+                    <th className="ap-th" scope="col">Due</th>
                     <th className="ap-th" />
                   </tr>
                 </thead>

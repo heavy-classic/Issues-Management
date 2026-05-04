@@ -268,8 +268,8 @@ function AuditTypeFormModal({
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} required maxLength={255} />
             </div>
             <div className="form-group" style={{ width: "80px" }}>
-              <label>Color</label>
-              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ height: "38px", padding: "2px" }} />
+              <label htmlFor="aat-color">Color</label>
+              <input id="aat-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ height: "38px", padding: "2px" }} aria-label="Audit type color" />
             </div>
             <div className="form-group" style={{ width: "80px" }}>
               <label>Icon</label>

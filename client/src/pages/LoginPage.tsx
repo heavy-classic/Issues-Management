@@ -34,7 +34,7 @@ export default function LoginPage() {
         <div className="auth-brand-sub">PUBLIC SECTOR</div>
       </div>
       <h1>Login</h1>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Email</label>

@@ -85,9 +85,9 @@ export default function RiskLinkedAuditsPanel({ riskId, audits, onRefresh }: Pro
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Audit #</th>
-            <th className="ap-th">Title</th>
-            <th className="ap-th">Status</th>
+            <th className="ap-th" scope="col">Audit #</th>
+            <th className="ap-th" scope="col">Title</th>
+            <th className="ap-th" scope="col">Status</th>
             <th className="ap-th" />
           </tr>
         </thead>

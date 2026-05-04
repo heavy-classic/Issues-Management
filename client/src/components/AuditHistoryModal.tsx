@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
+import { useModalA11y } from "../hooks/useModalA11y";
 
 interface AuditEntry {
   id: string;
@@ -34,6 +35,7 @@ export default function AuditHistoryModal({ issueId, onClose }: Props) {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
+  const dialogRef = useModalA11y(onClose);
 
   useEffect(() => {
     api.get(`/audit/issues/${issueId}`).then((res) => {
@@ -57,15 +59,24 @@ export default function AuditHistoryModal({ issueId, onClose }: Props) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content audit-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="modal-content audit-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="audit-history-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="audit-modal-header">
-          <h2>Audit History</h2>
-          <button onClick={onClose} className="btn btn-secondary btn-sm">Close</button>
+          <h2 id="audit-history-title">Audit History</h2>
+          <button onClick={onClose} className="btn btn-secondary btn-sm" aria-label="Close Audit History">Close</button>
         </div>
 
         <div className="audit-filters">
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <label htmlFor="ah-filter" className="sr-only">Filter by type</label>
+          <select id="ah-filter" value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="">All Types</option>
             <option value="INSERT">Insert</option>
             <option value="UPDATE">Update</option>

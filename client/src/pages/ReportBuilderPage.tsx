@@ -304,10 +304,10 @@ export default function ReportBuilderPage() {
             <thead>
               <tr>
                 {previewData.dimensions.map((d: string) => (
-                  <th key={d}>{d}</th>
+                  <th key={d} scope="col">{d}</th>
                 ))}
                 {previewData.measures.map((m: string) => (
-                  <th key={m}>{m}</th>
+                  <th key={m} scope="col">{m}</th>
                 ))}
               </tr>
             </thead>

@@ -84,10 +84,10 @@ export default function RiskLinkedIssuesPanel({ riskId, issues, onRefresh }: Pro
       <table className="ap-table">
         <thead>
           <tr>
-            <th className="ap-th">Issue #</th>
-            <th className="ap-th">Title</th>
-            <th className="ap-th">Status</th>
-            <th className="ap-th">Priority</th>
+            <th className="ap-th" scope="col">Issue #</th>
+            <th className="ap-th" scope="col">Title</th>
+            <th className="ap-th" scope="col">Status</th>
+            <th className="ap-th" scope="col">Priority</th>
             <th className="ap-th" />
           </tr>
         </thead>
